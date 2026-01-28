@@ -39,6 +39,8 @@ export class GameState {
             autoSaveInterval: 30000, // 30 seconds
             offlineProgress: true
         };
+        
+        this.lastSaveTime = Date.now();
     }
     
     // Resource Management
@@ -250,19 +252,17 @@ export class GameState {
     
     // Game Loop Update
     update(deltaTime) {
-        const dt = deltaTime / 1000; // Convert to seconds
-        
         // Add resources from production
         for (const [resourceId, resource] of Object.entries(this.resources)) {
             if (resource.perSecond > 0) {
-                this.addResource(resourceId, resource.perSecond * dt);
+                this.addResource(resourceId, resource.perSecond * deltaTime);
             }
         }
         
         // Update training progress
         if (this.currentTraining) {
             const model = this.models[this.currentTraining];
-            this.trainingProgress += dt;
+            this.trainingProgress += deltaTime;
             
             if (this.trainingProgress >= model.trainingTime) {
                 this.completeTraining();
@@ -275,6 +275,19 @@ export class GameState {
         
         // Update total compute for stats
         this.stats.totalCompute = this.resources.compute.amount;
+    }
+    
+    // Process offline progression
+    processOfflineProgress(offlineTime) {
+        const maxOfflineTime = 24 * 60 * 60 * 1000; // 24 hours
+        const actualTime = Math.min(offlineTime, maxOfflineTime) / 1000; // Convert to seconds
+        
+        // Apply offline production
+        for (const [resourceId, resource] of Object.entries(this.resources)) {
+            if (resource.perSecond > 0) {
+                this.addResource(resourceId, resource.perSecond * actualTime);
+            }
+        }
     }
     
     // Save/Load
@@ -294,40 +307,41 @@ export class GameState {
             settings: this.settings
         };
         
-        localStorage.setItem('kiIdle_save', JSON.stringify(saveData));
+        this.lastSaveTime = Date.now();
         return saveData;
     }
     
-    load() {
-        const saveString = localStorage.getItem('kiIdle_save');
-        if (!saveString) return false;
-        
+    load(saveData) {
         try {
-            const saveData = JSON.parse(saveString);
-            
             // Calculate offline progress
             if (this.settings.offlineProgress && saveData.timestamp) {
-                const offlineTime = (Date.now() - saveData.timestamp) / 1000; // seconds
-                const maxOfflineTime = 3600 * 24; // 24 hours max
-                const actualOfflineTime = Math.min(offlineTime, maxOfflineTime);
+                const offlineTime = Date.now() - saveData.timestamp;
                 
                 // Restore state first
                 this.resources = saveData.resources;
                 this.buildings = saveData.buildings;
+                this.models = saveData.models;
+                this.research = saveData.research;
+                this.achievements = saveData.achievements;
+                this.prestige = saveData.prestige;
+                this.currentTraining = saveData.currentTraining;
+                this.trainingProgress = saveData.trainingProgress;
+                this.stats = saveData.stats;
+                this.settings = saveData.settings;
+                
                 this.recalculateProduction();
                 
                 // Apply offline progress
-                for (const [resourceId, resource] of Object.entries(this.resources)) {
-                    if (resource.perSecond > 0) {
-                        this.addResource(resourceId, resource.perSecond * actualOfflineTime);
-                    }
+                if (offlineTime > 1000) {
+                    this.processOfflineProgress(offlineTime);
                 }
+            } else {
+                // Just restore without offline progress
+                Object.assign(this, saveData);
+                this.recalculateProduction();
             }
             
-            // Load full state
-            Object.assign(this, saveData);
-            this.recalculateProduction();
-            
+            this.lastSaveTime = saveData.timestamp || Date.now();
             return true;
         } catch (e) {
             console.error('Failed to load save:', e);
@@ -337,20 +351,27 @@ export class GameState {
     
     reset() {
         Object.assign(this, new GameState());
-        localStorage.removeItem('kiIdle_save');
     }
     
-    // Export/Import
+    // Export/Import with Unicode-safe Base64
     export() {
         const saveData = this.save();
-        return btoa(JSON.stringify(saveData));
+        const jsonString = JSON.stringify(saveData);
+        // Use Unicode-safe encoding
+        return btoa(encodeURIComponent(jsonString).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+            return String.fromCharCode('0x' + p1);
+        }));
     }
     
     import(saveString) {
         try {
-            const saveData = JSON.parse(atob(saveString));
-            localStorage.setItem('kiIdle_save', JSON.stringify(saveData));
-            this.load();
+            // Decode Unicode-safe Base64
+            const jsonString = decodeURIComponent(atob(saveString).split('').map((c) => {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            
+            const saveData = JSON.parse(jsonString);
+            this.load(saveData);
             return true;
         } catch (e) {
             console.error('Failed to import save:', e);
