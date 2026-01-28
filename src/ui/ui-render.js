@@ -1,6 +1,9 @@
 // UI Rendering Functions
 
 import { getBuildingCost } from '../modules/buildings.js';
+import { buildings } from '../modules/buildings.js';
+import { models } from '../modules/models.js';
+import { research } from '../modules/research.js';
 
 // Main render function that updates all UI elements
 export function renderAll(gameState) {
@@ -44,7 +47,9 @@ export function renderBuildings(gameState) {
         
         let card = document.getElementById(`building-${id}`);
         if (!card) {
-            card = createBuildingCard(id, building);
+            // Use current building definition for description
+            const buildingDef = buildings[id];
+            card = createBuildingCard(id, buildingDef);
             container.appendChild(card);
         }
         
@@ -137,7 +142,9 @@ export function renderModels(gameState) {
         
         let card = document.getElementById(`model-${id}`);
         if (!card) {
-            card = createModelCard(id, model);
+            // Use current model definition for description
+            const modelDef = models[id];
+            card = createModelCard(id, modelDef);
             container.appendChild(card);
         }
         
@@ -225,19 +232,21 @@ export function renderResearch(gameState) {
         'regularization': document.getElementById('research-regularization')
     };
     
-    for (const [id, research] of Object.entries(gameState.research)) {
-        if (!research.unlocked) continue;
+    for (const [id, researchItem] of Object.entries(gameState.research)) {
+        if (!researchItem.unlocked) continue;
         
-        const container = categories[research.category];
+        const container = categories[researchItem.category];
         if (!container) continue;
         
         let card = document.getElementById(`research-${id}`);
         if (!card) {
-            card = createResearchCard(id, research);
+            // Use current research definition for description
+            const researchDef = research[id];
+            card = createResearchCard(id, researchDef);
             container.appendChild(card);
         }
         
-        updateResearchCard(card, research, gameState);
+        updateResearchCard(card, researchItem, gameState);
     }
 }
 
