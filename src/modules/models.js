@@ -9,12 +9,12 @@ export const models = {
         icon: '🔢',
         description: 'Train a neural network to recognize handwritten digits (MNIST-style)',
         requirements: {
-            data: 100,
-            compute: 1
+            data: 50,
+            compute: 0.5
         },
         production: {
-            accuracy: 0.1,
-            research: 0.01
+            accuracy: 0.2,
+            research: 0.02
         },
         unlocked: true,
         trainingTime: 10, // seconds for visual progress bar
@@ -29,15 +29,15 @@ export const models = {
         icon: '🖼️',
         description: 'Classify complex images into categories (ImageNet-style)',
         requirements: {
-            data: 10000,
-            compute: 50
+            data: 5000,
+            compute: 20
         },
         production: {
             accuracy: 5,
             research: 0.5
         },
         unlocked: false,
-        unlockRequirement: { accuracy: 100 },
+        unlockRequirement: { accuracy: 50 },
         trainingTime: 30,
         realConcept: 'Convolutional Neural Networks (CNNs) like ResNet, VGG'
     },
@@ -48,15 +48,15 @@ export const models = {
         icon: '🎯',
         description: 'Detect and localize multiple objects within images',
         requirements: {
-            data: 100000,
-            compute: 200
+            data: 50000,
+            compute: 100
         },
         production: {
-            accuracy: 20,
-            research: 2
+            accuracy: 25,
+            research: 2.5
         },
         unlocked: false,
-        unlockRequirement: { accuracy: 1000 },
+        unlockRequirement: { accuracy: 500 },
         trainingTime: 60,
         realConcept: 'Region-based CNNs (R-CNN, Fast R-CNN, YOLO)'
     },
@@ -69,15 +69,15 @@ export const models = {
         icon: '📝',
         description: 'Process and understand human language',
         requirements: {
-            data: 1000000,
-            compute: 1000
+            data: 500000,
+            compute: 500
         },
         production: {
-            accuracy: 100,
-            research: 10
+            accuracy: 125,
+            research: 12.5
         },
         unlocked: false,
-        unlockRequirement: { accuracy: 5000, research: 50 },
+        unlockRequirement: { accuracy: 2500, research: 25 },
         trainingTime: 120,
         realConcept: 'Transformers, BERT, attention mechanisms'
     },
@@ -88,15 +88,15 @@ export const models = {
         icon: '🎮',
         description: 'Train agents to make sequential decisions',
         requirements: {
-            data: 10000000,
-            compute: 5000
+            data: 5000000,
+            compute: 2500
         },
         production: {
-            accuracy: 500,
-            research: 50
+            accuracy: 625,
+            research: 62.5
         },
         unlocked: false,
-        unlockRequirement: { accuracy: 25000, research: 100 },
+        unlockRequirement: { accuracy: 12500, research: 50 },
         trainingTime: 180,
         realConcept: 'Q-Learning, Policy Gradients, Actor-Critic methods'
     },
@@ -109,15 +109,15 @@ export const models = {
         icon: '🧠',
         description: 'Scale to billions of parameters for emergent capabilities',
         requirements: {
-            data: 100000000,
-            compute: 50000
+            data: 50000000,
+            compute: 25000
         },
         production: {
-            accuracy: 5000,
-            research: 500
+            accuracy: 3125,
+            research: 312.5
         },
         unlocked: false,
-        unlockRequirement: { accuracy: 100000, research: 500 },
+        unlockRequirement: { accuracy: 62500, research: 250 },
         trainingTime: 300,
         realConcept: 'GPT-style models, scaling laws, emergent abilities'
     },
@@ -128,15 +128,15 @@ export const models = {
         icon: '🌈',
         description: 'Combine vision and language understanding',
         requirements: {
-            data: 1000000000,
-            compute: 500000
+            data: 500000000,
+            compute: 250000
         },
         production: {
-            accuracy: 50000,
-            research: 5000
+            accuracy: 15625,
+            research: 1562.5
         },
         unlocked: false,
-        unlockRequirement: { accuracy: 1000000, research: 1000 },
+        unlockRequirement: { accuracy: 312500, research: 500 },
         trainingTime: 600,
         realConcept: 'CLIP, DALL-E, vision-language models'
     }

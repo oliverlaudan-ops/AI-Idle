@@ -7,20 +7,37 @@ export function initializeUI(game) {
     // Initialize tabs
     initializeTabs();
     
-    // Manual collect button
-    document.getElementById('btn-collect').addEventListener('click', () => {
+    // Manual collect button with animation
+    const collectBtn = document.getElementById('btn-collect');
+    let clickCount = 0;
+    let lastClickTime = 0;
+    
+    collectBtn.addEventListener('click', () => {
         game.addResource('data', 1);
-        // Add visual feedback
-        const btn = document.getElementById('btn-collect');
-        btn.style.transform = 'scale(0.95)';
+        
+        // Visual feedback with bounce
+        collectBtn.style.transform = 'scale(0.95)';
         setTimeout(() => {
-            btn.style.transform = '';
+            collectBtn.style.transform = '';
         }, 100);
+        
+        // Show floating +1 animation
+        const now = Date.now();
+        if (now - lastClickTime < 500) {
+            clickCount++;
+        } else {
+            clickCount = 1;
+        }
+        lastClickTime = now;
+        
+        showFloatingText(collectBtn, `+${clickCount}`, clickCount > 5);
     });
     
     // Save button
     document.getElementById('btn-save').addEventListener('click', () => {
         game.save();
+        const saveData = game.save();
+        localStorage.setItem('ai-idle-save', JSON.stringify(saveData));
         showToast('Game saved successfully!', 'success');
     });
     
@@ -42,6 +59,7 @@ export function initializeUI(game) {
             const doubleCheck = confirm('This action cannot be undone. Are you REALLY sure?');
             if (doubleCheck) {
                 game.reset();
+                localStorage.removeItem('ai-idle-save');
                 location.reload();
             }
         }
@@ -57,6 +75,21 @@ export function initializeUI(game) {
     
     // Modal close handlers
     setupModalHandlers();
+}
+
+// Show floating text animation
+function showFloatingText(element, text, isCombo = false) {
+    const floater = document.createElement('div');
+    floater.className = 'floating-text' + (isCombo ? ' combo' : '');
+    floater.textContent = text;
+    
+    const rect = element.getBoundingClientRect();
+    floater.style.left = rect.left + rect.width / 2 + 'px';
+    floater.style.top = rect.top + 'px';
+    
+    document.body.appendChild(floater);
+    
+    setTimeout(() => floater.remove(), 1000);
 }
 
 // Show export modal

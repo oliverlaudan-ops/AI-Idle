@@ -20,9 +20,9 @@ export const buildings = {
         tier: 1,
         icon: '🔲',
         description: 'Basic compute units for model training',
-        baseCost: { data: 50 },
+        baseCost: { data: 25 },
         costMultiplier: 1.15,
-        production: { compute: 0.1 },
+        production: { compute: 0.2 },
         unlocked: true,
         count: 0
     },
@@ -31,11 +31,10 @@ export const buildings = {
         name: 'Storage Server',
         tier: 1,
         icon: '💾',
-        description: 'Expands your data storage capacity',
-        baseCost: { data: 100 },
+        description: 'Expands your data storage capacity and generates passive data',
+        baseCost: { data: 75 },
         costMultiplier: 1.15,
-        production: {}, // Special: increases data cap
-        bonus: { dataCapacity: 1000 },
+        production: { data: 0.5 },
         unlocked: true,
         count: 0
     },
@@ -47,11 +46,11 @@ export const buildings = {
         tier: 2,
         icon: '🎮',
         description: 'Graphics Processing Units optimized for parallel training',
-        baseCost: { data: 1000, compute: 10 },
+        baseCost: { data: 500, compute: 5 },
         costMultiplier: 1.18,
-        production: { compute: 5 },
+        production: { compute: 3 },
         unlocked: false,
-        unlockRequirement: { compute: 5 },
+        unlockRequirement: { compute: 2 },
         count: 0
     },
     datapipeline: {
@@ -60,11 +59,11 @@ export const buildings = {
         tier: 2,
         icon: '🔄',
         description: 'Automated ETL processes for continuous data flow',
-        baseCost: { data: 5000 },
+        baseCost: { data: 2500 },
         costMultiplier: 1.18,
-        production: { data: 10 },
+        production: { data: 15 },
         unlocked: false,
-        unlockRequirement: { data: 500 },
+        unlockRequirement: { data: 300 },
         count: 0
     },
     coolingsystem: {
@@ -73,12 +72,12 @@ export const buildings = {
         tier: 2,
         icon: '❄️',
         description: 'Advanced cooling increases efficiency of all infrastructure',
-        baseCost: { data: 10000 },
+        baseCost: { data: 5000, compute: 15 },
         costMultiplier: 1.2,
         production: {},
         bonus: { globalProduction: 0.15 }, // +15% to all production
         unlocked: false,
-        unlockRequirement: { compute: 50 },
+        unlockRequirement: { compute: 10 },
         count: 0
     },
     
@@ -89,11 +88,11 @@ export const buildings = {
         tier: 3,
         icon: '🧮',
         description: 'Tensor Processing Units designed specifically for ML workloads',
-        baseCost: { data: 100000, compute: 100 },
+        baseCost: { data: 50000, compute: 50 },
         costMultiplier: 1.22,
-        production: { compute: 50 },
+        production: { compute: 30 },
         unlocked: false,
-        unlockRequirement: { compute: 100 },
+        unlockRequirement: { compute: 50 },
         count: 0
     },
     distributedsystem: {
@@ -102,12 +101,11 @@ export const buildings = {
         tier: 3,
         icon: '🌐',
         description: 'Parallel training across multiple nodes',
-        baseCost: { data: 500000 },
+        baseCost: { data: 250000 },
         costMultiplier: 1.22,
-        production: {},
-        bonus: { trainingSpeed: 0.5 }, // +50% training speed
+        production: { data: 100 },
         unlocked: false,
-        unlockRequirement: { accuracy: 1000 },
+        unlockRequirement: { accuracy: 500 },
         count: 0
     },
     quantumprocessor: {
@@ -116,11 +114,11 @@ export const buildings = {
         tier: 3,
         icon: '⚛️',
         description: 'Experimental quantum computing for breakthrough performance',
-        baseCost: { data: 10000000, compute: 1000 },
+        baseCost: { data: 5000000, compute: 500 },
         costMultiplier: 1.25,
-        production: { compute: 500 },
+        production: { compute: 300 },
         unlocked: false,
-        unlockRequirement: { accuracy: 10000, research: 100 },
+        unlockRequirement: { accuracy: 5000, research: 50 },
         count: 0
     }
 };
