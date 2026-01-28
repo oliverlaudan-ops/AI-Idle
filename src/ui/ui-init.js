@@ -55,6 +55,7 @@ function showExportModal(saveString) {
     const description = document.getElementById('modal-description');
     const textarea = document.getElementById('save-string');
     const actionBtn = document.getElementById('modal-action-btn');
+    const downloadBtn = document.getElementById('modal-download-btn');
     
     title.textContent = '📤 Export Save';
     description.textContent = 'Copy this save string to backup your progress:';
@@ -62,6 +63,7 @@ function showExportModal(saveString) {
     textarea.readOnly = true;
     actionBtn.textContent = '📋 Copy to Clipboard';
     actionBtn.className = 'btn-primary';
+    downloadBtn.style.display = ''; // Show in export mode
     
     // Select all text when modal opens
     setTimeout(() => textarea.select(), 100);
@@ -80,6 +82,20 @@ function showExportModal(saveString) {
         });
     };
     
+    // Download button handler
+    downloadBtn.onclick = () => {
+        const blob = new Blob([saveString], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ai-idle-save-${Date.now()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Save file downloaded!', 'success');
+    };
+    
     modal.classList.add('active');
 }
 
@@ -90,6 +106,7 @@ function showImportModal(game) {
     const description = document.getElementById('modal-description');
     const textarea = document.getElementById('save-string');
     const actionBtn = document.getElementById('modal-action-btn');
+    const downloadBtn = document.getElementById('modal-download-btn');
     
     title.textContent = '📥 Import Save';
     description.textContent = 'Paste your save string below:';
@@ -98,6 +115,7 @@ function showImportModal(game) {
     textarea.placeholder = 'Paste your save string here...';
     actionBtn.textContent = '📥 Import Save';
     actionBtn.className = 'btn-primary';
+    downloadBtn.style.display = 'none'; // Hide in import mode
     
     // Focus textarea when modal opens
     setTimeout(() => textarea.focus(), 100);

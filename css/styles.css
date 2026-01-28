@@ -347,6 +347,32 @@ body {
     box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
 }
 
+/* Deploy Button */
+.btn-deploy {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+    transition: all 0.3s;
+}
+
+.btn-deploy:disabled {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-deploy:not(:disabled):hover {
+    background: var(--accent-success);
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+}
+
 .footer-info {
     display: flex;
     gap: 1rem;
@@ -505,6 +531,7 @@ body {
     display: flex;
     gap: 1rem;
     justify-content: flex-end;
+    flex-wrap: wrap;
 }
 
 /* Responsive Design */
