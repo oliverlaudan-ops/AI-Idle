@@ -1,7 +1,7 @@
 // Main Game Initialization and Loop
 
 import { GameState } from './modules/game-state.js';
-import { initializeUI, attachEventListeners } from './ui/ui-init.js';
+import { initializeUI } from './ui/ui-init.js';
 import { renderAll } from './ui/ui-render.js';
 
 // Global game instance
@@ -44,10 +44,9 @@ function init() {
             showToast('Welcome to AI-Idle! Click Data Collectors to begin.', 'success');
         }
         
-        // Initialize UI
+        // Initialize UI (includes event listeners)
         console.log('🎨 Initializing UI...');
         initializeUI(game);
-        attachEventListeners(game);
         
         // Initial render
         renderAll(game);
