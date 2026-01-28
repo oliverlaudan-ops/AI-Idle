@@ -71,7 +71,9 @@ function createBuildingCard(id, building) {
     // Add click handler
     const button = card.querySelector(`#btn-building-${id}`);
     button.addEventListener('click', () => {
-        window.game.purchaseBuilding(id);
+        if (window.game && window.game.purchaseBuilding(id)) {
+            showToast(`Built ${building.name}!`, 'success');
+        }
     });
     
     return card;
@@ -160,7 +162,9 @@ function createModelCard(id, model) {
     
     const button = card.querySelector(`#btn-model-${id}`);
     button.addEventListener('click', () => {
-        window.game.startTraining(id);
+        if (window.game && window.game.startTraining(id)) {
+            showToast(`Training ${model.name}!`, 'success');
+        }
     });
     
     return card;
@@ -253,7 +257,9 @@ function createResearchCard(id, research) {
     
     const button = card.querySelector(`#btn-research-${id}`);
     button.addEventListener('click', () => {
-        window.game.performResearch(id);
+        if (window.game && window.game.performResearch(id)) {
+            showToast(`Researched ${research.name}!`, 'success');
+        }
     });
     
     return card;
@@ -263,7 +269,7 @@ function updateResearchCard(card, research, gameState) {
     const id = research.id;
     
     if (research.researched) {
-        card.style.opacity = '0.5';
+        card.style.opacity = '0.6';
         card.style.borderColor = 'var(--accent-success)';
     }
     
@@ -284,18 +290,118 @@ function updateResearchCard(card, research, gameState) {
     // Update button
     const button = document.getElementById(`btn-research-${id}`);
     button.disabled = research.researched || !gameState.canAfford(research.cost);
-    button.textContent = research.researched ? 'Completed' : 'Research';
+    button.textContent = research.researched ? '✓ Completed' : 'Research';
 }
 
 export function renderAchievements(gameState) {
-    // Implementation for achievement rendering
-    // Similar pattern to other render functions
+    const categories = {
+        'training': document.getElementById('achievements-training'),
+        'research': document.getElementById('achievements-research'),
+        'infrastructure': document.getElementById('achievements-infrastructure')
+    };
+    
+    let unlockedCount = 0;
+    let totalCount = 0;
+    
+    for (const [id, achievement] of Object.entries(gameState.achievements)) {
+        totalCount++;
+        if (achievement.unlocked) unlockedCount++;
+        
+        const container = categories[achievement.category];
+        if (!container) continue;
+        
+        let card = document.getElementById(`achievement-${id}`);
+        if (!card) {
+            card = createAchievementCard(id, achievement);
+            container.appendChild(card);
+        }
+        
+        updateAchievementCard(card, achievement);
+    }
+    
+    // Update stats
+    document.getElementById('achievements-unlocked').textContent = unlockedCount;
+    document.getElementById('achievements-total').textContent = totalCount;
+}
+
+function createAchievementCard(id, achievement) {
+    const card = document.createElement('div');
+    card.className = 'achievement-card';
+    card.id = `achievement-${id}`;
+    
+    card.innerHTML = `
+        <div class="achievement-icon">${achievement.icon}</div>
+        <div class="achievement-info">
+            <div class="achievement-name">${achievement.name}</div>
+            <div class="achievement-description">${achievement.description}</div>
+            <div class="achievement-reward">Reward: ${achievement.reward}</div>
+        </div>
+    `;
+    
+    return card;
+}
+
+function updateAchievementCard(card, achievement) {
+    if (achievement.unlocked) {
+        card.classList.add('unlocked');
+    } else {
+        card.classList.remove('unlocked');
+    }
 }
 
 export function renderStatistics(gameState) {
     // Update playtime
     const playtime = Math.floor((Date.now() - gameState.stats.startTime + gameState.stats.totalPlaytime) / 1000);
-    document.getElementById('playtime').textContent = formatTime(playtime);
+    const playtimeElement = document.getElementById('playtime');
+    if (playtimeElement) {
+        playtimeElement.textContent = formatTime(playtime);
+    }
+    
+    // Update resources table
+    const resourcesTable = document.getElementById('stats-resources');
+    if (resourcesTable) {
+        resourcesTable.innerHTML = `
+            <tr><td>Total Data Generated</td><td>${formatNumber(gameState.stats.totalDataGenerated)}</td></tr>
+            <tr><td>Total Accuracy</td><td>${formatNumber(gameState.stats.totalAccuracy)}</td></tr>
+            <tr><td>Max Accuracy</td><td>${formatNumber(gameState.stats.maxAccuracy)}</td></tr>
+            <tr><td>Total Compute</td><td>${formatNumber(gameState.stats.totalCompute)} TFLOPS</td></tr>
+        `;
+    }
+    
+    // Update infrastructure table
+    const infraTable = document.getElementById('stats-infrastructure');
+    if (infraTable) {
+        infraTable.innerHTML = `
+            <tr><td>Total Buildings</td><td>${gameState.stats.totalBuildings}</td></tr>
+        `;
+        for (const [id, building] of Object.entries(gameState.buildings)) {
+            if (building.count > 0) {
+                infraTable.innerHTML += `<tr><td>${building.name}</td><td>${building.count}</td></tr>`;
+            }
+        }
+    }
+    
+    // Update training table
+    const trainingTable = document.getElementById('stats-training');
+    if (trainingTable) {
+        trainingTable.innerHTML = `
+            <tr><td>Models Trained</td><td>${gameState.stats.modelsTrained}</td></tr>
+            <tr><td>Unique Models</td><td>${gameState.stats.uniqueModelsTrained}</td></tr>
+            <tr><td>Research Completed</td><td>${gameState.stats.completedResearch.length}</td></tr>
+            <tr><td>Deployments</td><td>${gameState.stats.deployments}</td></tr>
+        `;
+    }
+    
+    // Update game info table
+    const gameInfoTable = document.getElementById('stats-game');
+    if (gameInfoTable) {
+        gameInfoTable.innerHTML = `
+            <tr><td>Playtime</td><td>${formatTime(playtime)}</td></tr>
+            <tr><td>Game Version</td><td>0.1-alpha</td></tr>
+            <tr><td>Deployments</td><td>${gameState.prestige.deployments}</td></tr>
+            <tr><td>Tokens</td><td>${gameState.prestige.tokens}</td></tr>
+        `;
+    }
 }
 
 // Utility Functions
@@ -332,6 +438,8 @@ export function formatTime(seconds) {
 
 export function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
+    if (!container) return;
+    
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.textContent = message;

@@ -5,7 +5,7 @@ import { initializeUI } from './ui/ui-init.js';
 import { renderAll } from './ui/ui-render.js';
 
 // Global game instance
-let game = null;
+window.game = null;
 let lastTick = Date.now();
 let lastSave = Date.now();
 const TICK_INTERVAL = 100; // Update every 100ms (10 times per second)
@@ -18,7 +18,7 @@ function init() {
     
     try {
         // Create game state
-        game = new GameState();
+        window.game = new GameState();
         
         // Try to load saved game
         const savedGame = localStorage.getItem('ai-idle-save');
@@ -26,30 +26,27 @@ function init() {
             console.log('📂 Loading saved game...');
             try {
                 const saveData = JSON.parse(savedGame);
-                game.load(saveData);
+                window.game.load(saveData);
                 
                 // Calculate offline progression
-                const offlineTime = Math.min(Date.now() - game.lastSaveTime, MAX_OFFLINE_TIME);
+                const offlineTime = Math.min(Date.now() - window.game.lastSaveTime, MAX_OFFLINE_TIME);
                 if (offlineTime > 1000) {
                     console.log(`⏰ Processing ${(offlineTime / 1000).toFixed(0)}s of offline time`);
-                    game.processOfflineProgress(offlineTime);
-                    showToast(`Welcome back! You gained ${formatOfflineGains()} while offline`, 'success');
+                    window.game.processOfflineProgress(offlineTime);
                 }
             } catch (e) {
                 console.error('❌ Failed to load save:', e);
-                showToast('Failed to load save game. Starting fresh.', 'warning');
             }
         } else {
             console.log('✨ Starting new game');
-            showToast('Welcome to AI-Idle! Click Data Collectors to begin.', 'success');
         }
         
         // Initialize UI (includes event listeners)
         console.log('🎨 Initializing UI...');
-        initializeUI(game);
+        initializeUI(window.game);
         
         // Initial render
-        renderAll(game);
+        renderAll(window.game);
         
         // Start game loop
         console.log('▶️ Starting game loop...');
@@ -77,10 +74,10 @@ function gameLoop() {
     
     if (deltaTime >= TICK_INTERVAL / 1000) {
         // Update game state
-        game.update(deltaTime);
+        window.game.update(deltaTime);
         
         // Render updates
-        renderAll(game);
+        renderAll(window.game);
         
         lastTick = now;
     }
@@ -98,7 +95,7 @@ function gameLoop() {
 // Save game
 function saveGame() {
     try {
-        const saveData = game.save();
+        const saveData = window.game.save();
         localStorage.setItem('ai-idle-save', JSON.stringify(saveData));
         
         // Update last save time display
@@ -110,135 +107,8 @@ function saveGame() {
         console.log('💾 Game saved');
     } catch (error) {
         console.error('❌ Failed to save game:', error);
-        showToast('Failed to save game!', 'error');
     }
 }
-
-// Manual save button
-window.manualSave = function() {
-    saveGame();
-    showToast('Game saved successfully!', 'success');
-};
-
-// Export save
-window.exportSave = function() {
-    try {
-        const saveData = game.save();
-        const saveString = JSON.stringify(saveData);
-        const blob = new Blob([saveString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `ai-idle-save-${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        
-        URL.revokeObjectURL(url);
-        showToast('Save exported successfully!', 'success');
-    } catch (error) {
-        console.error('❌ Failed to export save:', error);
-        showToast('Failed to export save!', 'error');
-    }
-};
-
-// Import save
-window.importSave = function() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    
-    input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            try {
-                const saveData = JSON.parse(event.target.result);
-                game.load(saveData);
-                renderAll(game);
-                saveGame();
-                showToast('Save imported successfully!', 'success');
-            } catch (error) {
-                console.error('❌ Failed to import save:', error);
-                showToast('Failed to import save! Invalid file.', 'error');
-            }
-        };
-        reader.readAsText(file);
-    };
-    
-    input.click();
-};
-
-// Reset game
-window.resetGame = function() {
-    const confirmed = confirm(
-        '⚠️ WARNING: RESET GAME\n\n' +
-        'This will delete ALL progress including:\n' +
-        '• All resources and buildings\n' +
-        '• Research progress\n' +
-        '• Achievements\n' +
-        '• Deployment bonuses\n\n' +
-        'This action CANNOT be undone!\n\n' +
-        'Are you absolutely sure?'
-    );
-    
-    if (confirmed) {
-        const doubleCheck = confirm('Really reset? This is your last chance!');
-        if (doubleCheck) {
-            console.log('🔄 Resetting game...');
-            localStorage.removeItem('ai-idle-save');
-            location.reload();
-        }
-    }
-};
-
-// Utility: Show toast notification
-function showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-    
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = message;
-    
-    container.appendChild(toast);
-    
-    // Remove after 3 seconds
-    setTimeout(() => {
-        toast.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-
-// Make showToast globally available
-window.showToast = showToast;
-
-// Utility: Format offline gains
-function formatOfflineGains() {
-    const gains = [];
-    
-    if (game.resources.data.amount > 0) {
-        gains.push(`${formatNumber(game.resources.data.amount)} Data`);
-    }
-    if (game.resources.accuracy.amount > 0) {
-        gains.push(`${formatNumber(game.resources.accuracy.amount)} Accuracy`);
-    }
-    
-    return gains.join(', ') || 'some resources';
-}
-
-// Utility: Format large numbers
-function formatNumber(num) {
-    if (num < 1000) return Math.floor(num).toString();
-    if (num < 1000000) return (num / 1000).toFixed(1) + 'K';
-    if (num < 1000000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num < 1000000000000) return (num / 1000000000).toFixed(1) + 'B';
-    return (num / 1000000000000).toFixed(1) + 'T';
-}
-
-// Make formatNumber globally available for UI
-window.formatNumber = formatNumber;
 
 // Handle page visibility (pause when tab is hidden)
 let wasHidden = false;
@@ -253,8 +123,8 @@ document.addEventListener('visibilitychange', () => {
         const offlineTime = Date.now() - hiddenTime;
         if (offlineTime > 5000) { // Only show if > 5 seconds
             console.log(`👀 Tab visible again after ${(offlineTime / 1000).toFixed(0)}s`);
-            game.processOfflineProgress(offlineTime);
-            renderAll(game);
+            window.game.processOfflineProgress(offlineTime);
+            renderAll(window.game);
         }
         wasHidden = false;
     }
@@ -271,9 +141,6 @@ if (document.readyState === 'loading') {
 } else {
     init();
 }
-
-// Export game instance for debugging
-window.game = game;
 
 console.log('📜 main.js loaded');
 
