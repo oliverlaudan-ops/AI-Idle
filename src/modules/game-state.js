@@ -6,6 +6,7 @@ import { initializeModels } from './models.js';
 import { initializeResearch } from './research.js';
 import { initializeAchievements } from './achievements.js';
 import { initializePrestige } from './prestige.js';
+import { checkAndUnlockAchievements, getAchievementBonus } from './achievement-checker.js';
 
 export class GameState {
     constructor() {
@@ -18,6 +19,21 @@ export class GameState {
         
         this.currentTraining = null;
         this.trainingProgress = 0;
+        
+        // Achievement bonuses storage
+        this.achievementBonuses = {
+            dataGeneration: 1,
+            allProduction: 1,
+            trainingSpeed: 1,
+            modelPerformance: 1,
+            computePower: 1,
+            allResources: 1,
+            buildingCostReduction: 0,
+            globalMultiplier: 1,
+            deploymentTokens: 1,
+            permanentAccuracy: 1,
+            researchPoints: 1
+        };
         
         this.stats = {
             totalDataGenerated: 0,
@@ -42,6 +58,9 @@ export class GameState {
         };
         
         this.lastSaveTime = Date.now();
+        
+        // Queue for newly unlocked achievements (for notifications)
+        this.newlyUnlockedAchievements = [];
     }
     
     // Resource Management
@@ -82,7 +101,18 @@ export class GameState {
         const building = this.buildings[buildingId];
         if (!building || !building.unlocked) return false;
         
-        const cost = getBuildingCost(building);
+        let cost = getBuildingCost(building);
+        
+        // Apply achievement cost reduction
+        if (this.achievementBonuses.buildingCostReduction > 0) {
+            const reduction = this.achievementBonuses.buildingCostReduction;
+            const adjustedCost = {};
+            for (const [resourceId, amount] of Object.entries(cost)) {
+                adjustedCost[resourceId] = amount * (1 - reduction);
+            }
+            cost = adjustedCost;
+        }
+        
         if (!this.spendResources(cost)) return false;
         
         building.count++;
@@ -132,7 +162,7 @@ export class GameState {
         let globalMultiplier = 1;
         for (const researchId of this.stats.completedResearch) {
             const research = this.research[researchId];
-            if (research.effect.type === 'globalMultiplier') {
+            if (research && research.effect && research.effect.type === 'globalMultiplier') {
                 globalMultiplier *= research.effect.multiplier;
             }
         }
@@ -141,6 +171,22 @@ export class GameState {
         if (this.prestige.upgrades.ensemblelearning.level > 0) {
             const bonus = this.prestige.upgrades.ensemblelearning.effect.value * this.prestige.upgrades.ensemblelearning.level;
             globalMultiplier *= (1 + bonus);
+        }
+        
+        // Apply achievement bonuses
+        globalMultiplier *= this.achievementBonuses.globalMultiplier;
+        globalMultiplier *= this.achievementBonuses.allProduction;
+        globalMultiplier *= this.achievementBonuses.allResources;
+        
+        // Apply specific resource bonuses
+        if (this.resources.data) {
+            this.resources.data.perSecond *= this.achievementBonuses.dataGeneration;
+        }
+        if (this.resources.compute) {
+            this.resources.compute.perSecond *= this.achievementBonuses.computePower;
+        }
+        if (this.resources.research) {
+            this.resources.research.perSecond *= this.achievementBonuses.researchPoints;
         }
         
         // Apply multiplier to all resources
@@ -152,7 +198,8 @@ export class GameState {
         if (this.currentTraining) {
             const model = this.models[this.currentTraining];
             for (const [resourceId, amount] of Object.entries(model.production)) {
-                this.resources[resourceId].perSecond += amount;
+                let modifiedAmount = amount * this.achievementBonuses.modelPerformance;
+                this.resources[resourceId].perSecond += modifiedAmount;
             }
         }
     }
@@ -251,6 +298,22 @@ export class GameState {
         }
     }
     
+    // Achievement Management
+    checkAchievements() {
+        const newUnlocks = checkAndUnlockAchievements(this);
+        if (newUnlocks.length > 0) {
+            this.newlyUnlockedAchievements.push(...newUnlocks);
+        }
+        return newUnlocks;
+    }
+    
+    // Get and clear newly unlocked achievements (for UI notifications)
+    popNewlyUnlockedAchievements() {
+        const achievements = this.newlyUnlockedAchievements;
+        this.newlyUnlockedAchievements = [];
+        return achievements;
+    }
+    
     // Game Loop Update
     update(deltaTime) {
         // Update playtime
@@ -269,7 +332,8 @@ export class GameState {
         // Update training progress
         if (this.currentTraining) {
             const model = this.models[this.currentTraining];
-            this.trainingProgress += deltaTime;
+            const trainingSpeedBonus = this.achievementBonuses.trainingSpeed;
+            this.trainingProgress += deltaTime * trainingSpeedBonus;
             
             if (this.trainingProgress >= model.trainingTime) {
                 this.completeTraining();
@@ -279,6 +343,9 @@ export class GameState {
         // Check unlocks
         this.checkBuildingUnlocks();
         this.checkResearchUnlocks();
+        
+        // Check achievements
+        this.checkAchievements();
         
         // Update total compute for stats
         this.stats.totalCompute = this.resources.compute.amount;
@@ -298,6 +365,9 @@ export class GameState {
                 this.addResource(resourceId, resource.perSecond * actualTime);
             }
         }
+        
+        // Check achievements after offline progress
+        this.checkAchievements();
     }
     
     // Save/Load
@@ -310,6 +380,7 @@ export class GameState {
             models: this.models,
             research: this.research,
             achievements: this.achievements,
+            achievementBonuses: this.achievementBonuses,
             prestige: this.prestige,
             currentTraining: this.currentTraining,
             trainingProgress: this.trainingProgress,
@@ -334,6 +405,11 @@ export class GameState {
             this.trainingProgress = saveData.trainingProgress;
             this.stats = saveData.stats;
             this.settings = saveData.settings;
+            
+            // Load achievement bonuses if they exist
+            if (saveData.achievementBonuses) {
+                this.achievementBonuses = saveData.achievementBonuses;
+            }
             
             // Ensure lastPlaytimeUpdate is set
             if (!this.stats.lastPlaytimeUpdate) {
