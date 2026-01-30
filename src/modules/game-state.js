@@ -153,9 +153,23 @@ export class GameState {
         for (const building of Object.values(this.buildings)) {
             if (building.count > 0 && building.production) {
                 for (const [resourceId, amount] of Object.entries(building.production)) {
-                    this.resources[resourceId].perSecond += amount * building.count;
+                    if (this.resources[resourceId]) {
+                        this.resources[resourceId].perSecond += amount * building.count;
+                    }
                 }
             }
+        }
+        
+        // Apply specific resource bonuses FIRST (before global multipliers)
+        // This ensures they show up correctly in the UI
+        if (this.resources.data) {
+            this.resources.data.perSecond *= this.achievementBonuses.dataGeneration;
+        }
+        if (this.resources.compute) {
+            this.resources.compute.perSecond *= this.achievementBonuses.computePower;
+        }
+        if (this.resources.research) {
+            this.resources.research.perSecond *= this.achievementBonuses.researchPoints;
         }
         
         // Apply global multipliers from research
@@ -173,33 +187,26 @@ export class GameState {
             globalMultiplier *= (1 + bonus);
         }
         
-        // Apply achievement bonuses
+        // Apply achievement bonuses to global multiplier
         globalMultiplier *= this.achievementBonuses.globalMultiplier;
         globalMultiplier *= this.achievementBonuses.allProduction;
         globalMultiplier *= this.achievementBonuses.allResources;
         
-        // Apply specific resource bonuses
-        if (this.resources.data) {
-            this.resources.data.perSecond *= this.achievementBonuses.dataGeneration;
-        }
-        if (this.resources.compute) {
-            this.resources.compute.perSecond *= this.achievementBonuses.computePower;
-        }
-        if (this.resources.research) {
-            this.resources.research.perSecond *= this.achievementBonuses.researchPoints;
-        }
-        
-        // Apply multiplier to all resources
+        // Apply global multiplier to all resources
         for (const resource of Object.values(this.resources)) {
             resource.perSecond *= globalMultiplier;
         }
         
-        // Add production from current training
+        // Add production from current training (with bonuses)
         if (this.currentTraining) {
             const model = this.models[this.currentTraining];
-            for (const [resourceId, amount] of Object.entries(model.production)) {
-                let modifiedAmount = amount * this.achievementBonuses.modelPerformance;
-                this.resources[resourceId].perSecond += modifiedAmount;
+            if (model && model.production) {
+                for (const [resourceId, amount] of Object.entries(model.production)) {
+                    if (this.resources[resourceId]) {
+                        let modifiedAmount = amount * this.achievementBonuses.modelPerformance * globalMultiplier;
+                        this.resources[resourceId].perSecond += modifiedAmount;
+                    }
+                }
             }
         }
     }
@@ -373,7 +380,7 @@ export class GameState {
     // Save/Load
     save() {
         const saveData = {
-            version: '0.1',
+            version: '0.2',
             timestamp: Date.now(),
             resources: this.resources,
             buildings: this.buildings,
