@@ -1,7 +1,7 @@
 // Building (Infrastructure) Definitions
 
 export const buildings = {
-    // Tier 1: Foundation
+    // Tier 1: Foundation (BALANCED for early game)
     datacollector: {
         id: 'datacollector',
         name: 'Data Collector',
@@ -32,25 +32,25 @@ export const buildings = {
         tier: 1,
         icon: '💾',
         description: 'Stores and indexes datasets for faster access. Each server provides +0.5 data/s',
-        baseCost: { data: 75 },
+        baseCost: { data: 60 }, // Reduced from 75 for smoother early game
         costMultiplier: 1.15,
         production: { data: 0.5 },
         unlocked: true,
         count: 0
     },
     
-    // Tier 2: Acceleration
+    // Tier 2: Acceleration (BALANCED transition from Tier 1)
     gpucluster: {
         id: 'gpucluster',
         name: 'GPU Cluster',
         tier: 2,
         icon: '🎮',
         description: 'Graphics Processing Units optimized for parallel training. Each cluster provides +3 compute/s',
-        baseCost: { data: 500, compute: 5 },
+        baseCost: { data: 400, compute: 5 }, // Reduced from 500 data for smoother transition
         costMultiplier: 1.18,
         production: { compute: 3 },
         unlocked: false,
-        unlockRequirement: { compute: 2 },
+        unlockRequirement: { compute: 1.5 }, // Reduced from 2 to unlock earlier
         count: 0
     },
     datapipeline: {
@@ -59,11 +59,11 @@ export const buildings = {
         tier: 2,
         icon: '🔄',
         description: 'Automated ETL processes for continuous data flow. Each pipeline provides +15 data/s',
-        baseCost: { data: 2500 },
+        baseCost: { data: 2000 }, // Reduced from 2500 for better pacing
         costMultiplier: 1.18,
         production: { data: 15 },
         unlocked: false,
-        unlockRequirement: { data: 300 },
+        unlockRequirement: { data: 250 }, // Reduced from 300 for earlier access
         count: 0
     },
     coolingsystem: {
@@ -72,27 +72,27 @@ export const buildings = {
         tier: 2,
         icon: '❄️',
         description: 'Advanced cooling increases efficiency of ALL infrastructure by +15%',
-        baseCost: { data: 5000, compute: 15 },
+        baseCost: { data: 4000, compute: 12 }, // Reduced from 5000 data and 15 compute
         costMultiplier: 1.2,
         production: {},
         bonus: { globalProduction: 0.15 }, // +15% to all production
         unlocked: false,
-        unlockRequirement: { compute: 10 },
+        unlockRequirement: { compute: 8 }, // Reduced from 10
         count: 0
     },
     
-    // Tier 3: Advanced Infrastructure
+    // Tier 3: Advanced Infrastructure (BALANCED for late game)
     tpuarray: {
         id: 'tpuarray',
         name: 'TPU Array',
         tier: 3,
         icon: '🧮',
         description: 'Tensor Processing Units designed for ML workloads. Each array provides +30 compute/s',
-        baseCost: { data: 50000, compute: 50 },
+        baseCost: { data: 40000, compute: 40 }, // Reduced from 50000 data and 50 compute
         costMultiplier: 1.22,
         production: { compute: 30 },
         unlocked: false,
-        unlockRequirement: { compute: 50 },
+        unlockRequirement: { compute: 40 }, // Reduced from 50
         count: 0
     },
     distributedsystem: {
@@ -101,11 +101,11 @@ export const buildings = {
         tier: 3,
         icon: '🌐',
         description: 'Parallel training across multiple nodes. Each system provides +100 data/s',
-        baseCost: { data: 250000 },
+        baseCost: { data: 200000 }, // Reduced from 250000
         costMultiplier: 1.22,
         production: { data: 100 },
         unlocked: false,
-        unlockRequirement: { accuracy: 500 },
+        unlockRequirement: { accuracy: 400 }, // Reduced from 500
         count: 0
     },
     quantumprocessor: {
@@ -114,11 +114,11 @@ export const buildings = {
         tier: 3,
         icon: '⚛️',
         description: 'Experimental quantum computing for breakthrough performance. Each processor provides +300 compute/s',
-        baseCost: { data: 5000000, compute: 500 },
+        baseCost: { data: 3000000, compute: 400 }, // Significantly reduced from 5M data and 500 compute
         costMultiplier: 1.25,
         production: { compute: 300 },
         unlocked: false,
-        unlockRequirement: { accuracy: 5000, research: 50 },
+        unlockRequirement: { accuracy: 4000, research: 40 }, // Reduced from 5000 accuracy and 50 research
         count: 0
     }
 };
