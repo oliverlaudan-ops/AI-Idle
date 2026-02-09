@@ -8,6 +8,14 @@ import { initializeAchievements } from './achievements.js';
 import { initializePrestige } from './prestige.js';
 import { checkAndUnlockAchievements, getAchievementBonus } from './achievement-checker.js';
 
+// Game constants
+const GAME_CONSTANTS = {
+    MAX_OFFLINE_TIME_MS: 24 * 60 * 60 * 1000, // 24 hours
+    OFFLINE_TICK_INTERVAL: 60, // Process offline progress in 60 second chunks
+    MIN_OFFLINE_TIME_MS: 5000, // Minimum 5 seconds to trigger offline progress
+    SAVE_VERSION: '0.2'
+};
+
 export class GameState {
     constructor() {
         this.resources = initializeResources();
@@ -74,16 +82,16 @@ export class GameState {
     
     // Resource Management
     addResource(resourceId, amount) {
-        if (this.resources[resourceId]) {
-            this.resources[resourceId].amount += amount;
-            
-            // Update stats
-            if (resourceId === 'data') {
-                this.stats.totalDataGenerated += amount;
-            } else if (resourceId === 'accuracy') {
-                this.stats.totalAccuracy += amount;
-                this.stats.maxAccuracy = Math.max(this.stats.maxAccuracy, this.resources.accuracy.amount);
-            }
+        if (!this.resources[resourceId]) return;
+        
+        this.resources[resourceId].amount += amount;
+        
+        // Update stats
+        if (resourceId === 'data') {
+            this.stats.totalDataGenerated += amount;
+        } else if (resourceId === 'accuracy') {
+            this.stats.totalAccuracy += amount;
+            this.stats.maxAccuracy = Math.max(this.stats.maxAccuracy, this.resources.accuracy.amount);
         }
     }
     
@@ -191,7 +199,7 @@ export class GameState {
         }
         
         // Apply prestige bonuses
-        if (this.prestige.upgrades.ensemblelearning.level > 0) {
+        if (this.prestige.upgrades.ensemblelearning && this.prestige.upgrades.ensemblelearning.level > 0) {
             const bonus = this.prestige.upgrades.ensemblelearning.effect.value * this.prestige.upgrades.ensemblelearning.level;
             globalMultiplier *= (1 + bonus);
         }
@@ -363,13 +371,15 @@ export class GameState {
         // Update training progress
         if (this.currentTraining && this.training) {
             const model = this.models[this.currentTraining];
-            const trainingSpeedBonus = this.achievementBonuses.trainingSpeed;
-            
-            this.trainingProgress += deltaTime * trainingSpeedBonus;
-            this.training.elapsedTime += deltaTime * trainingSpeedBonus;
-            
-            if (this.trainingProgress >= model.trainingTime) {
-                this.completeTraining();
+            if (model) {
+                const trainingSpeedBonus = this.achievementBonuses.trainingSpeed;
+                
+                this.trainingProgress += deltaTime * trainingSpeedBonus;
+                this.training.elapsedTime += deltaTime * trainingSpeedBonus;
+                
+                if (this.trainingProgress >= model.trainingTime) {
+                    this.completeTraining();
+                }
             }
         }
         
@@ -384,29 +394,104 @@ export class GameState {
         this.stats.totalCompute = this.resources.compute.amount;
     }
     
-    // Process offline progression
+    // Enhanced offline progression with simulation
     processOfflineProgress(offlineTime) {
-        const maxOfflineTime = 24 * 60 * 60 * 1000; // 24 hours
-        const actualTime = Math.min(offlineTime, maxOfflineTime) / 1000; // Convert to seconds
+        if (!this.settings.offlineProgress) return;
+        if (offlineTime < GAME_CONSTANTS.MIN_OFFLINE_TIME_MS) return;
+        
+        const maxTime = GAME_CONSTANTS.MAX_OFFLINE_TIME_MS;
+        const actualTime = Math.min(offlineTime, maxTime);
+        const timeInSeconds = actualTime / 1000;
         
         // Update playtime
-        this.stats.totalPlaytime += Math.min(offlineTime, maxOfflineTime);
+        this.stats.totalPlaytime += actualTime;
         
-        // Apply offline production
+        // Process in chunks to handle achievement unlocks and production changes
+        const tickInterval = GAME_CONSTANTS.OFFLINE_TICK_INTERVAL;
+        const numTicks = Math.floor(timeInSeconds / tickInterval);
+        const remainingTime = timeInSeconds % tickInterval;
+        
+        // Process full ticks
+        for (let i = 0; i < numTicks; i++) {
+            this._processOfflineTick(tickInterval);
+        }
+        
+        // Process remaining time
+        if (remainingTime > 0) {
+            this._processOfflineTick(remainingTime);
+        }
+        
+        console.log(`✅ Processed ${timeInSeconds.toFixed(0)}s of offline time (${numTicks} ticks)`);
+    }
+    
+    // Helper: Process a single offline tick
+    _processOfflineTick(deltaTime) {
+        // Add resources from production
         for (const [resourceId, resource] of Object.entries(this.resources)) {
             if (resource.perSecond > 0) {
-                this.addResource(resourceId, resource.perSecond * actualTime);
+                this.addResource(resourceId, resource.perSecond * deltaTime);
             }
         }
         
-        // Check achievements after offline progress
-        this.checkAchievements();
+        // Check for new unlocks and recalculate if needed
+        const hadUnlocks = this._checkOfflineUnlocks();
+        if (hadUnlocks) {
+            this.recalculateProduction();
+        }
+        
+        // Check achievements (they may unlock and change bonuses)
+        const newAchievements = this.checkAchievements();
+        if (newAchievements.length > 0) {
+            // Recalculate production with new achievement bonuses
+            this.recalculateProduction();
+        }
+    }
+    
+    // Helper: Check for unlocks during offline progression
+    _checkOfflineUnlocks() {
+        let hadUnlocks = false;
+        
+        // Check building unlocks
+        for (const building of Object.values(this.buildings)) {
+            if (!building.unlocked && building.unlockRequirement) {
+                let canUnlock = true;
+                for (const [resourceId, amount] of Object.entries(building.unlockRequirement)) {
+                    if (this.resources[resourceId].amount < amount) {
+                        canUnlock = false;
+                        break;
+                    }
+                }
+                if (canUnlock) {
+                    building.unlocked = true;
+                    hadUnlocks = true;
+                }
+            }
+        }
+        
+        // Check model unlocks
+        for (const model of Object.values(this.models)) {
+            if (!model.unlocked && model.unlockRequirement) {
+                let canUnlock = true;
+                for (const [resourceId, amount] of Object.entries(model.unlockRequirement)) {
+                    if (this.resources[resourceId].amount < amount) {
+                        canUnlock = false;
+                        break;
+                    }
+                }
+                if (canUnlock) {
+                    model.unlocked = true;
+                    hadUnlocks = true;
+                }
+            }
+        }
+        
+        return hadUnlocks;
     }
     
     // Save/Load
     save() {
         const saveData = {
-            version: '0.2',
+            version: GAME_CONSTANTS.SAVE_VERSION,
             timestamp: Date.now(),
             resources: this.resources,
             buildings: this.buildings,
@@ -428,6 +513,11 @@ export class GameState {
     
     load(saveData) {
         try {
+            // Validate save version
+            if (saveData.version && saveData.version !== GAME_CONSTANTS.SAVE_VERSION) {
+                console.warn(`Loading save from version ${saveData.version}, current version is ${GAME_CONSTANTS.SAVE_VERSION}`);
+            }
+            
             // Restore state
             this.resources = saveData.resources;
             this.buildings = saveData.buildings;
@@ -439,7 +529,7 @@ export class GameState {
             this.trainingProgress = saveData.trainingProgress;
             this.training = saveData.training || null;
             this.stats = saveData.stats;
-            this.settings = saveData.settings;
+            this.settings = saveData.settings || this.settings; // Use default if missing
             
             // Load achievement bonuses if they exist
             if (saveData.achievementBonuses) {
@@ -467,12 +557,17 @@ export class GameState {
     
     // Export/Import with Unicode-safe Base64
     export() {
-        const saveData = this.save();
-        const jsonString = JSON.stringify(saveData);
-        // Use Unicode-safe encoding
-        return btoa(encodeURIComponent(jsonString).replace(/%([0-9A-F]{2})/g, (match, p1) => {
-            return String.fromCharCode('0x' + p1);
-        }));
+        try {
+            const saveData = this.save();
+            const jsonString = JSON.stringify(saveData);
+            // Use Unicode-safe encoding
+            return btoa(encodeURIComponent(jsonString).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+                return String.fromCharCode('0x' + p1);
+            }));
+        } catch (e) {
+            console.error('Failed to export save:', e);
+            return null;
+        }
     }
     
     import(saveString) {
@@ -483,8 +578,7 @@ export class GameState {
             }).join(''));
             
             const saveData = JSON.parse(jsonString);
-            this.load(saveData);
-            return true;
+            return this.load(saveData);
         } catch (e) {
             console.error('Failed to import save:', e);
             return false;
