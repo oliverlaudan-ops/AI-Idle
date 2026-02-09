@@ -6,6 +6,7 @@
     <title>AI-Idle - Train Your AI Empire</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/training-animations.css">
 </head>
 <body>
     <div class="game-container">
@@ -122,6 +123,11 @@
                                 <div class="training-time-remaining" id="training-time-remaining">--:--</div>
                                 <div class="training-time-label">remaining</div>
                             </div>
+                        </div>
+                        
+                        <!-- Canvas-based Training Visualization -->
+                        <div class="training-canvas-container">
+                            <canvas id="training-canvas" width="800" height="300"></canvas>
                         </div>
                         
                         <div class="training-progress-container">
@@ -285,7 +291,7 @@
                 <button class="btn-danger" id="btn-reset">🔄 Reset Game</button>
             </div>
             <div class="footer-info">
-                <span>AI-Idle v0.2-alpha</span>
+                <span>AI-Idle v0.2.0</span>
                 <span>|</span>
                 <span>Last save: <span id="last-save-time">Never</span></span>
                 <span>|</span>
