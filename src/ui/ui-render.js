@@ -252,7 +252,7 @@ export function renderTrainingStatus(gameState) {
         
         // Stop animations
         if (trainingAnimations) {
-            trainingAnimations.stop();
+            trainingAnimations.stopTraining();
             trainingAnimations = null;
         }
         return;
@@ -274,13 +274,18 @@ export function renderTrainingStatus(gameState) {
     
     // Initialize training animations if not already done
     if (!trainingAnimations && canvas) {
-        trainingAnimations = new TrainingAnimations(canvas);
-        trainingAnimations.start(training);
+        trainingAnimations = new TrainingAnimations();
+        const canvasInitialized = trainingAnimations.initCanvas('training-canvas');
+        if (canvasInitialized) {
+            trainingAnimations.startTraining(modelDef);
+        }
     }
     
     // Update animations with current training state
     if (trainingAnimations && canvas) {
-        trainingAnimations.update(training);
+        const progress = (training.elapsedTime / training.duration) * 100;
+        const currentAccuracy = gameState.resources.accuracy.amount;
+        trainingAnimations.updateProgress(progress, currentAccuracy);
     }
     
     // Update model info
