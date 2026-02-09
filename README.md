@@ -15,7 +15,7 @@ Train neural networks, optimize algorithms, and scale your AI research facility 
 - 🏭 **Build Infrastructure** - Data centers, GPU clusters, quantum processors
 - 🔬 **Research Technologies** - Unlock real ML algorithms and architectures
 - 🚀 **Deploy Models** - Prestige system with permanent upgrades
-- 📈 **Watch Progress** - Animated training curves and performance metrics ✨ NEW!
+- 📈 **Watch Progress** - Animated training curves and performance metrics ✨
 - 🏆 **Unlock Achievements** - 17+ achievements with permanent bonuses
 
 ### Educational Value
@@ -37,6 +37,7 @@ Train neural networks, optimize algorithms, and scale your AI research facility 
 - Research advanced techniques and hardware
 - Deploy models for permanent bonuses
 - Unlock achievements and milestones
+- **Optimized**: Smoother progression curve with balanced costs ✨
 
 ## 🛠️ Technology Stack
 
@@ -44,7 +45,7 @@ Train neural networks, optimize algorithms, and scale your AI research facility 
 - **Styling**: CSS3 with modern animations
 - **Storage**: LocalStorage for save games
 - **Architecture**: Modular design inspired by Idle-Game-v2
-- **Visualization**: Canvas-based training curves and animations ✨ NEW!
+- **Visualization**: Canvas-based training curves and animations
 
 ## 📁 Project Structure
 
@@ -53,14 +54,14 @@ AI-Idle/
 ├── index.html              # Main game page
 ├── css/
 │   ├── styles.css          # Game styling
-│   └── training-animations.css  # Animation styles ✨ NEW!
+│   └── training-animations.css  # Animation styles ✨
 ├── src/
-│   ├── main.js             # Game initialization
+│   ├── main.js             # Game initialization (optimized)
 │   ├── modules/
-│   │   ├── game-state.js   # Central state management
+│   │   ├── game-state.js   # Central state management (optimized)
 │   │   ├── resources.js    # Resource definitions
-│   │   ├── buildings.js    # Infrastructure definitions (BALANCED) ✨
-│   │   ├── models.js       # ML model definitions (BALANCED) ✨
+│   │   ├── buildings.js    # Infrastructure definitions (BALANCED)
+│   │   ├── models.js       # ML model definitions (BALANCED)
 │   │   ├── research.js     # Research tree
 │   │   ├── achievements.js  # Achievement definitions
 │   │   ├── achievement-checker.js  # Achievement logic
@@ -69,8 +70,9 @@ AI-Idle/
 │       ├── ui-init.js      # UI initialization
 │       ├── ui-render.js    # Rendering functions
 │       ├── ui-tabs.js      # Tab management
-│       └── training-animations.js  # Visual training system ✨ NEW!
+│       └── training-animations.js  # Visual training system ✨
 ├── DESIGN.md               # Comprehensive design document
+├── CHANGELOG.md            # Detailed version history ✨
 └── README.md               # This file
 ```
 
@@ -80,28 +82,28 @@ AI-Idle/
 - Click to generate your first training data
 - Build data collectors and CPU cores
 - Train your first neural network on digit recognition
-- **Improved**: Faster early game progression with balanced costs ✨
+- **Optimized**: 20% faster early game with reduced costs ✨
 
 ### Phase 2: Automation (10-60 minutes)
 - Unlock passive data generation
 - Build GPU clusters for faster training
 - Research optimization algorithms
 - Train image classification models
-- **Improved**: Smoother transition to Tier 2 buildings ✨
+- **Optimized**: Smoother transition with earlier Tier 2 unlocks ✨
 
 ### Phase 3: Scaling (1-4 hours)
 - Deploy distributed systems
 - Unlock transformer architectures
 - Train NLP and RL agents
 - Optimize with advanced regularization
-- **Improved**: Better balanced mid-game progression ✨
+- **Optimized**: Better balanced mid-game progression ✨
 
 ### Phase 4: Prestige Loop (4+ hours)
 - Deploy your first model for permanent bonuses
 - Unlock transfer learning and AutoML
 - Scale to frontier models (LLMs, multimodal AI)
 - Compete in the model leaderboard
-- **Improved**: More achievable late-game goals ✨
+- **Optimized**: More achievable late-game goals ✨
 
 ## 🏆 Achievements
 
@@ -134,7 +136,8 @@ Each achievement provides permanent bonuses that stack with your other upgrades!
 
 - Auto-save every 30 seconds
 - Export/import save files
-- Offline progression when you're away (up to 24 hours)
+- **Enhanced offline progression** (up to 24 hours) ✨
+- Intelligent simulation with achievement tracking
 - Cloud save support (planned)
 
 ## 🎨 Visual Features
@@ -163,7 +166,7 @@ Tooltips and explanations help you understand what each upgrade means in the rea
 
 ## 🚀 Development Roadmap
 
-### Version 0.1 (MVP) - ✅ Completed
+### Version 0.1 (MVP) - ✅ Completed (Jan 30, 2026)
 - [x] Game design document
 - [x] README and documentation
 - [x] Basic resource system (data, compute, accuracy)
@@ -173,34 +176,43 @@ Tooltips and explanations help you understand what each upgrade means in the rea
 - [x] UI and rendering
 - [x] Game loop and save system
 
-### Version 0.2 (Early Access) - 🚧 In Progress (90% Complete)
+### Version 0.2 (Early Access) - ✅ Completed (Feb 9, 2026)
 - [x] **Achievement system implementation** ✅
   - [x] 17 achievements across 3 categories
   - [x] Automatic tracking and unlock detection
   - [x] Animated notifications and visual feedback
   - [x] Permanent bonus system
-- [x] **Balance adjustments** ✅ ✨ NEW!
-  - [x] Early game: Reduced costs for smoother start
+- [x] **Balance adjustments** ✅
+  - [x] Early game: 20% reduced costs for smoother start
   - [x] Mid game: Better Tier 1 to Tier 2 transition
-  - [x] Late game: More achievable quantum processor
+  - [x] Late game: 40% cheaper quantum processor
   - [x] All models: 20% reduced requirements, 20% increased rewards
   - [x] Buildings: 10-40% cost reductions across tiers
-- [x] **Visual training animations** ✅ ✨ NEW!
+- [x] **Visual training animations** ✅
   - [x] Canvas-based training curve visualization
   - [x] Real-time progress tracking with animations
   - [x] Particle effects for training completion
   - [x] Phase indicators and milestone markers
   - [x] Enhanced progress bars with dynamic effects
-- [ ] Offline progression optimization (coming soon)
-- [ ] Final bug fixes and polish
+- [x] **Offline progression optimization** ✅
+  - [x] Intelligent 60-second chunk simulation
+  - [x] Achievement unlock detection during offline time
+  - [x] Production recalculation on unlocks
+  - [x] Better accuracy for extended sessions
+- [x] **Bug fixes and polish** ✅
+  - [x] Enhanced error handling throughout
+  - [x] Extracted constants for maintainability
+  - [x] Improved null-safety checks
+  - [x] Better save/load validation
+  - [x] Critical error recovery screen
 
-### Version 1.0 (Full Release)
+### Version 1.0 (Full Release) - 🔜 Planned
 - [ ] Complete model progression
 - [ ] Full research tree implementation
-- [ ] Prestige/deployment system
-- [ ] Statistics and analytics
-- [ ] Balanced progression curve
+- [ ] Prestige/deployment system expansion
+- [ ] Statistics and analytics dashboard
 - [ ] Mobile optimization
+- [ ] Tutorial system
 
 ### Future Versions
 - [ ] Competitions and leaderboards
@@ -209,26 +221,34 @@ Tooltips and explanations help you understand what each upgrade means in the rea
 - [ ] Multiplayer features
 - [ ] Mobile app version
 
-## 🔄 What's New in v0.2
+## 🔄 What's New in v0.2 (Feb 9, 2026)
 
-### Balance Changes
-- **Early Game**: Reduced initial building costs (10-20%) for faster start
-- **Mid Game**: Lower unlock thresholds for Tier 2 buildings
-- **Late Game**: Quantum Processor now 40% cheaper and unlocks earlier
-- **Models**: All training requirements reduced by 20%, rewards increased by 20%
-- **Progression**: Smoother difficulty curve from early to late game
+### ⚖️ Balance Changes
+- **Early Game**: Reduced initial costs by 20% for faster start
+- **Mid Game**: Lower unlock thresholds for Tier 2 buildings (up to 25% earlier)
+- **Late Game**: Quantum Processor 40% cheaper and unlocks at 4000 instead of 5000 accuracy
+- **Models**: All requirements -20%, all rewards +20%
+- **Progression**: Smoother difficulty curve throughout
 
-### New Features
-- **Training Visualizations**: Watch your models learn in real-time with animated curves
-- **Progress Animations**: Enhanced visual feedback during training
-- **Particle Effects**: Celebrations when completing training milestones
-- **Performance Metrics**: Track accuracy, speed, and efficiency visually
+### ✨ New Features
+- **Training Visualizations**: Real-time animated training curves
+- **Progress Animations**: Enhanced visual feedback with particle effects
+- **Smart Offline Progress**: Chunked simulation with achievement tracking
+- **Better Error Handling**: Recovery options for save errors
 
-### Technical Improvements
-- Optimized achievement checking system
-- Better modular code structure
-- Enhanced canvas rendering performance
-- Improved animation frame management
+### 🛠️ Technical Improvements
+- **Code Quality**: Constants extracted, better structure
+- **Error Resilience**: Comprehensive try-catch blocks
+- **Offline Simulation**: 60s tick processing for accuracy
+- **Performance**: Optimized canvas rendering
+- **Maintainability**: Improved documentation and comments
+
+### 🐛 Bug Fixes
+- Fixed achievement bonuses not applying during offline time
+- Fixed production not updating when buildings unlock offline
+- Better handling of corrupted save files
+- Improved save version migration
+- Fixed potential undefined errors with prestige upgrades
 
 ## 🤝 Contributing
 
@@ -254,8 +274,10 @@ Inspired by:
 
 ---
 
-**Status**: 🚧 In Development  
-**Version**: 0.2-alpha (90% complete)  
+**Status**: ✅ Version 0.2 Complete!  
+**Version**: 0.2.0  
 **Last Updated**: February 9, 2026
 
-Start your journey from simple neural networks to frontier AI models. Train, optimize, and deploy! 🚀
+**Ready for v1.0 Development** 🚀
+
+Start your journey from simple neural networks to frontier AI models. Train, optimize, and deploy!
