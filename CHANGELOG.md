@@ -27,6 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `TrainingAnimations` class for curve visualization
   - `TrainingProgressBar` class for enhanced progress tracking
   - `TrainingParticles` class for celebration effects
+- **Enhanced Offline Progression**
+  - Intelligent simulation processing in 60-second chunks
+  - Automatic achievement unlock detection during offline time
+  - Production recalculation when new buildings/achievements unlock offline
+  - Improved accuracy for long offline sessions
+  - Better handling of achievement bonuses affecting production
 
 ### Changed
 - **Major Balance Adjustments**
@@ -66,12 +72,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 20% cost reduction across most buildings
   - 20% reward increase for all model training
   - 10-40% lower unlock thresholds throughout
+- **Code Quality & Maintainability**
+  - Extracted magic numbers to `GAME_CONSTANTS` and `LOOP_CONSTANTS`
+  - Improved error handling throughout codebase
+  - Better null-safety checks for models and prestige upgrades
+  - Enhanced logging for debugging
+  - Critical error screen with recovery options
+
+### Fixed
+- **Offline Progression**
+  - Fixed achievement bonuses not applying during offline time
+  - Fixed production not updating when buildings unlock offline
+  - Improved calculation accuracy for extended offline sessions
+  - Better handling of save version mismatches
+- **Error Handling**
+  - Game loop now catches errors and attempts recovery
+  - Save/load operations have better error messages
+  - Export function returns null on error instead of crashing
+  - Import function properly validates save data
+- **Edge Cases**
+  - Fixed potential undefined errors with prestige upgrades
+  - Added validation for training model existence
+  - Better handling of corrupted save files
 
 ### Technical
 - Improved code modularity with separated animation systems
 - Optimized canvas rendering for better performance
 - Enhanced CSS animations with GPU acceleration
 - Better responsive design for mobile devices
+- Chunked offline progression simulation (60s ticks)
+- Constants extracted to configuration objects
+- Improved type safety and null checks
 
 ## [0.1.0] - 2026-01-30
 
@@ -106,17 +137,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
-- **0.2.0** (Feb 9, 2026) - Balance adjustments and visual training animations
+- **0.2.0** (Feb 9, 2026) - Balance adjustments, visual training animations, and code optimization
 - **0.1.0** (Jan 30, 2026) - Initial release with core gameplay
 
 ## Upcoming
 
 ### Version 0.3 (Planned)
-- Offline progression optimization
 - Additional achievements
-- More visual effects
+- More visual effects and polish
 - Performance improvements
 - Bug fixes based on user feedback
+- Quality of life improvements
 
 ### Version 1.0 (Planned)
 - Complete prestige system
