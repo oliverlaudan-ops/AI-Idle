@@ -4,15 +4,26 @@ import { GameState } from './modules/game-state.js';
 import { initializeUI } from './ui/ui-init.js';
 import { renderAll, showToast } from './ui/ui-render.js';
 
+// Game loop constants
+const LOOP_CONSTANTS = {
+    TICK_INTERVAL: 100, // Update every 100ms (10 times per second)
+    RENDER_INTERVAL: 100, // Render every 100ms
+    SAVE_INTERVAL: 30000, // Auto-save every 30 seconds
+    MAX_OFFLINE_TIME: 24 * 60 * 60 * 1000, // Max 24 hours offline progression
+    MIN_OFFLINE_TIME: 5000, // Minimum 5 seconds to show offline progress
+    OFFLINE_MODAL_DELAY: 500, // Delay before showing offline modal
+    ACHIEVEMENT_DISPLAY_TIME: 5000, // How long to show achievement notifications
+    ACHIEVEMENT_ANIMATION_TIME: 300 // Animation duration for achievement toast
+};
+
+// Storage keys
+const STORAGE_KEY = 'ai-idle-save';
+
 // Global game instance
 window.game = null;
 let lastTick = Date.now();
 let lastSave = Date.now();
 let lastRender = Date.now();
-const TICK_INTERVAL = 100; // Update every 100ms (10 times per second)
-const RENDER_INTERVAL = 100; // Render every 100ms
-const SAVE_INTERVAL = 30000; // Auto-save every 30 seconds
-const MAX_OFFLINE_TIME = 24 * 60 * 60 * 1000; // Max 24 hours offline progression
 
 // Initialize the game
 function init() {
@@ -26,16 +37,20 @@ function init() {
         let offlineGains = null;
         
         // Try to load saved game
-        const savedGame = localStorage.getItem('ai-idle-save');
+        const savedGame = localStorage.getItem(STORAGE_KEY);
         if (savedGame) {
             console.log('📂 Loading saved game...');
             try {
                 const saveData = JSON.parse(savedGame);
-                window.game.load(saveData);
+                const loaded = window.game.load(saveData);
+                
+                if (!loaded) {
+                    throw new Error('Failed to load save data');
+                }
                 
                 // Calculate offline progression
-                const offlineTime = Math.min(Date.now() - window.game.lastSaveTime, MAX_OFFLINE_TIME);
-                if (offlineTime > 5000) { // Only show if > 5 seconds
+                const offlineTime = Date.now() - window.game.lastSaveTime;
+                if (offlineTime > LOOP_CONSTANTS.MIN_OFFLINE_TIME) {
                     console.log(`⏰ Processing ${(offlineTime / 1000).toFixed(0)}s of offline time`);
                     
                     // Capture resources before offline progress
@@ -62,6 +77,8 @@ function init() {
             } catch (e) {
                 console.error('❌ Failed to load save:', e);
                 showToast('Failed to load save game. Starting fresh.', 'warning');
+                // Reset to new game state
+                window.game = new GameState();
             }
         } else {
             console.log('✨ Starting new game');
@@ -77,7 +94,7 @@ function init() {
         
         // Show offline progress modal if applicable
         if (hasOfflineProgress && offlineGains) {
-            setTimeout(() => showOfflineProgressModal(offlineGains), 500);
+            setTimeout(() => showOfflineProgressModal(offlineGains), LOOP_CONSTANTS.OFFLINE_MODAL_DELAY);
         }
         
         // Start game loop
@@ -88,48 +105,65 @@ function init() {
         
     } catch (error) {
         console.error('💥 Critical error during initialization:', error);
-        document.body.innerHTML = `
-            <div style="color: white; text-align: center; padding: 50px; font-family: monospace;">
-                <h1>❌ Initialization Error</h1>
-                <p>Failed to start AI-Idle. Check console for details.</p>
-                <pre style="text-align: left; max-width: 800px; margin: 20px auto; background: #1a1a1a; padding: 20px; border-radius: 10px;">${error.stack}</pre>
-                <button onclick="location.reload()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">Reload Page</button>
-            </div>
-        `;
+        showCriticalError(error);
     }
+}
+
+// Show critical error screen
+function showCriticalError(error) {
+    document.body.innerHTML = `
+        <div style="color: white; text-align: center; padding: 50px; font-family: monospace;">
+            <h1>❌ Initialization Error</h1>
+            <p>Failed to start AI-Idle. Check console for details.</p>
+            <pre style="text-align: left; max-width: 800px; margin: 20px auto; background: #1a1a1a; padding: 20px; border-radius: 10px; overflow: auto;">${error.stack || error.message || 'Unknown error'}</pre>
+            <button onclick="location.reload()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background: #667eea; color: white; border: none; border-radius: 8px; margin: 10px;">Reload Page</button>
+            <button onclick="localStorage.removeItem('${STORAGE_KEY}'); location.reload();" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background: #e63946; color: white; border: none; border-radius: 8px; margin: 10px;">Reset Save & Reload</button>
+        </div>
+    `;
 }
 
 // Main game loop
 function gameLoop() {
-    const now = Date.now();
-    const deltaTime = (now - lastTick) / 1000; // Convert to seconds
-    
-    // Update game state
-    if (deltaTime >= TICK_INTERVAL / 1000) {
-        window.game.update(deltaTime);
-        lastTick = now;
+    try {
+        const now = Date.now();
+        const deltaTime = (now - lastTick) / 1000; // Convert to seconds
         
-        // Check for newly unlocked achievements and show notifications
-        const newAchievements = window.game.popNewlyUnlockedAchievements();
-        for (const { id, achievement } of newAchievements) {
-            showAchievementUnlock(achievement);
+        // Update game state
+        if (deltaTime >= LOOP_CONSTANTS.TICK_INTERVAL / 1000) {
+            window.game.update(deltaTime);
+            lastTick = now;
+            
+            // Check for newly unlocked achievements and show notifications
+            const newAchievements = window.game.popNewlyUnlockedAchievements();
+            for (const { id, achievement } of newAchievements) {
+                showAchievementUnlock(achievement);
+            }
         }
+        
+        // Render updates (can be less frequent than game updates)
+        if (now - lastRender >= LOOP_CONSTANTS.RENDER_INTERVAL) {
+            renderAll(window.game);
+            lastRender = now;
+        }
+        
+        // Auto-save check
+        if (now - lastSave >= LOOP_CONSTANTS.SAVE_INTERVAL) {
+            saveGame(true); // true = auto-save
+            lastSave = now;
+        }
+        
+        // Continue loop
+        requestAnimationFrame(gameLoop);
+    } catch (error) {
+        console.error('💥 Error in game loop:', error);
+        // Try to save before stopping
+        try {
+            saveGame();
+        } catch (e) {
+            console.error('Failed to save after error:', e);
+        }
+        showToast('Game loop error! Check console. Game saved.', 'error');
     }
-    
-    // Render updates (can be less frequent than game updates)
-    if (now - lastRender >= RENDER_INTERVAL) {
-        renderAll(window.game);
-        lastRender = now;
-    }
-    
-    // Auto-save check
-    if (now - lastSave >= SAVE_INTERVAL) {
-        saveGame(true); // true = auto-save
-        lastSave = now;
-    }
-    
-    // Continue loop
-    requestAnimationFrame(gameLoop);
 }
 
 // Show achievement unlock notification
@@ -166,15 +200,15 @@ function showAchievementUnlock(achievement) {
     
     setTimeout(() => {
         toast.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-    }, 5000); // Show for 5 seconds (longer than normal toasts)
+        setTimeout(() => toast.remove(), LOOP_CONSTANTS.ACHIEVEMENT_ANIMATION_TIME);
+    }, LOOP_CONSTANTS.ACHIEVEMENT_DISPLAY_TIME);
 }
 
 // Save game
 function saveGame(isAutoSave = false) {
     try {
         const saveData = window.game.save();
-        localStorage.setItem('ai-idle-save', JSON.stringify(saveData));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
         
         // Update last save time display
         const lastSaveElement = document.getElementById('last-save-time');
@@ -190,7 +224,7 @@ function saveGame(isAutoSave = false) {
         }
     } catch (error) {
         console.error('❌ Failed to save game:', error);
-        showToast('Failed to save game!', 'error');
+        showToast('Failed to save game! ' + error.message, 'error');
     }
 }
 
@@ -201,6 +235,7 @@ function showOfflineProgressModal(gains) {
     modal.id = 'offline-modal';
     
     const timeString = formatOfflineTime(gains.time);
+    const hasGains = gains.data > 0 || gains.accuracy > 0 || gains.research > 0;
     
     modal.innerHTML = `
         <div class="modal-content offline-modal-content">
@@ -214,7 +249,7 @@ function showOfflineProgressModal(gains) {
                     ${gains.data > 0 ? `<div class="offline-gain-item">📊 <strong>${formatNumber(gains.data)}</strong> Training Data</div>` : ''}
                     ${gains.accuracy > 0 ? `<div class="offline-gain-item">🎯 <strong>${formatNumber(gains.accuracy)}</strong> Accuracy</div>` : ''}
                     ${gains.research > 0 ? `<div class="offline-gain-item">🔬 <strong>${formatNumber(gains.research)}</strong> Research Points</div>` : ''}
-                    ${gains.data === 0 && gains.accuracy === 0 && gains.research === 0 ? '<p style="color: var(--text-secondary);">No production yet. Build infrastructure to gain offline progress!</p>' : ''}
+                    ${!hasGains ? '<p style="color: var(--text-secondary);">No production yet. Build infrastructure to gain offline progress!</p>' : ''}
                 </div>
                 <div class="modal-actions" style="margin-top: 2rem;">
                     <button class="btn-primary" onclick="document.getElementById('offline-modal').remove()" style="width: 100%; padding: 1rem;">Continue</button>
@@ -275,7 +310,7 @@ document.addEventListener('visibilitychange', () => {
         saveGame();
     } else if (wasHidden) {
         const offlineTime = Date.now() - hiddenTime;
-        if (offlineTime > 5000) { // Only process if > 5 seconds
+        if (offlineTime > LOOP_CONSTANTS.MIN_OFFLINE_TIME) {
             console.log(`👀 Tab visible again after ${(offlineTime / 1000).toFixed(0)}s`);
             
             // Capture resources before offline progress
@@ -308,7 +343,11 @@ document.addEventListener('visibilitychange', () => {
 
 // Handle beforeunload (save before closing)
 window.addEventListener('beforeunload', () => {
-    saveGame();
+    try {
+        saveGame();
+    } catch (e) {
+        console.error('Failed to save on unload:', e);
+    }
 });
 
 // Initialize when DOM is ready
