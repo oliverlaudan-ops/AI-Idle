@@ -5,6 +5,26 @@ All notable changes to AI-Idle will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-02-09
+
+### Fixed
+- **Training Animations Integration**
+  - Fixed training-animations.css not being linked in index.html
+  - Fixed canvas container missing from training status display
+  - Fixed TrainingAnimations class import in ui-render.js
+  - Fixed incorrect method calls (start/stop instead of startTraining/stopTraining)
+  - Fixed canvas initialization - now properly uses initCanvas() method
+  - Training curve visualization now displays correctly during model training
+
+### Changed
+- Updated footer version display to show "0.2.0" instead of "0.2-alpha"
+- Improved error handling in training animation lifecycle
+
+### Technical
+- Properly integrated training-animations.js module into UI rendering pipeline
+- Canvas element now correctly initialized with TrainingAnimations instance
+- Animation lifecycle properly managed (start on training begin, stop on training end)
+
 ## [0.2.0] - 2026-02-09
 
 ### Added
@@ -137,6 +157,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
+- **0.2.1** (Feb 9, 2026) - Hotfix: Training animations integration fixes
 - **0.2.0** (Feb 9, 2026) - Balance adjustments, visual training animations, and code optimization
 - **0.1.0** (Jan 30, 2026) - Initial release with core gameplay
 
