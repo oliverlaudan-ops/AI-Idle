@@ -4,6 +4,10 @@ import { getBuildingCost } from '../modules/buildings.js';
 import { buildings } from '../modules/buildings.js';
 import { models } from '../modules/models.js';
 import { research } from '../modules/research.js';
+import { TrainingAnimations } from './training-animations.js';
+
+// Training animations instance
+let trainingAnimations = null;
 
 // Main render function that updates all UI elements
 export function renderAll(gameState) {
@@ -227,11 +231,12 @@ function canTrainModel(model, gameState) {
     return true;
 }
 
-// New: Render Training Status with Animations
+// Enhanced: Render Training Status with Canvas Animations
 export function renderTrainingStatus(gameState) {
     const noTrainingMsg = document.getElementById('no-training-msg');
     const activeTraining = document.getElementById('active-training');
     const stopButton = document.getElementById('btn-stop-training');
+    const canvas = document.getElementById('training-canvas');
     
     // Safety check for elements
     if (!noTrainingMsg || !activeTraining || !stopButton) {
@@ -244,6 +249,12 @@ export function renderTrainingStatus(gameState) {
         noTrainingMsg.style.display = 'block';
         activeTraining.style.display = 'none';
         stopButton.style.display = 'none';
+        
+        // Stop animations
+        if (trainingAnimations) {
+            trainingAnimations.stop();
+            trainingAnimations = null;
+        }
         return;
     }
     
@@ -259,6 +270,17 @@ export function renderTrainingStatus(gameState) {
     // Safety checks
     if (!model || !modelDef || !training) {
         return;
+    }
+    
+    // Initialize training animations if not already done
+    if (!trainingAnimations && canvas) {
+        trainingAnimations = new TrainingAnimations(canvas);
+        trainingAnimations.start(training);
+    }
+    
+    // Update animations with current training state
+    if (trainingAnimations && canvas) {
+        trainingAnimations.update(training);
     }
     
     // Update model info
@@ -498,7 +520,7 @@ export function renderStatistics(gameState) {
     if (gameInfoTable) {
         gameInfoTable.innerHTML = `
             <tr><td>Playtime</td><td>${formatTime(playtime)}</td></tr>
-            <tr><td>Game Version</td><td>0.2-alpha</td></tr>
+            <tr><td>Game Version</td><td>0.2.0</td></tr>
             <tr><td>Deployments</td><td>${gameState.prestige.deployments}</td></tr>
             <tr><td>Tokens</td><td>${gameState.prestige.tokens}</td></tr>
         `;
