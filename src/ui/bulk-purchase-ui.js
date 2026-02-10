@@ -36,7 +36,7 @@ export class BulkPurchaseUI {
      */
     createModeSelector() {
         // Find or create container in the infrastructure tab
-        const infrastructureTab = document.getElementById('infrastructure-tab');
+        const infrastructureTab = document.getElementById('tab-infrastructure');
         if (!infrastructureTab) {
             console.warn('Infrastructure tab not found');
             return;
@@ -67,9 +67,14 @@ export class BulkPurchaseUI {
                 </div>
             `;
             
-            // Insert at the top of infrastructure tab, before buildings
-            const firstChild = infrastructureTab.firstChild;
-            infrastructureTab.insertBefore(modeSelector, firstChild);
+            // Insert after the tab header, before the manual collection button
+            const tabHeader = infrastructureTab.querySelector('.tab-header');
+            if (tabHeader && tabHeader.nextSibling) {
+                infrastructureTab.insertBefore(modeSelector, tabHeader.nextSibling);
+            } else {
+                // Fallback: insert at the beginning
+                infrastructureTab.insertBefore(modeSelector, infrastructureTab.firstChild);
+            }
         }
         
         // Setup button click handlers
