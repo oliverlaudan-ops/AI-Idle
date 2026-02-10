@@ -14,8 +14,9 @@
     <link rel="stylesheet" href="src/ui/settings-styles.css">
     <link rel="stylesheet" href="src/ui/hotkey-styles.css">
     
-    <!-- TensorFlow.js v4.x - ML in the Browser -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+    <!-- TensorFlow.js v4.x - ML in the Browser (Lazy loaded when AI Lab is opened) -->
+    <!-- crossorigin=anonymous prevents Safari tracking prevention issues -->
+    <script id="tensorflow-loader" data-src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
     <div class="game-container" id="game">
@@ -298,7 +299,9 @@
                     <p class="tab-description">Train real neural networks and watch AI learn to play!</p>
                 </div>
                 <div id="ai-lab-content">
-                    <p style="text-align: center; padding: 2rem; color: var(--text-secondary);">AI Lab features are being initialized...</p>
+                    <p style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        Loading AI Lab... <span id="ai-lab-status">Initializing TensorFlow.js</span>
+                    </p>
                 </div>
             </div>
         </main>
@@ -320,6 +323,8 @@
                 <span>Last save: <span id="last-save-time">Never</span></span>
                 <span>|</span>
                 <span>Playtime: <span id="playtime">0s</span></span>
+                <span id="performance-indicator" style="display: none;">|</span>
+                <span id="performance-warning" style="display: none; color: #ff6b6b;">⚠️ Performance</span>
             </div>
         </footer>
     </div>

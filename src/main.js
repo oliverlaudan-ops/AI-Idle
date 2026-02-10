@@ -1,4 +1,4 @@
-// Main Game Initialization and Loop
+// Main Game Initialization and Loop - OPTIMIZED
 
 import { GameState } from './modules/game-state.js';
 import { initializeUI } from './ui/ui-init.js';
@@ -9,16 +9,17 @@ import { BulkPurchaseUI } from './ui/bulk-purchase-ui.js';
 import { SettingsUI } from './ui/settings-ui.js';
 import { HotkeySystem } from './modules/hotkeys.js';
 
-// Game loop constants
+// Game loop constants - OPTIMIZED
 const LOOP_CONSTANTS = {
     TICK_INTERVAL: 100, // Update every 100ms (10 times per second)
-    RENDER_INTERVAL: 100, // Render every 100ms
+    RENDER_INTERVAL: 100, // Render every 100ms (matches tick for now)
     SAVE_INTERVAL: 30000, // Auto-save every 30 seconds
     MAX_OFFLINE_TIME: 24 * 60 * 60 * 1000, // Max 24 hours offline progression
     MIN_OFFLINE_TIME: 5000, // Minimum 5 seconds to show offline progress
     OFFLINE_MODAL_DELAY: 500, // Delay before showing offline modal
     ACHIEVEMENT_DISPLAY_TIME: 5000, // How long to show achievement notifications
-    ACHIEVEMENT_ANIMATION_TIME: 300 // Animation duration for achievement toast
+    ACHIEVEMENT_ANIMATION_TIME: 300, // Animation duration for achievement toast
+    PERFORMANCE_WARNING_THRESHOLD: 200 // Warn if frame takes >200ms
 };
 
 // Storage keys
@@ -26,14 +27,18 @@ const STORAGE_KEY = 'ai-idle-save';
 
 // Global game instance
 window.game = null;
-window.tutorial = null; // Global tutorial instance
-window.queueUI = null; // Global queue UI instance
-window.bulkPurchaseUI = null; // Global bulk purchase UI instance
-window.settingsUI = null; // Global settings UI instance
-window.hotkeys = null; // NEW: Global hotkeys instance
-let lastTick = Date.now();
+window.tutorial = null;
+window.queueUI = null;
+window.bulkPurchaseUI = null;
+window.settingsUI = null;
+window.hotkeys = null;
+window.aiLab = null; // Lazy-loaded AI Lab
+
+// Game loop state
+let gameLoopInterval = null;
+let renderLoopInterval = null;
 let lastSave = Date.now();
-let lastRender = Date.now();
+let performanceWarningCount = 0;
 
 // Initialize the game
 function init() {
@@ -63,23 +68,17 @@ function init() {
                 if (offlineTime > LOOP_CONSTANTS.MIN_OFFLINE_TIME) {
                     console.log(`⏰ Processing ${(offlineTime / 1000).toFixed(0)}s of offline time`);
                     
-                    // Capture resources before offline progress
                     const beforeData = window.game.resources.data.amount;
                     const beforeAccuracy = window.game.resources.accuracy.amount;
                     const beforeResearch = window.game.resources.research.amount;
                     
                     window.game.processOfflineProgress(offlineTime);
                     
-                    // Calculate gains
-                    const dataGained = window.game.resources.data.amount - beforeData;
-                    const accuracyGained = window.game.resources.accuracy.amount - beforeAccuracy;
-                    const researchGained = window.game.resources.research.amount - beforeResearch;
-                    
                     offlineGains = {
                         time: offlineTime,
-                        data: dataGained,
-                        accuracy: accuracyGained,
-                        research: researchGained
+                        data: window.game.resources.data.amount - beforeData,
+                        accuracy: window.game.resources.accuracy.amount - beforeAccuracy,
+                        research: window.game.resources.research.amount - beforeResearch
                     };
                     
                     hasOfflineProgress = true;
@@ -87,12 +86,10 @@ function init() {
             } catch (e) {
                 console.error('❌ Failed to load save:', e);
                 showToast('Failed to load save game. Starting fresh.', 'warning');
-                // Reset to new game state
                 window.game = new GameState();
             }
         } else {
             console.log('✨ Starting new game');
-            // Don't show welcome toast if tutorial will start
             const shouldShowWelcome = localStorage.getItem('ai-idle-tutorial-completed') === 'true' || 
                                      localStorage.getItem('ai-idle-tutorial-skipped') === 'true';
             if (shouldShowWelcome) {
@@ -100,57 +97,50 @@ function init() {
             }
         }
         
-        // Initialize UI (includes event listeners)
+        // Initialize UI
         console.log('🎨 Initializing UI...');
         initializeUI(window.game);
         
-        // Initialize Tutorial System
-        console.log('🎓 Initializing Tutorial System...');
+        // Initialize systems
+        console.log('🎓 Initializing systems...');
         window.tutorial = new TutorialSystem(window.game);
         window.tutorial.init();
         
-        // Initialize Training Queue UI
-        console.log('📋 Initializing Training Queue UI...');
         window.queueUI = new TrainingQueueUI(window.game);
         window.queueUI.init();
         
-        // Initialize Bulk Purchase UI
-        console.log('🛠️ Initializing Bulk Purchase UI...');
         window.bulkPurchaseUI = new BulkPurchaseUI(window.game);
         window.bulkPurchaseUI.init();
         
-        // Initialize Settings UI
-        console.log('⚙️ Initializing Settings UI...');
         window.settingsUI = new SettingsUI(window.game.settings, window.game);
         window.settingsUI.init();
         
-        // NEW: Initialize Hotkey System
-        console.log('⌨️ Initializing Hotkey System...');
         window.hotkeys = new HotkeySystem(window.game);
         window.hotkeys.init();
         
-        // Setup hotkey button in footer
+        // Setup hotkey button
         const hotkeyBtn = document.getElementById('btn-hotkeys');
         if (hotkeyBtn) {
-            hotkeyBtn.addEventListener('click', () => {
-                window.hotkeys.showHelp();
-            });
+            hotkeyBtn.addEventListener('click', () => window.hotkeys.showHelp());
         }
         
-        // Apply settings to game
+        // Setup AI Lab lazy loading
+        setupAILabLazyLoad();
+        
+        // Apply settings
         window.game.settings.apply(window.game);
         
         // Initial render
         renderAll(window.game);
         
-        // Show offline progress modal if applicable (only if tutorial is completed)
+        // Show offline progress modal
         if (hasOfflineProgress && offlineGains && window.tutorial.isComplete()) {
             setTimeout(() => showOfflineProgressModal(offlineGains), LOOP_CONSTANTS.OFFLINE_MODAL_DELAY);
         }
         
-        // Start game loop
-        console.log('▶️ Starting game loop...');
-        requestAnimationFrame(gameLoop);
+        // Start optimized game loops
+        console.log('▶️ Starting optimized game loops...');
+        startGameLoops();
         
         console.log('✅ AI-Idle initialized successfully!');
         
@@ -158,6 +148,153 @@ function init() {
         console.error('💥 Critical error during initialization:', error);
         showCriticalError(error);
     }
+}
+
+// Setup AI Lab lazy loading (only load TensorFlow.js when tab is opened)
+function setupAILabLazyLoad() {
+    const aiLabTab = document.querySelector('[data-tab="ai-lab"]');
+    if (!aiLabTab) return;
+    
+    aiLabTab.addEventListener('click', async () => {
+        if (window.aiLab) return; // Already loaded
+        
+        const statusEl = document.getElementById('ai-lab-status');
+        if (statusEl) statusEl.textContent = 'Loading TensorFlow.js...';
+        
+        try {
+            // Load TensorFlow.js dynamically
+            await loadTensorFlow();
+            
+            if (statusEl) statusEl.textContent = 'Initializing AI modules...';
+            
+            // Dynamically import AI modules
+            const { AILabUI } = await import('./ui/ai-lab-ui.js');
+            
+            window.aiLab = new AILabUI(window.game);
+            await window.aiLab.init();
+            
+            console.log('✅ AI Lab loaded successfully!');
+        } catch (error) {
+            console.error('❌ Failed to load AI Lab:', error);
+            const content = document.getElementById('ai-lab-content');
+            if (content) {
+                content.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #e63946;">
+                        <h3>⚠️ Failed to load AI Lab</h3>
+                        <p>${error.message}</p>
+                        <button class="btn-primary" onclick="location.reload()">Reload Page</button>
+                    </div>
+                `;
+            }
+        }
+    }, { once: true }); // Only fire once
+}
+
+// Load TensorFlow.js dynamically
+function loadTensorFlow() {
+    return new Promise((resolve, reject) => {
+        if (typeof tf !== 'undefined') {
+            console.log('✅ TensorFlow.js already loaded');
+            return resolve();
+        }
+        
+        const loaderScript = document.getElementById('tensorflow-loader');
+        if (!loaderScript) {
+            return reject(new Error('TensorFlow loader script not found'));
+        }
+        
+        const src = loaderScript.getAttribute('data-src');
+        const script = document.createElement('script');
+        script.src = src;
+        script.crossOrigin = 'anonymous'; // Prevent tracking prevention issues
+        
+        script.onload = () => {
+            console.log('✅ TensorFlow.js loaded:', tf.version.tfjs);
+            resolve();
+        };
+        
+        script.onerror = () => {
+            reject(new Error('Failed to load TensorFlow.js from CDN'));
+        };
+        
+        document.head.appendChild(script);
+    });
+}
+
+// Start optimized game loops using setInterval instead of RAF
+function startGameLoops() {
+    // Game update loop (10Hz - every 100ms)
+    gameLoopInterval = setInterval(() => {
+        const startTime = performance.now();
+        
+        try {
+            // Update game state
+            window.game.update(LOOP_CONSTANTS.TICK_INTERVAL / 1000);
+            
+            // Check achievements
+            const newAchievements = window.game.popNewlyUnlockedAchievements();
+            for (const { id, achievement } of newAchievements) {
+                showAchievementUnlock(achievement);
+            }
+            
+            // Auto-save check
+            const now = Date.now();
+            const autoSaveInterval = window.game.settings.get('gameplay', 'autoSaveInterval');
+            if (now - lastSave >= autoSaveInterval) {
+                saveGame(true);
+                lastSave = now;
+            }
+            
+            // Performance monitoring
+            const elapsed = performance.now() - startTime;
+            if (elapsed > LOOP_CONSTANTS.PERFORMANCE_WARNING_THRESHOLD) {
+                performanceWarningCount++;
+                if (performanceWarningCount > 10) {
+                    showPerformanceWarning();
+                    performanceWarningCount = 0; // Reset counter
+                }
+            } else {
+                performanceWarningCount = Math.max(0, performanceWarningCount - 1);
+            }
+            
+        } catch (error) {
+            console.error('💥 Error in game loop:', error);
+            saveGame();
+            showToast('Game loop error! Check console. Game saved.', 'error');
+        }
+    }, LOOP_CONSTANTS.TICK_INTERVAL);
+    
+    // Render loop (10Hz - every 100ms, matches game loop for now)
+    renderLoopInterval = setInterval(() => {
+        try {
+            renderAll(window.game);
+            
+            if (window.queueUI) window.queueUI.update();
+            if (window.bulkPurchaseUI) window.bulkPurchaseUI.update();
+            
+        } catch (error) {
+            console.error('💥 Error in render loop:', error);
+        }
+    }, LOOP_CONSTANTS.RENDER_INTERVAL);
+    
+    console.log('✅ Game loops started (setInterval-based)');
+}
+
+// Show performance warning
+function showPerformanceWarning() {
+    const indicator = document.getElementById('performance-indicator');
+    const warning = document.getElementById('performance-warning');
+    
+    if (indicator) indicator.style.display = 'inline';
+    if (warning) warning.style.display = 'inline';
+    
+    console.warn('⚠️ Performance degradation detected. Consider closing other tabs or reducing game settings.');
+    
+    // Hide after 10 seconds
+    setTimeout(() => {
+        if (indicator) indicator.style.display = 'none';
+        if (warning) warning.style.display = 'none';
+    }, 10000);
 }
 
 // Show critical error screen
@@ -173,72 +310,12 @@ function showCriticalError(error) {
     `;
 }
 
-// Main game loop
-function gameLoop() {
-    try {
-        const now = Date.now();
-        const deltaTime = (now - lastTick) / 1000; // Convert to seconds
-        
-        // Update game state
-        if (deltaTime >= LOOP_CONSTANTS.TICK_INTERVAL / 1000) {
-            window.game.update(deltaTime);
-            lastTick = now;
-            
-            // Check for newly unlocked achievements and show notifications
-            const newAchievements = window.game.popNewlyUnlockedAchievements();
-            for (const { id, achievement } of newAchievements) {
-                showAchievementUnlock(achievement);
-            }
-        }
-        
-        // Render updates (can be less frequent than game updates)
-        if (now - lastRender >= LOOP_CONSTANTS.RENDER_INTERVAL) {
-            renderAll(window.game);
-            
-            // Update queue UI
-            if (window.queueUI) {
-                window.queueUI.update();
-            }
-            
-            // Update bulk purchase UI
-            if (window.bulkPurchaseUI) {
-                window.bulkPurchaseUI.update();
-            }
-            
-            lastRender = now;
-        }
-        
-        // Auto-save check (respects settings)
-        const autoSaveInterval = window.game.settings.get('gameplay', 'autoSaveInterval');
-        if (now - lastSave >= autoSaveInterval) {
-            saveGame(true); // true = auto-save
-            lastSave = now;
-        }
-        
-        // Continue loop
-        requestAnimationFrame(gameLoop);
-    } catch (error) {
-        console.error('💥 Error in game loop:', error);
-        // Try to save before stopping
-        try {
-            saveGame();
-        } catch (e) {
-            console.error('Failed to save after error:', e);
-        }
-        showToast('Game loop error! Check console. Game saved.', 'error');
-    }
-}
-
 // Show achievement unlock notification
 function showAchievementUnlock(achievement) {
     console.log(`🏆 Achievement unlocked: ${achievement.name}`);
     
-    // Check if achievement notifications are enabled
-    if (!window.game.settings.get('notifications', 'achievements')) {
-        return;
-    }
+    if (!window.game.settings.get('notifications', 'achievements')) return;
     
-    // Create special toast for achievements
     const container = document.getElementById('toast-container');
     if (!container) return;
     
@@ -257,15 +334,12 @@ function showAchievementUnlock(achievement) {
     
     container.appendChild(toast);
     
-    // Play sound if enabled
     if (window.game.settings.get('notifications', 'sound')) {
         try {
-            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZRQ0PVqzn77BdGAg+ltryxnMpBSh+zPLaizsIGGS57OihUBELTKXh8bllHAU2jtXzzn0uBSd7yvLekDcJGGe+7ueXRA0PU6nm8bllHQU4kdXzzn4vBSh9y/LfkjgJGWm/7+aXRA8OU6vl8bplHgU4ktXzzn8wBSl+y/LgkzgKGWm/7+aXRQ8RUqrl8bplHgU4ktXzzoAwBil+y/LgkzkKGWnA7+aXRQ8RUqrl8bpmHgU4ktX0zoAwBil+y/LhlDoKGWnA7+aYRQ8RUqrl8bpmHgU4ktX0z4AwBil+y/Lhlj0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4E');
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZRQ0PVqzn77BdGAg+ltryxnMpBSh+zPLaizsIGGS57OihUBELTKXh8bllHAU2jtXzzn0uBSd7yvLekDcJGGe+7ueXRA0PU6nm8bllHQU4kdXzzn4vBSh9y/LfkjgJGWm/7+aXRA8OU6vl8bplHgU4ktXzzn8wBSl+y/LgkzgKGWm/7+aXRQ8RUqrl8bplHgU4ktXzzoAwBil+y/LgkzkKGWnA7+aXRQ8RUqrl8bpmHgU4ktX0zoAwBil+y/LhlDoKGWnA7+aYRQ8RUqrl8bpmHgU4ktX0z4AwBil+y/Lhlj0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4E');
             audio.volume = 0.3;
-            audio.play().catch(() => {}); // Ignore errors if audio fails
-        } catch (e) {
-            // Ignore audio errors
-        }
+            audio.play().catch(() => {});
+        } catch (e) {}
     }
     
     const displayTime = window.game.settings.get('notifications', 'toastDuration');
@@ -281,16 +355,13 @@ function saveGame(isAutoSave = false) {
         const saveData = window.game.save();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
         
-        // Update last save time display
         const lastSaveElement = document.getElementById('last-save-time');
         if (lastSaveElement) {
             lastSaveElement.textContent = new Date().toLocaleTimeString();
         }
         
-        console.log('💾 Game saved' + (isAutoSave ? ' (auto)' : ''));
-        
-        // Show toast only for manual saves, not auto-saves
         if (!isAutoSave) {
+            console.log('💾 Game saved');
             showToast('Game saved successfully!', 'success');
         }
     } catch (error) {
@@ -331,7 +402,6 @@ function showOfflineProgressModal(gains) {
     
     document.body.appendChild(modal);
     
-    // Close on ESC
     const closeHandler = (e) => {
         if (e.key === 'Escape') {
             modal.remove();
@@ -348,18 +418,13 @@ function formatOfflineTime(ms) {
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
     
-    if (days > 0) {
-        return `${days} day${days > 1 ? 's' : ''} ${hours % 24} hour${(hours % 24) !== 1 ? 's' : ''}`;
-    } else if (hours > 0) {
-        return `${hours} hour${hours > 1 ? 's' : ''} ${minutes % 60} minute${(minutes % 60) !== 1 ? 's' : ''}`;
-    } else if (minutes > 0) {
-        return `${minutes} minute${minutes > 1 ? 's' : ''}`;
-    } else {
-        return `${seconds} second${seconds !== 1 ? 's' : ''}`;
-    }
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ${hours % 24} hour${(hours % 24) !== 1 ? 's' : ''}`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ${minutes % 60} minute${(minutes % 60) !== 1 ? 's' : ''}`;
+    if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+    return `${seconds} second${seconds !== 1 ? 's' : ''}`;
 }
 
-// Format number for display
+// Format number
 function formatNumber(num) {
     if (num < 1000) return Math.floor(num).toString();
     if (num < 1000000) return (num / 1000).toFixed(1) + 'K';
@@ -368,67 +433,48 @@ function formatNumber(num) {
     return (num / 1000000000000).toFixed(1) + 'T';
 }
 
-// Handle page visibility (pause when tab is hidden)
+// Handle page visibility
 let wasHidden = false;
 let hiddenTime = 0;
 
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-        // Check if game should pause on blur
         if (window.game && window.game.settings.get('gameplay', 'pauseOnBlur')) {
             wasHidden = true;
             hiddenTime = Date.now();
-            console.log('👋 Tab hidden - game paused');
         }
-        // Always save when tab is hidden
         saveGame();
     } else if (wasHidden) {
         const offlineTime = Date.now() - hiddenTime;
         if (offlineTime > LOOP_CONSTANTS.MIN_OFFLINE_TIME) {
-            console.log(`👀 Tab visible again after ${(offlineTime / 1000).toFixed(0)}s`);
-            
-            // Capture resources before offline progress
             const beforeData = window.game.resources.data.amount;
             const beforeAccuracy = window.game.resources.accuracy.amount;
             const beforeResearch = window.game.resources.research.amount;
             
             window.game.processOfflineProgress(offlineTime);
             
-            // Calculate gains
-            const dataGained = window.game.resources.data.amount - beforeData;
-            const accuracyGained = window.game.resources.accuracy.amount - beforeAccuracy;
-            const researchGained = window.game.resources.research.amount - beforeResearch;
+            const gains = [];
+            if (window.game.resources.data.amount - beforeData > 0) gains.push(`${formatNumber(window.game.resources.data.amount - beforeData)} Data`);
+            if (window.game.resources.accuracy.amount - beforeAccuracy > 0) gains.push(`${formatNumber(window.game.resources.accuracy.amount - beforeAccuracy)} Accuracy`);
+            if (window.game.resources.research.amount - beforeResearch > 0) gains.push(`${formatNumber(window.game.resources.research.amount - beforeResearch)} Research`);
             
-            // Show toast if gains are significant
-            if (dataGained > 0 || accuracyGained > 0 || researchGained > 0) {
-                const gains = [];
-                if (dataGained > 0) gains.push(`${formatNumber(dataGained)} Data`);
-                if (accuracyGained > 0) gains.push(`${formatNumber(accuracyGained)} Accuracy`);
-                if (researchGained > 0) gains.push(`${formatNumber(researchGained)} Research`);
-                
-                showToast(`Gained while away: ${gains.join(', ')}`, 'success');
-            }
+            if (gains.length > 0) showToast(`Gained while away: ${gains.join(', ')}`, 'success');
             
             renderAll(window.game);
-            
-            // Update queue UI after offline progress
-            if (window.queueUI) {
-                window.queueUI.update();
-            }
-            
-            // Update bulk purchase UI after offline progress
-            if (window.bulkPurchaseUI) {
-                window.bulkPurchaseUI.update();
-            }
+            if (window.queueUI) window.queueUI.update();
+            if (window.bulkPurchaseUI) window.bulkPurchaseUI.update();
         }
         wasHidden = false;
     }
 });
 
-// Handle beforeunload (save before closing)
+// Save before closing
 window.addEventListener('beforeunload', () => {
     try {
         saveGame();
+        // Clean up intervals
+        if (gameLoopInterval) clearInterval(gameLoopInterval);
+        if (renderLoopInterval) clearInterval(renderLoopInterval);
     } catch (e) {
         console.error('Failed to save on unload:', e);
     }
@@ -441,25 +487,17 @@ if (document.readyState === 'loading') {
     init();
 }
 
-console.log('📜 main.js loaded');
+console.log('📜 main.js loaded (optimized)');
 
 // Add styles
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideOut {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(400px);
-            opacity: 0;
-        }
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
     }
     
-    .offline-modal-content {
-        max-width: 500px;
-    }
+    .offline-modal-content { max-width: 500px; }
     
     .offline-gains {
         background: var(--bg-tertiary);
@@ -477,11 +515,8 @@ style.textContent = `
         gap: 1rem;
     }
     
-    .offline-gain-item:last-child {
-        border-bottom: none;
-    }
+    .offline-gain-item:last-child { border-bottom: none; }
     
-    /* Achievement Toast Styles */
     .toast.achievement {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: 2px solid #ffd700;
@@ -508,9 +543,7 @@ style.textContent = `
         to { transform: translateY(-5px); }
     }
     
-    .achievement-toast-content {
-        flex: 1;
-    }
+    .achievement-toast-content { flex: 1; }
     
     .achievement-toast-title {
         font-size: 0.8rem;
