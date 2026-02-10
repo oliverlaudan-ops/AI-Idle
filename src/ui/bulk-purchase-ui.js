@@ -1,4 +1,4 @@
-// Bulk Purchase UI Component
+// Bulk Purchase UI Component - PERFORMANCE OPTIMIZED
 // Handles the visual interface for bulk building purchases
 
 import { formatNumber } from './ui-render.js';
@@ -10,6 +10,12 @@ export class BulkPurchaseUI {
         this.isShiftPressed = false;
         this.isCtrlPressed = false;
         this.initialized = false;
+        
+        // PERFORMANCE: Track if UI needs update
+        this.isDirty = true;
+        this.lastResourceSnapshot = null;
+        this.updateThrottle = 0;
+        this.THROTTLE_INTERVAL = 0.5; // Only update UI every 500ms max
     }
     
     /**
@@ -72,7 +78,6 @@ export class BulkPurchaseUI {
             if (tabHeader && tabHeader.nextSibling) {
                 infrastructureTab.insertBefore(modeSelector, tabHeader.nextSibling);
             } else {
-                // Fallback: insert at the beginning
                 infrastructureTab.insertBefore(modeSelector, infrastructureTab.firstChild);
             }
         }
@@ -95,21 +100,34 @@ export class BulkPurchaseUI {
     setupKeyboardShortcuts() {
         // Track modifier keys
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Shift') this.isShiftPressed = true;
-            if (e.key === 'Control' || e.key === 'Meta') this.isCtrlPressed = true;
+            if (e.key === 'Shift') {
+                this.isShiftPressed = true;
+                this.markDirty(); // Mode changed
+            }
+            if (e.key === 'Control' || e.key === 'Meta') {
+                this.isCtrlPressed = true;
+                this.markDirty(); // Mode changed
+            }
             this.updateModifierDisplay();
         });
         
         document.addEventListener('keyup', (e) => {
-            if (e.key === 'Shift') this.isShiftPressed = false;
-            if (e.key === 'Control' || e.key === 'Meta') this.isCtrlPressed = false;
+            if (e.key === 'Shift') {
+                this.isShiftPressed = false;
+                this.markDirty(); // Mode changed
+            }
+            if (e.key === 'Control' || e.key === 'Meta') {
+                this.isCtrlPressed = false;
+                this.markDirty(); // Mode changed
+            }
             this.updateModifierDisplay();
         });
         
-        // Handle window blur (user switches tabs)
+        // Handle window blur
         window.addEventListener('blur', () => {
             this.isShiftPressed = false;
             this.isCtrlPressed = false;
+            this.markDirty();
             this.updateModifierDisplay();
         });
     }
@@ -121,10 +139,8 @@ export class BulkPurchaseUI {
         const selector = document.getElementById('bulk-purchase-selector');
         if (!selector) return;
         
-        // Remove all modifier classes
         selector.classList.remove('shift-active', 'ctrl-active', 'both-active');
         
-        // Add appropriate class
         if (this.isShiftPressed && this.isCtrlPressed) {
             selector.classList.add('both-active');
         } else if (this.isShiftPressed) {
@@ -135,11 +151,55 @@ export class BulkPurchaseUI {
     }
     
     /**
+     * Mark UI as dirty (needs update)
+     */
+    markDirty() {
+        this.isDirty = true;
+    }
+    
+    /**
+     * Check if resources changed significantly
+     */
+    hasResourcesChanged() {
+        if (!this.lastResourceSnapshot) return true;
+        
+        // Only check key resources that affect building affordability
+        const current = {
+            data: this.gameState.resources.data.amount,
+            compute: this.gameState.resources.compute.amount,
+            accuracy: this.gameState.resources.accuracy.amount
+        };
+        
+        // Check if any resource changed by more than 1% or crossed affordability threshold
+        for (const [key, value] of Object.entries(current)) {
+            const old = this.lastResourceSnapshot[key];
+            const percentChange = Math.abs((value - old) / Math.max(old, 1));
+            if (percentChange > 0.01) { // 1% change
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Save current resource snapshot
+     */
+    saveResourceSnapshot() {
+        this.lastResourceSnapshot = {
+            data: this.gameState.resources.data.amount,
+            compute: this.gameState.resources.compute.amount,
+            accuracy: this.gameState.resources.accuracy.amount
+        };
+    }
+    
+    /**
      * Set the current purchase mode
      */
     setMode(mode) {
         this.gameState.bulkPurchase.setMode(mode);
         this.updateModeButtons();
+        this.markDirty(); // Force update
         this.updateAllBuildingButtons();
     }
     
@@ -172,7 +232,6 @@ export class BulkPurchaseUI {
             return 10;
         }
         
-        // Use selected mode
         return this.gameState.bulkPurchase.getMode();
     }
     
@@ -218,6 +277,7 @@ export class BulkPurchaseUI {
         for (const buildingId of Object.keys(this.gameState.buildings)) {
             this.updateBuildingButton(buildingId);
         }
+        this.saveResourceSnapshot();
     }
     
     /**
@@ -232,7 +292,6 @@ export class BulkPurchaseUI {
         
         if (preview.amount <= 1) return;
         
-        // Find or create preview element
         let previewEl = card.querySelector('.bulk-cost-preview');
         if (!previewEl) {
             previewEl = document.createElement('div');
@@ -240,7 +299,6 @@ export class BulkPurchaseUI {
             card.appendChild(previewEl);
         }
         
-        // Build cost preview HTML
         let costHtml = '<div class="bulk-preview-header">Total Cost:</div>';
         for (const [resourceId, amount] of Object.entries(preview.cost)) {
             const resource = this.gameState.resources[resourceId];
@@ -281,7 +339,6 @@ export class BulkPurchaseUI {
         const result = this.gameState.bulkPurchase.purchase(buildingId, effectiveMode);
         
         if (result.success) {
-            // Show success toast
             const building = this.gameState.buildings[buildingId];
             const message = result.amount > 1 
                 ? `Built ${result.amount}x ${building.name}!`
@@ -291,6 +348,9 @@ export class BulkPurchaseUI {
                 window.showToast(message, 'success');
             }
             
+            // Force update after purchase
+            this.markDirty();
+            
             return true;
         }
         
@@ -298,20 +358,30 @@ export class BulkPurchaseUI {
     }
     
     /**
-     * Update UI every frame
+     * Update UI - PERFORMANCE OPTIMIZED
+     * Only updates when resources changed or mode changed
      */
-    update() {
+    update(deltaTime = 0.1) {
         if (!this.initialized) return;
         
-        // Update all building buttons based on current state
-        this.updateAllBuildingButtons();
+        // Throttle updates
+        this.updateThrottle += deltaTime;
+        if (this.updateThrottle < this.THROTTLE_INTERVAL) {
+            return; // Skip this update
+        }
+        this.updateThrottle = 0;
+        
+        // Only update if something changed
+        if (this.isDirty || this.hasResourcesChanged()) {
+            this.updateAllBuildingButtons();
+            this.isDirty = false;
+        }
     }
     
     /**
      * Cleanup
      */
     destroy() {
-        // Remove keyboard listeners if needed
         this.initialized = false;
     }
 }
