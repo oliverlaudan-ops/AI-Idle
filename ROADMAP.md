@@ -1,7 +1,7 @@
 # 🗺️ AI-Idle Development Roadmap
 
 **Last Updated:** February 10, 2026  
-**Current Version:** 0.2.1  
+**Current Version:** 0.3.0-dev  
 **Next Release:** 0.3.0 (Polish & Experience)
 
 ---
@@ -13,7 +13,11 @@ v0.1.0 ✅ (Jan 30, 2026) - MVP Release
 v0.2.0 ✅ (Feb 9, 2026)  - Balance & Animations
 v0.2.1 ✅ (Feb 9, 2026)  - Hotfix: Training Animations
 │
-├─ v0.3.0 🔜 (Target: Early March 2026) - Polish & Experience
+├─ v0.3.0 🚧 (In Progress) - Polish & Experience
+│  ├─ PR #2 ✅ (Feb 10) - Combo System
+│  ├─ PR #3 ✅ (Feb 10) - Tutorial System
+│  ├─ PR #4 ✅ (Feb 10) - Auto-Training Queue
+│  └─ PR #5 🔜 - QoL Improvements
 │
 └─ v1.0.0 🎯 (Target: Late March 2026) - Complete Release
 ```
@@ -22,8 +26,8 @@ v0.2.1 ✅ (Feb 9, 2026)  - Hotfix: Training Animations
 
 ## 🎯 Version 0.3.0 - "Polish & Experience"
 
-**Release Target:** Early March 2026  
-**Development Time:** 1-2 weeks  
+**Release Target:** Mid February 2026  
+**Development Time:** 1 week  
 **Focus:** Enhance player experience without major new systems
 
 ### Core Philosophy
@@ -36,12 +40,15 @@ v0.2.1 ✅ (Feb 9, 2026)  - Hotfix: Training Animations
 
 ## ✨ Version 0.3.0 Features
 
-### 1. 🔥 **Manual Collect Combo System** (High Priority)
+### 1. 🔥 **Manual Collect Combo System** ✅ **COMPLETED** (PR #2)
+
+**Status:** Merged Feb 10, 2026  
+**Implementation:** [Pull Request #2](https://github.com/oliverlaudan-ops/AI-Idle/pull/2)
 
 **Problem:** Manual data collection is boring and unrewarding  
 **Solution:** Engaging combo mechanic that rewards active clicking
 
-#### Mechanics
+#### ✅ Implemented Mechanics
 - **Combo Multipliers:**
   - Click 1: +1 Data (x1)
   - Click 2 (within 5s): +2 Data (x2)
@@ -51,7 +58,7 @@ v0.2.1 ✅ (Feb 9, 2026)  - Hotfix: Training Animations
 - **Combo Decay:** Resets to x1 after timer expires
 - **Max Combo:** x8 (upgradeable via research later)
 
-#### Visual Feedback
+#### ✅ Implemented Visual Feedback
 - **Combo Counter:** Large animated number above button
 - **Multiplier Badge:** "x2", "x4", "x8" with color progression
   - x1: Gray (default)
@@ -64,31 +71,33 @@ v0.2.1 ✅ (Feb 9, 2026)  - Hotfix: Training Animations
 - **Screen Shake:** Subtle shake at x4 and x8
 - **Combo Break:** Red flash when combo expires
 
-#### Sound Design (Optional)
-- Click sound pitch increases with combo
-- Special sound on combo level-up
-- Satisfying "break" sound on combo loss
-
-#### Achievements
-- **Combo Starter:** Reach x2 combo (Reward: +1 base click value)
-- **Combo Expert:** Reach x4 combo 10 times (Reward: +5% manual collection)
-- **Combo Master:** Reach x8 combo 100 times (Reward: +10% manual collection)
-- **Speed Clicker:** Maintain x8 combo for 60 seconds (Reward: +1 second combo timer)
-
-#### Technical Implementation
+#### ✅ Technical Implementation
 - New `ComboSystem` class in `src/modules/combo-system.js`
+- New `ComboUI` class in `src/ui/combo-ui.js`
 - Combo state tracked in game state
 - Timer using `requestAnimationFrame` for smooth countdown
-- CSS animations for visual effects
+- CSS animations in `src/ui/combo-styles.css`
+- Statistics tracking for combo stats
+
+#### 🔮 Future Enhancements (Post-v0.3.0)
+- Sound Design: Click sounds with pitch changes
+- Achievements:
+  - **Combo Starter:** Reach x2 combo (Reward: +1 base click value)
+  - **Combo Expert:** Reach x4 combo 10 times (Reward: +5% manual collection)
+  - **Combo Master:** Reach x8 combo 100 times (Reward: +10% manual collection)
+  - **Speed Clicker:** Maintain x8 combo for 60 seconds (Reward: +1 second combo timer)
 
 ---
 
-### 2. 🎓 **Tutorial System** (High Priority)
+### 2. 🎓 **Tutorial System** ✅ **COMPLETED** (PR #3)
+
+**Status:** Merged Feb 10, 2026  
+**Implementation:** [Pull Request #3](https://github.com/oliverlaudan-ops/AI-Idle/pull/3)
 
 **Problem:** New players don't know where to start  
 **Solution:** Interactive step-by-step tutorial
 
-#### Tutorial Flow (7 Steps)
+#### ✅ Implemented Tutorial Flow (7 Steps)
 
 **Step 1: Welcome**
 - Modal overlay with game introduction
@@ -98,8 +107,8 @@ v0.2.1 ✅ (Feb 9, 2026)  - Hotfix: Training Animations
 **Step 2: Manual Collection**
 - Highlight "Collect Data" button
 - "Click here to gather your first training data!"
-- Wait for first click
-- Show combo system explanation
+- Wait for 3 clicks to proceed
+- Shows combo system explanation
 
 **Step 3: Resources**
 - Highlight stats bar
@@ -107,118 +116,177 @@ v0.2.1 ✅ (Feb 9, 2026)  - Hotfix: Training Animations
 - Explain each resource icon
 
 **Step 4: First Building**
-- Highlight "CPU Core" building
+- Highlight Tier 1 buildings section
 - "Build your first infrastructure to generate data automatically!"
-- Wait for first building purchase
-- Show passive income increase
+- Wait for CPU Core purchase
+- Shows passive income benefits
 
 **Step 5: First Model Training**
-- Unlock "Digit Recognition" if not unlocked
-- Highlight training tab
+- Switches to Training tab automatically
+- Highlight training tab button
 - "Now train your first neural network!"
 - Wait for training start
-- Show training progress visualization
+- Shows training progress visualization
 
 **Step 6: Research**
 - Highlight research tab
 - "Unlock new technologies to improve your AI!"
-- Show first research item
+- Shows upgrade system
 
 **Step 7: Achievements & Goals**
 - Highlight achievements tab
 - "Track your progress and earn permanent bonuses!"
-- Show next achievement goals
+- Shows completion celebration with confetti animation
 - Tutorial complete! 🎉
 
-#### Features
+#### ✅ Implemented Features
 - **Spotlight System:** Dim rest of screen, highlight current element
 - **Step Indicator:** "Step 2/7" progress bar
 - **Skip Anytime:** "Skip Tutorial" button always visible
-- **Persist State:** Remember tutorial progress in save file
-- **Replay Option:** "Restart Tutorial" in settings
-- **Tooltips:** Contextual help after tutorial completion
+- **Persist State:** Tutorial progress saved in LocalStorage
+- **Replay Option:** "🎓 Tutorial" button in footer
+- **Animations:** Smooth transitions, pulse effects, confetti celebration
+- **Mobile Optimized:** Touch-friendly, responsive design
+- **Accessibility:** Reduced motion support, keyboard navigation (ESC to skip)
 
-#### Technical Implementation
+#### ✅ Technical Implementation
 - New `TutorialSystem` class in `src/ui/tutorial.js`
 - Modal overlay with z-index management
-- Event listeners for tutorial progression
-- LocalStorage flag for completion status
+- Event listeners for action-based progression
+- LocalStorage flag for completion status: `ai-idle-tutorial-completed`
+- Integrated with offline progress modal (only shown after tutorial)
+- CSS animations in `src/ui/tutorial-styles.css`
 
 ---
 
-### 3. ✨ **Quality of Life Improvements** (High Priority)
+### 3A. ✨ **Auto-Training Queue** ✅ **COMPLETED** (PR #4)
 
-#### A. Auto-Training Queue
+**Status:** Merged Feb 10, 2026  
+**Implementation:** [Pull Request #4](https://github.com/oliverlaudan-ops/AI-Idle/pull/4)
+
 **Feature:** Automatically train next model when current training completes
 
-- **Queue UI:**
-  - "Add to Queue" button on each model card
-  - Queue display showing next 3 models
-  - Drag-to-reorder queue (optional)
-  - "Clear Queue" button
-- **Smart Queue:**
-  - Only queues models with sufficient resources
-  - Skips models if resources unavailable
-  - Shows estimated queue completion time
-- **Settings:**
-  - Toggle "Auto-queue enabled"
-  - "Repeat last model" option
-  - Queue notifications
+#### ✅ Implemented Features
 
-#### B. Bulk Building Purchase
+**Queue Management:**
+- "📋 Add to Queue" button on each model card
+- Queue display showing all queued models (up to 10)
+- Reorder queue: Move up/down buttons
+- Remove from queue: Individual remove buttons
+- "Clear Queue" button to remove all
+- Queue counter: "3 / 10 models"
+
+**Smart Queue:**
+- Only queues models when resources are sufficient
+- Skips models if resources unavailable during execution
+- Shows estimated queue completion time
+- Visual resource warnings (red indicator) for unaffordable models
+
+**Settings:**
+- Toggle "Auto-queue enabled"
+- Toggle "Repeat last model" option
+- Queue state persists in save file
+
+**User Interface:**
+- Dedicated queue section below training status
+- Empty state message when queue is empty
+- Model icons and names in queue list
+- Button state management ("Add to Queue" ↔ "✓ In Queue")
+- Smooth animations and transitions
+- Responsive design for mobile
+
+#### ✅ Technical Implementation
+- New `TrainingQueue` class in `src/modules/training-queue.js`
+- New `TrainingQueueUI` class in `src/ui/training-queue-ui.js`
+- Queue integrated into `GameState` with save/load support
+- Auto-detection of newly unlocked models
+- Optimized rendering (state tracking prevents flickering)
+- Toast notifications for queue actions
+- CSS styling in `src/ui/training-queue-styles.css`
+
+**Files Added:**
+- `src/modules/training-queue.js` (253 lines)
+- `src/ui/training-queue-ui.js` (419 lines)
+- `src/ui/training-queue-styles.css` (344 lines)
+- `docs/TRAINING_QUEUE.md` (545 lines documentation)
+
+---
+
+### 3B-D. ✨ **Additional Quality of Life Improvements** 🚧 **IN PROGRESS** (PR #5)
+
+**Status:** Development in progress  
+**Target:** Feb 10-11, 2026
+
+#### B. Bulk Building Purchase 🔜
 **Feature:** Buy multiple buildings at once
 
 - **Buy Amounts:**
   - Buy x1 (default)
-  - Buy x10 (normal click)
-  - Buy x100 (Shift + click)
-  - Buy Max (Ctrl + click)
+  - Buy x10 (button toggle)
+  - Buy x100 (button toggle)
+  - Buy Max (button toggle)
 - **Visual Feedback:**
   - Show total cost for bulk purchase
-  - "Affordable" amount highlighted in green
-  - "Max: 47" indicator
+  - "Max: 47" indicator showing affordable amount
+  - Cost preview updates in real-time
 - **Keyboard Shortcuts:**
-  - 1: Buy x1
-  - Shift: Hold for x10
-  - Ctrl: Hold for x100
-  - Ctrl+Shift: Buy max affordable
+  - Shift + Click: Buy x10
+  - Ctrl + Click: Buy x100
+  - Ctrl + Shift + Click: Buy max affordable
 
-#### C. Resource Notifications
+#### C. Enhanced Resource Notifications 🔜
 **Feature:** Smart notifications for important events
 
 - **Unlock Notifications:**
-  - "New Building Unlocked: GPU Cluster! 🖥️"
-  - "New Model Available: Image Classification! 🖼️"
-  - "New Research: Adam Optimizer! 🔬"
+  - "🖥️ New Building Unlocked: GPU Cluster!"
+  - "🧠 New Model Available: Image Classification!"
+  - "🔬 New Research: Adam Optimizer!"
 - **Milestone Notifications:**
-  - "1,000 data collected! 🎉"
-  - "100 TFLOPS reached! ⚡"
-  - "First achievement unlocked! 🏆"
+  - "🎉 1,000 data collected!"
+  - "⚡ 100 TFLOPS reached!"
+  - "🏆 First achievement unlocked!"
 - **Settings:**
-  - Toggle notification types
-  - Notification duration
-  - Sound on/off
+  - Toggle notification types in settings panel
+  - Notification duration slider
+  - Sound on/off toggle (when sound system implemented)
 
-#### D. Progress Indicators
+#### D. Progress Indicators 🔜
 **Feature:** Show progress to next unlocks and goals
 
-- **"Next Unlock" Section:**
+- **"Next Unlock" Widget:**
   - Shows closest locked building/model/research
   - Progress bar: "67% to GPU Cluster"
-  - Estimated time to unlock
+  - Estimated time to unlock based on current production
+  - Updates in real-time
 - **Achievement Progress:**
   - "Train 7/10 models for Generalist AI"
-  - Progress bars on locked achievements
-  - "Closest Achievement" widget
+  - Progress bars on achievement cards
+  - "Closest Achievement" highlighted
 - **Resource Projections:**
-  - "At current rate: X hours to next unlock"
+  - "At current rate: 2 hours to next unlock"
   - Hourly production breakdown
+  - Production per building type
 
 ---
 
-### 4. 🎨 **Visual Polish** (Medium Priority)
+### 4. 🎨 **Visual Polish** (Medium Priority) ⏸️ **DEFERRED**
 
-#### A. Enhanced Particle Effects
+**Status:** Partially implemented in v0.2.0, additional polish deferred to post-v0.3.0
+
+**Existing Visual Features (v0.2.0):**
+- ✅ Canvas-based training animations
+- ✅ Real-time training curve visualization
+- ✅ Particle celebration on training completion
+- ✅ Progress bars with dynamic effects
+- ✅ Training phase indicators
+
+**Existing Visual Features (v0.3.0):**
+- ✅ Combo system particles and animations
+- ✅ Tutorial spotlight and transitions
+- ✅ Screen shake effects
+- ✅ Confetti celebration animations
+
+#### Future Enhancements (Post-v0.3.0)
 
 **Achievement Unlocks:**
 - Golden particle burst from center
@@ -240,197 +308,136 @@ v0.2.1 ✅ (Feb 9, 2026)  - Hotfix: Training Animations
   - Accuracy: Green stars
   - Research: Purple wisps
 
-**Training Complete:**
-- Enhanced particle celebration (already exists)
-- Model card glows on completion
-- Accuracy gain numbers float up
-- Victory banner animation
+**Sound System (Optional):**
+- Click/Button press sounds
+- Building purchase sounds
+- Training start/complete sounds
+- Achievement unlock fanfares
+- Volume controls and settings
+- Web Audio API implementation
 
-#### B. Sound System (Optional)
-
-**Core Sounds:**
-- Click/Button press: Satisfying "thunk"
-- Building purchase: Cash register "cha-ching"
-- Training start: Power-up "whoosh"
-- Training complete: Victory "jingle"
-- Achievement unlock: Triumphant "fanfare"
-- Resource milestone: Celebratory "ding"
-- Combo level-up: Rising pitch "bloop"
-- UI navigation: Soft "click"
-
-**Features:**
-- **Volume Control:** Master slider in settings
-- **Mute Toggle:** Hotkey (M) and button
-- **Sound Categories:**
-  - UI Sounds (clicks, navigation)
-  - Game Events (training, building)
-  - Achievements (unlocks, milestones)
-- **Persist Settings:** Save sound preferences
-
-**Implementation:**
-- Web Audio API for precise timing
-- Audio sprite for performance
-- Fallback for browsers without audio support
-- Respectful defaults (off by default, easy to enable)
-
-#### C. Animation Enhancements
-
-**Smooth Transitions:**
-- Tab switching with slide animation
-- Cards fade in when unlocked
-- Counters animate when values change (odometer effect)
-- Progress bars fill smoothly
-
-**Hover Effects:**
-- Buildings scale slightly on hover
-- Cards lift with shadow on hover
-- Buttons glow on hover
-- Tooltips slide in smoothly
-
-**Loading States:**
-- Skeleton screens for initial load
-- Spinner for save/load operations
-- Progress indicator for export
+**Animation Enhancements:**
+- Tab switching slide animations
+- Card fade-in on unlock
+- Counter odometer effects
+- Enhanced hover effects
+- Loading state animations
 
 ---
 
-### 5. 📊 **Statistics Dashboard Expansion** (Medium Priority)
+### 5. 📊 **Statistics Dashboard Expansion** 🚧 **IN PROGRESS** (PR #5)
 
-#### New Stats Sections
+**Status:** Development in progress  
+**Target:** Feb 10-11, 2026
+
+**Existing Stats (v0.2.0):**
+- ✅ Playtime tracking
+- ✅ Total resources generated
+- ✅ Building counts
+- ✅ Models trained statistics
+- ✅ Research completion tracking
+- ✅ Deployment count
+
+#### Planned Enhancements
 
 **Production Breakdown:**
-- Pie chart of resource sources
+- Visual breakdown of resource sources
 - "Data from Buildings: 85%"
-- "Data from Manual: 15%"
+- "Data from Manual Clicks: 15%"
 - "Top Producer: GPU Cluster (45%)"
-
-**Historical Accuracy:**
-- Line graph of accuracy over time
-- Session markers
-- Deployment points marked
-- Best/worst sessions highlighted
+- Bar charts or progress indicators
 
 **Resources Per Hour:**
-- Current production rates
-- Projected gains in 1h, 8h, 24h
-- Comparison to previous sessions
-- "You're earning 23% more than average!"
+- Current production rates (already exists)
+- **NEW:** Projected gains in 1h, 8h, 24h
+- **NEW:** Comparison to previous sessions
+- **NEW:** Session performance indicators
 
 **Most Trained Models:**
 - Leaderboard of most-trained models
 - "Digit Recognition: 47 times"
-- Total time spent training each
-- Favorite model badge
+- Total time spent training each model
+- Favorite model indicator
+
+**Session Stats:**
+- **NEW:** This Session vs All Time comparison
+- **NEW:** Session start time and duration
+- **NEW:** Resources gained this session
+- **NEW:** Buildings built this session
+- **NEW:** Models trained this session
 
 **Training History:**
-- Timeline of all training sessions
+- Timeline of training sessions
 - Accuracy gained per model
-- Average training time
-- Success rate
-
-#### Session Stats
-
-**This Session:**
-- Time played
-- Resources gained
-- Buildings built
-- Models trained
-- Achievements unlocked
-
-**All Time vs Session:**
-- Side-by-side comparison
-- Personal records highlighted
-- "New record: Most data in one session!"
-
-**Best Session:**
-- Show stats from best historical session
-- Date and time
-- What made it special
-- Try to beat it!
+- Average training time per model
+- Success rate tracking
 
 ---
 
-### 6. ♿ **Accessibility Features** (Medium Priority)
+### 6. ♿ **Accessibility Features** (Medium Priority) ⏸️ **DEFERRED**
 
-#### A. Settings Panel
+**Status:** Deferred to post-v0.3.0 or v1.0
 
-**Animation Settings:**
-- **Animation Speed:** Slider (0.5x - 2.0x)
-- **Reduce Motion:** Toggle for users with motion sensitivity
-- **Particle Effects:** Toggle on/off
-- **Screen Shake:** Toggle on/off
+**Existing Accessibility:**
+- ✅ Reduced motion support in combo and tutorial animations
+- ✅ Keyboard navigation (ESC to close modals)
+- ✅ Screen reader friendly structure
 
-**Display Settings:**
-- **Font Size:** Small / Medium / Large
-- **High Contrast Mode:** Increase contrast for readability
-- **Color Blind Mode:** Alternative color palettes
-  - Deuteranopia (red-green)
-  - Protanopia (red-green)
-  - Tritanopia (blue-yellow)
-- **Dark/Light Theme:** Toggle (dark is default)
+#### Future Enhancements (Post-v0.3.0)
+
+**Settings Panel:**
+- Animation speed slider (0.5x - 2.0x)
+- Particle effects toggle
+- Screen shake toggle
+- Font size options (Small / Medium / Large)
+- High contrast mode
+- Color blind modes (Deuteranopia, Protanopia, Tritanopia)
+- Dark/Light theme toggle
 
 **Gameplay Settings:**
-- **Auto-Save Interval:** 10s / 30s / 60s / Manual only
-- **Offline Progress:** Toggle on/off
-- **Confirmations:** Require confirm for reset, deploy, etc.
-- **Hotkeys Enabled:** Toggle keyboard shortcuts
+- Auto-save interval options
+- Offline progress toggle
+- Confirmation dialogs toggle
+- Hotkey customization
 
-#### B. Keyboard Navigation
-
-**Tab Shortcuts:**
-- `1`: Infrastructure
-- `2`: Training
-- `3`: Research
-- `4`: Deployment
-- `5`: Achievements
-- `6`: Statistics
-
-**Action Shortcuts:**
-- `Space`: Collect Data (manual)
-- `S`: Save Game
-- `E`: Export Save
-- `M`: Mute/Unmute
-- `?`: Show help/shortcuts
-
-**Modifier Keys:**
-- `Shift + Click`: Buy x10
-- `Ctrl + Click`: Buy x100
-- `Ctrl + Shift + Click`: Buy Max
-
-**Focus Management:**
-- Tab through interactive elements
+**Keyboard Navigation:**
+- Tab shortcuts (1-6 for different tabs)
+- Action shortcuts (Space, S, E, M, ?)
+- Full keyboard navigation support
 - Visual focus indicators
-- Escape to close modals
 
 ---
 
-## 📋 Version 0.3.0 Implementation Plan
+## 📋 Version 0.3.0 Implementation Status
 
-### Phase 1: Foundation (Days 1-3)
-- [ ] Create `ROADMAP.md` ✅
-- [ ] Set up feature branches
-- [ ] Implement `ComboSystem` class
-- [ ] Add tutorial system framework
-- [ ] Create settings panel UI
+### ✅ Completed (Feb 10, 2026)
+- [x] Create `ROADMAP.md`
+- [x] Set up feature branches
+- [x] Implement `ComboSystem` class (PR #2)
+- [x] Add combo UI with visuals (PR #2)
+- [x] Implement all 7 tutorial steps (PR #3)
+- [x] Add tutorial system with spotlight (PR #3)
+- [x] Implement TrainingQueue system (PR #4)
+- [x] Add TrainingQueueUI with queue management (PR #4)
+- [x] Auto-training queue integration (PR #4)
 
-### Phase 2: Core Features (Days 4-7)
-- [ ] Complete combo system with visuals
-- [ ] Implement all 7 tutorial steps
-- [ ] Add auto-training queue
-- [ ] Bulk building purchase
-- [ ] Resource notifications
+### 🚧 In Progress (Feb 10-11, 2026)
+- [ ] Bulk building purchase (PR #5)
+- [ ] Enhanced resource notifications (PR #5)
+- [ ] Progress indicators widget (PR #5)
+- [ ] Statistics dashboard refresh (PR #5)
 
-### Phase 3: Polish (Days 8-10)
+### 📅 Planned (Post-v0.3.0)
 - [ ] Enhanced particle effects
-- [ ] Sound system (if included)
+- [ ] Sound system implementation
 - [ ] Animation improvements
-- [ ] Statistics expansion
-- [ ] Keyboard shortcuts
+- [ ] Accessibility settings panel
+- [ ] Keyboard shortcuts system
 
-### Phase 4: Testing & Release (Days 11-14)
+### 🎯 Release Preparation
 - [ ] Bug testing
-- [ ] Balance adjustments
-- [ ] Documentation updates
+- [ ] Balance adjustments (if needed)
+- [ ] Documentation updates (CHANGELOG.md, README.md)
 - [ ] Create release notes
 - [ ] Deploy v0.3.0
 
@@ -1170,16 +1177,16 @@ ACHIEVEMENTS
 5. ✅ Expanded Research (40+)
 
 ### High Priority (Should-Have)
-6. ✅ Tutorial System (v0.3)
-7. ✅ Combo System (v0.3)
-8. ✅ Auto-Training Queue (v0.3)
-9. ✅ Statistics Dashboard (v0.3)
+6. ✅ Tutorial System (v0.3.0 - PR #3)
+7. ✅ Combo System (v0.3.0 - PR #2)
+8. ✅ Auto-Training Queue (v0.3.0 - PR #4)
+9. 🚧 Statistics Dashboard (v0.3.0 - PR #5)
 10. ✅ Events & Challenges
 
 ### Medium Priority (Nice-to-Have)
-11. ✅ Sound System (v0.3)
-12. ✅ Visual Polish (v0.3)
-13. ✅ Accessibility Features (v0.3)
+11. ⏸️ Sound System (deferred)
+12. ⏸️ Visual Polish (partially done)
+13. ⏸️ Accessibility Features (deferred)
 14. ✅ PWA Features
 15. ✅ Challenge System
 
@@ -1218,11 +1225,11 @@ ACHIEVEMENTS
 
 ## 📈 Success Metrics
 
-### v0.3 Goals
+### v0.3.0 Goals
 - 90%+ tutorial completion rate
 - Average session length: 15+ minutes
 - Combo system used by 80%+ players
-- Settings panel accessed by 50%+ players
+- Training queue used by 70%+ players
 
 ### v1.0 Goals
 - 10+ deployments per player average
@@ -1237,17 +1244,22 @@ ACHIEVEMENTS
 
 This roadmap outlines a clear path from v0.2.1 to v1.0 and beyond:
 
-- **v0.3.0:** Polish and improve player experience (2 weeks)
+- **v0.3.0:** Polish and improve player experience (1 week) - **75% COMPLETE**
+  - ✅ Combo System (PR #2)
+  - ✅ Tutorial System (PR #3)
+  - ✅ Auto-Training Queue (PR #4)
+  - 🚧 QoL Improvements (PR #5 in progress)
 - **v1.0.0:** Complete game with all major systems (4 weeks)
 - **Post-1.0:** Community features and advanced content
 
-Total estimated time to v1.0: **6 weeks from now** (Mid-March 2026)
+Total estimated time to v1.0: **5 weeks from now** (Mid-March 2026)
 
 **Next Steps:**
-1. Review and approve roadmap
-2. Create GitHub milestones and issues
-3. Begin v0.3.0 development
-4. Iterate based on feedback
+1. ✅ Review and approve roadmap
+2. ✅ Create GitHub milestones and issues
+3. 🚧 Complete v0.3.0 development (PR #5)
+4. 🔜 Release v0.3.0
+5. 🎯 Begin v1.0.0 planning
 
 ---
 
