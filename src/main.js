@@ -6,6 +6,7 @@ import { renderAll, showToast } from './ui/ui-render.js';
 import { TutorialSystem } from './ui/tutorial.js';
 import { TrainingQueueUI } from './ui/training-queue-ui.js';
 import { BulkPurchaseUI } from './ui/bulk-purchase-ui.js';
+import { SettingsUI } from './ui/settings-ui.js';
 
 // Game loop constants
 const LOOP_CONSTANTS = {
@@ -26,7 +27,8 @@ const STORAGE_KEY = 'ai-idle-save';
 window.game = null;
 window.tutorial = null; // Global tutorial instance
 window.queueUI = null; // Global queue UI instance
-window.bulkPurchaseUI = null; // NEW: Global bulk purchase UI instance
+window.bulkPurchaseUI = null; // Global bulk purchase UI instance
+window.settingsUI = null; // NEW: Global settings UI instance
 let lastTick = Date.now();
 let lastSave = Date.now();
 let lastRender = Date.now();
@@ -100,20 +102,28 @@ function init() {
         console.log('🎨 Initializing UI...');
         initializeUI(window.game);
         
-        // NEW: Initialize Tutorial System
+        // Initialize Tutorial System
         console.log('🎓 Initializing Tutorial System...');
         window.tutorial = new TutorialSystem(window.game);
         window.tutorial.init();
         
-        // NEW: Initialize Training Queue UI
+        // Initialize Training Queue UI
         console.log('📋 Initializing Training Queue UI...');
         window.queueUI = new TrainingQueueUI(window.game);
         window.queueUI.init();
         
-        // NEW: Initialize Bulk Purchase UI
+        // Initialize Bulk Purchase UI
         console.log('🛠️ Initializing Bulk Purchase UI...');
         window.bulkPurchaseUI = new BulkPurchaseUI(window.game);
         window.bulkPurchaseUI.init();
+        
+        // NEW: Initialize Settings UI
+        console.log('⚙️ Initializing Settings UI...');
+        window.settingsUI = new SettingsUI(window.game.settings, window.game);
+        window.settingsUI.init();
+        
+        // Apply settings to game
+        window.game.settings.apply(window.game);
         
         // Initial render
         renderAll(window.game);
@@ -170,12 +180,12 @@ function gameLoop() {
         if (now - lastRender >= LOOP_CONSTANTS.RENDER_INTERVAL) {
             renderAll(window.game);
             
-            // NEW: Update queue UI
+            // Update queue UI
             if (window.queueUI) {
                 window.queueUI.update();
             }
             
-            // NEW: Update bulk purchase UI
+            // Update bulk purchase UI
             if (window.bulkPurchaseUI) {
                 window.bulkPurchaseUI.update();
             }
@@ -183,8 +193,9 @@ function gameLoop() {
             lastRender = now;
         }
         
-        // Auto-save check
-        if (now - lastSave >= LOOP_CONSTANTS.SAVE_INTERVAL) {
+        // Auto-save check (respects settings)
+        const autoSaveInterval = window.game.settings.get('gameplay', 'autoSaveInterval');
+        if (now - lastSave >= autoSaveInterval) {
             saveGame(true); // true = auto-save
             lastSave = now;
         }
@@ -207,6 +218,11 @@ function gameLoop() {
 function showAchievementUnlock(achievement) {
     console.log(`🏆 Achievement unlocked: ${achievement.name}`);
     
+    // Check if achievement notifications are enabled
+    if (!window.game.settings.get('notifications', 'achievements')) {
+        return;
+    }
+    
     // Create special toast for achievements
     const container = document.getElementById('toast-container');
     if (!container) return;
@@ -226,19 +242,22 @@ function showAchievementUnlock(achievement) {
     
     container.appendChild(toast);
     
-    // Play sound if available
-    try {
-        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZRQ0PVqzn77BdGAg+ltryxnMpBSh+zPLaizsIGGS57OihUBELTKXh8bllHAU2jtXzzn0uBSd7yvLekDcJGGe+7ueXRA0PU6nm8bllHQU4kdXzzn4vBSh9y/LfkjgJGWm/7+aXRA8OU6vl8bplHgU4ktXzzn8wBSl+y/LgkzgKGWm/7+aXRQ8RUqrl8bplHgU4ktXzzoAwBil+y/LgkzkKGWnA7+aXRQ8RUqrl8bpmHgU4ktX0zoAwBil+y/LhlDoKGWnA7+aYRQ8RUqrl8bpmHgU4ktX0z4AwBil+y/Lhlj0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4E');
-        audio.volume = 0.3;
-        audio.play().catch(() => {}); // Ignore errors if audio fails
-    } catch (e) {
-        // Ignore audio errors
+    // Play sound if enabled
+    if (window.game.settings.get('notifications', 'sound')) {
+        try {
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZRQ0PVqzn77BdGAg+ltryxnMpBSh+zPLaizsIGGS57OihUBELTKXh8bllHAU2jtXzzn0uBSd7yvLekDcJGGe+7ueXRA0PU6nm8bllHQU4kdXzzn4vBSh9y/LfkjgJGWm/7+aXRA8OU6vl8bplHgU4ktXzzn8wBSl+y/LgkzgKGWm/7+aXRQ8RUqrl8bplHgU4ktXzzoAwBil+y/LgkzkKGWnA7+aXRQ8RUqrl8bpmHgU4ktX0zoAwBil+y/LhlDoKGWnA7+aYRQ8RUqrl8bpmHgU4ktX0z4AwBil+y/Lhlj0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4E');
+            audio.volume = 0.3;
+            audio.play().catch(() => {}); // Ignore errors if audio fails
+        } catch (e) {
+            // Ignore audio errors
+        }
     }
     
+    const displayTime = window.game.settings.get('notifications', 'toastDuration');
     setTimeout(() => {
         toast.style.animation = 'slideOut 0.3s ease';
         setTimeout(() => toast.remove(), LOOP_CONSTANTS.ACHIEVEMENT_ANIMATION_TIME);
-    }, LOOP_CONSTANTS.ACHIEVEMENT_DISPLAY_TIME);
+    }, displayTime);
 }
 
 // Save game
@@ -340,10 +359,13 @@ let hiddenTime = 0;
 
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-        wasHidden = true;
-        hiddenTime = Date.now();
-        console.log('👋 Tab hidden - game continues in background');
-        // Save when tab is hidden
+        // Check if game should pause on blur
+        if (window.game && window.game.settings.get('gameplay', 'pauseOnBlur')) {
+            wasHidden = true;
+            hiddenTime = Date.now();
+            console.log('👋 Tab hidden - game paused');
+        }
+        // Always save when tab is hidden
         saveGame();
     } else if (wasHidden) {
         const offlineTime = Date.now() - hiddenTime;
@@ -374,12 +396,12 @@ document.addEventListener('visibilitychange', () => {
             
             renderAll(window.game);
             
-            // NEW: Update queue UI after offline progress
+            // Update queue UI after offline progress
             if (window.queueUI) {
                 window.queueUI.update();
             }
             
-            // NEW: Update bulk purchase UI after offline progress
+            // Update bulk purchase UI after offline progress
             if (window.bulkPurchaseUI) {
                 window.bulkPurchaseUI.update();
             }
