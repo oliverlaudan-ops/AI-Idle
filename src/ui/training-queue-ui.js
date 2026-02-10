@@ -7,6 +7,7 @@ export class TrainingQueueUI {
         this.game = game;
         this.queueContainer = null;
         this.settingsContainer = null;
+        this.buttonsAdded = false; // Track if buttons were added
     }
     
     // Initialize UI
@@ -15,7 +16,10 @@ export class TrainingQueueUI {
         this.createQueueUI();
         
         // Add queue buttons to existing model cards
-        this.addQueueButtons();
+        // Delay to ensure model cards are rendered first
+        setTimeout(() => {
+            this.addQueueButtons();
+        }, 100);
         
         // Update UI initially
         this.update();
@@ -119,32 +123,46 @@ export class TrainingQueueUI {
     
     // Add "Add to Queue" buttons to model cards
     addQueueButtons() {
+        // Find all model cards
         const modelCards = document.querySelectorAll('.model-card');
         
         if (modelCards.length === 0) {
-            console.log('No model cards found yet, retrying in 500ms...');
-            setTimeout(() => this.addQueueButtons(), 500);
+            if (!this.buttonsAdded) {
+                console.log('No model cards found yet, will retry...');
+            }
             return;
         }
         
-        console.log(`Found ${modelCards.length} model cards, adding queue buttons...`);
+        console.log(`Adding queue buttons to ${modelCards.length} model cards...`);
         
         modelCards.forEach(card => {
             // Skip if button already exists
-            if (card.querySelector('.btn-add-queue')) return;
+            if (card.querySelector('.btn-add-queue')) {
+                return;
+            }
             
-            const modelId = card.dataset.modelId;
-            if (!modelId) return;
+            // Extract model ID from card id (format: "model-{id}")
+            const cardId = card.id;
+            if (!cardId || !cardId.startsWith('model-')) {
+                return;
+            }
             
-            // Find the train button
-            const trainBtn = card.querySelector('.btn-train');
-            if (!trainBtn) return;
+            const modelId = cardId.replace('model-', '');
+            
+            // Find the train button by ID
+            const trainBtn = card.querySelector(`#btn-model-${modelId}`);
+            if (!trainBtn) {
+                console.warn(`Train button not found for model ${modelId}`);
+                return;
+            }
             
             // Create add to queue button
             const queueBtn = document.createElement('button');
             queueBtn.className = 'btn-secondary btn-small btn-add-queue';
             queueBtn.innerHTML = '📋 Add to Queue';
             queueBtn.dataset.modelId = modelId;
+            queueBtn.style.marginTop = '0.5rem';
+            queueBtn.style.width = '100%';
             
             // Add click handler
             queueBtn.addEventListener('click', (e) => {
@@ -156,6 +174,7 @@ export class TrainingQueueUI {
             trainBtn.parentNode.insertBefore(queueBtn, trainBtn.nextSibling);
         });
         
+        this.buttonsAdded = true;
         console.log('Queue buttons added successfully!');
     }
     
@@ -311,9 +330,6 @@ export class TrainingQueueUI {
         
         // Update "Add to Queue" buttons state
         this.updateQueueButtons();
-        
-        // Re-add queue buttons if model cards were re-rendered
-        this.addQueueButtons();
     }
     
     // Setup event listeners for queue item controls
