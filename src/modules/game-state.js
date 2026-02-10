@@ -8,6 +8,7 @@ import { initializeAchievements } from './achievements.js';
 import { initializePrestige } from './prestige.js';
 import { checkAndUnlockAchievements, getAchievementBonus } from './achievement-checker.js';
 import { ComboSystem } from './combo-system.js';
+import { TrainingQueue } from './training-queue.js';
 
 // Game constants
 const GAME_CONSTANTS = {
@@ -28,6 +29,9 @@ export class GameState {
         
         // NEW: Combo system for manual collection
         this.comboSystem = new ComboSystem();
+        
+        // NEW: Training queue system
+        this.trainingQueue = new TrainingQueue(this);
         
         this.currentTraining = null;
         this.trainingProgress = 0;
@@ -256,6 +260,11 @@ export class GameState {
         }
     }
     
+    // NEW: Get training speed multiplier (used by queue for estimates)
+    getTrainingSpeedMultiplier() {
+        return this.achievementBonuses.trainingSpeed;
+    }
+    
     // Training Management
     startTraining(modelId) {
         const model = this.models[modelId];
@@ -304,6 +313,9 @@ export class GameState {
         }
         
         this.stopTraining();
+        
+        // NEW: Notify queue that training completed
+        this.trainingQueue.onTrainingComplete();
     }
     
     // Research Management
@@ -532,7 +544,8 @@ export class GameState {
             training: this.training,
             stats: this.stats,
             settings: this.settings,
-            comboSystem: this.comboSystem.save() // NEW: Save combo system state
+            comboSystem: this.comboSystem.save(),
+            trainingQueue: this.trainingQueue.save() // NEW: Save queue state
         };
         
         this.lastSaveTime = Date.now();
@@ -570,6 +583,11 @@ export class GameState {
             // NEW: Load combo system state
             if (saveData.comboSystem) {
                 this.comboSystem.load(saveData.comboSystem);
+            }
+            
+            // NEW: Load training queue state
+            if (saveData.trainingQueue) {
+                this.trainingQueue.load(saveData.trainingQueue);
             }
             
             // Ensure lastPlaytimeUpdate is set
