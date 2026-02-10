@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="src/ui/bulk-purchase-styles.css">
     <link rel="stylesheet" href="src/ui/settings-styles.css">
     <link rel="stylesheet" href="src/ui/hotkey-styles.css">
+    
+    <!-- TensorFlow.js v4.x - ML in the Browser -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
 </head>
 <body>
     <div class="game-container" id="game">
@@ -61,6 +64,7 @@
             <button class="tab-btn" data-tab="deployment">🚀 Deployment</button>
             <button class="tab-btn" data-tab="achievements">🏆 Achievements</button>
             <button class="tab-btn" data-tab="statistics">📈 Statistics</button>
+            <button class="tab-btn" data-tab="ai-lab">🤖 AI Lab</button>
         </nav>
 
         <!-- Main Content Area -->
@@ -286,6 +290,17 @@
                     </div>
                 </div>
             </div>
+
+            <!-- AI Lab Tab (NEW) -->
+            <div class="tab-content" id="tab-ai-lab">
+                <div class="tab-header">
+                    <h2>🤖 AI Lab - Real Machine Learning</h2>
+                    <p class="tab-description">Train real neural networks and watch AI learn to play!</p>
+                </div>
+                <div id="ai-lab-content">
+                    <p style="text-align: center; padding: 2rem; color: var(--text-secondary);">AI Lab features are being initialized...</p>
+                </div>
+            </div>
         </main>
 
         <!-- Footer with Controls -->
@@ -300,7 +315,7 @@
                 <button class="btn-danger" id="btn-reset">🔄 Reset Game</button>
             </div>
             <div class="footer-info">
-                <span>AI-Idle v0.3.0-dev</span>
+                <span>AI-Idle v1.0.0-dev</span>
                 <span>|</span>
                 <span>Last save: <span id="last-save-time">Never</span></span>
                 <span>|</span>
