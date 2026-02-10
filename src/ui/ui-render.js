@@ -80,12 +80,15 @@ function createBuildingCard(id, building) {
         <button class="card-button" id="btn-building-${id}">Build</button>
     `;
     
-    // Add click handler
+    // Add click handler - NOW USES BULK PURCHASE UI
     const button = card.querySelector(`#btn-building-${id}`);
     button.addEventListener('click', () => {
-        if (window.game && window.game.purchaseBuilding(id)) {
-            showToast(`Built ${building.name}!`, 'success');
-        }
+        if (!window.game || !window.bulkPurchaseUI) return;
+        
+        // Use bulkPurchaseUI handler which respects modifier keys
+        const result = window.bulkPurchaseUI.handleBuildingPurchase(id);
+        
+        // Success toast is handled by bulkPurchaseUI
     });
     
     return card;
@@ -128,7 +131,7 @@ function updateBuildingCard(card, building, gameState) {
         costDiv.appendChild(costItem);
     }
     
-    // Update button
+    // Update button state
     const button = document.getElementById(`btn-building-${id}`);
     const canAfford = gameState.canAfford(cost);
     button.disabled = !canAfford;
