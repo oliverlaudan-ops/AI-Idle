@@ -7,6 +7,7 @@ import { TutorialSystem } from './ui/tutorial.js';
 import { TrainingQueueUI } from './ui/training-queue-ui.js';
 import { BulkPurchaseUI } from './ui/bulk-purchase-ui.js';
 import { SettingsUI } from './ui/settings-ui.js';
+import { HotkeySystem } from './modules/hotkeys.js';
 
 // Game loop constants
 const LOOP_CONSTANTS = {
@@ -28,7 +29,8 @@ window.game = null;
 window.tutorial = null; // Global tutorial instance
 window.queueUI = null; // Global queue UI instance
 window.bulkPurchaseUI = null; // Global bulk purchase UI instance
-window.settingsUI = null; // NEW: Global settings UI instance
+window.settingsUI = null; // Global settings UI instance
+window.hotkeys = null; // NEW: Global hotkeys instance
 let lastTick = Date.now();
 let lastSave = Date.now();
 let lastRender = Date.now();
@@ -117,10 +119,23 @@ function init() {
         window.bulkPurchaseUI = new BulkPurchaseUI(window.game);
         window.bulkPurchaseUI.init();
         
-        // NEW: Initialize Settings UI
+        // Initialize Settings UI
         console.log('⚙️ Initializing Settings UI...');
         window.settingsUI = new SettingsUI(window.game.settings, window.game);
         window.settingsUI.init();
+        
+        // NEW: Initialize Hotkey System
+        console.log('⌨️ Initializing Hotkey System...');
+        window.hotkeys = new HotkeySystem(window.game);
+        window.hotkeys.init();
+        
+        // Setup hotkey button in footer
+        const hotkeyBtn = document.getElementById('btn-hotkeys');
+        if (hotkeyBtn) {
+            hotkeyBtn.addEventListener('click', () => {
+                window.hotkeys.showHelp();
+            });
+        }
         
         // Apply settings to game
         window.game.settings.apply(window.game);
