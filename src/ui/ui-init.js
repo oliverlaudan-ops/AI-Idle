@@ -2,18 +2,23 @@
 
 import { initializeTabs } from './ui-tabs.js';
 import { showToast } from './ui-render.js';
+import { ComboUI } from './combo-ui.js';
+
+let comboUI = null;
 
 export function initializeUI(game) {
     // Initialize tabs
     initializeTabs();
     
-    // Manual collect button with animation
+    // Manual collect button with combo system
     const collectBtn = document.getElementById('btn-collect');
-    let clickCount = 0;
-    let lastClickTime = 0;
+    
+    // Initialize combo UI
+    comboUI = new ComboUI(game.comboSystem, collectBtn);
     
     collectBtn.addEventListener('click', () => {
-        game.addResource('data', 1);
+        // Use the new manualCollect method that integrates with combo system
+        const result = game.manualCollect();
         
         // Visual feedback with bounce
         collectBtn.style.transform = 'scale(0.95)';
@@ -21,17 +26,18 @@ export function initializeUI(game) {
             collectBtn.style.transform = '';
         }, 100);
         
-        // Show floating +1 animation
-        const now = Date.now();
-        if (now - lastClickTime < 500) {
-            clickCount++;
-        } else {
-            clickCount = 1;
-        }
-        lastClickTime = now;
-        
-        showFloatingText(collectBtn, `+${clickCount}`, clickCount > 5);
+        // Show floating text with combo info
+        comboUI.showFloatingText(result.amount, result.multiplier);
     });
+    
+    // Update combo timer every frame
+    function updateComboTimer() {
+        if (comboUI) {
+            comboUI.updateTimer();
+        }
+        requestAnimationFrame(updateComboTimer);
+    }
+    updateComboTimer();
     
     // Save button
     document.getElementById('btn-save').addEventListener('click', () => {
@@ -77,7 +83,7 @@ export function initializeUI(game) {
     setupModalHandlers();
 }
 
-// Show floating text animation
+// Show floating text animation (legacy support, now handled by ComboUI)
 function showFloatingText(element, text, isCombo = false) {
     const floater = document.createElement('div');
     floater.className = 'floating-text' + (isCombo ? ' combo' : '');
