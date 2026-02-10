@@ -1,0 +1,277 @@
+/* Combo System Styles */
+
+/* Combo Container */
+.combo-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    min-height: 80px;
+}
+
+/* Combo Display (Large Number) */
+.combo-display {
+    font-size: 3rem;
+    font-weight: 900;
+    text-shadow: 0 0 20px currentColor;
+    transition: color 0.3s ease, transform 0.1s ease;
+    user-select: none;
+}
+
+.combo-display.gray {
+    color: #6b7280;
+    text-shadow: 0 0 10px rgba(107, 114, 128, 0.5);
+}
+
+.combo-display.blue {
+    color: #3b82f6;
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+}
+
+.combo-display.purple {
+    color: #a855f7;
+    text-shadow: 0 0 30px rgba(168, 85, 247, 0.8);
+}
+
+.combo-display.gold {
+    color: #fbbf24;
+    text-shadow: 0 0 40px rgba(251, 191, 36, 1);
+    animation: goldPulse 1s ease infinite;
+}
+
+/* Combo Badge */
+.combo-badge {
+    position: absolute;
+    top: 0;
+    right: -60px;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    user-select: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.combo-badge.gray {
+    background: linear-gradient(135deg, #4b5563, #6b7280);
+    color: #d1d5db;
+}
+
+.combo-badge.blue {
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+}
+
+.combo-badge.purple {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white;
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.5);
+}
+
+.combo-badge.gold {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    color: #1f2937;
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.7);
+    animation: badgeGlow 1s ease infinite;
+}
+
+/* Collect Button Wrapper */
+.collect-btn-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+/* Timer Bar */
+.combo-timer-bar {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% + 20px);
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.combo-timer-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #10b981, #34d399);
+    border-radius: 10px;
+    transition: width 0.1s linear, background 0.3s ease;
+    box-shadow: 0 0 10px currentColor;
+}
+
+/* Combo Break Flash */
+.combo-break-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(239, 68, 68, 0.3);
+    pointer-events: none;
+    z-index: 9999;
+    animation: flashFade 0.3s ease;
+}
+
+/* Floating Combo Text */
+.floating-combo-text {
+    position: fixed;
+    font-size: 1.5rem;
+    font-weight: 900;
+    pointer-events: none;
+    z-index: 1000;
+    animation: floatUp 1s ease forwards;
+    text-shadow: 0 0 10px currentColor;
+}
+
+.floating-combo-text.gray { color: #9ca3af; }
+.floating-combo-text.blue { color: #60a5fa; }
+.floating-combo-text.purple { color: #c084fc; }
+.floating-combo-text.gold { color: #fcd34d; }
+
+/* Combo Particles */
+.combo-particle {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 999;
+    animation: particleBurst 1s ease-out forwards;
+    box-shadow: 0 0 10px currentColor;
+}
+
+/* Animations */
+
+@keyframes comboPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes goldPulse {
+    0%, 100% {
+        text-shadow: 0 0 40px rgba(251, 191, 36, 1);
+        transform: scale(1);
+    }
+    50% {
+        text-shadow: 0 0 60px rgba(251, 191, 36, 1);
+        transform: scale(1.05);
+    }
+}
+
+@keyframes badgeGlow {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(251, 191, 36, 0.7);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(251, 191, 36, 1);
+    }
+}
+
+@keyframes flashFade {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes floatUp {
+    0% {
+        transform: translateY(0) translateX(-50%);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100px) translateX(-50%);
+        opacity: 0;
+    }
+}
+
+@keyframes particleBurst {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--tx), var(--ty)) scale(0);
+        opacity: 0;
+    }
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(calc(var(--shake-intensity) * -1));
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(var(--shake-intensity));
+    }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .combo-display {
+        font-size: 2.5rem;
+    }
+    
+    .combo-badge {
+        right: -50px;
+        padding: 0.4rem 0.8rem;
+        font-size: 1rem;
+    }
+    
+    .floating-combo-text {
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .combo-display {
+        font-size: 2rem;
+    }
+    
+    .combo-badge {
+        position: static;
+        margin-top: 0.5rem;
+    }
+    
+    .combo-container {
+        min-height: 100px;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .combo-display,
+    .combo-badge,
+    .combo-timer-fill,
+    .floating-combo-text,
+    .combo-particle {
+        animation: none !important;
+        transition: none !important;
+    }
+    
+    .combo-display.gold {
+        text-shadow: 0 0 40px rgba(251, 191, 36, 1);
+    }
+}
