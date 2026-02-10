@@ -15,8 +15,12 @@ Train neural networks, optimize algorithms, and scale your AI research facility 
 - 🏭 **Build Infrastructure** - Data centers, GPU clusters, quantum processors
 - 🔬 **Research Technologies** - Unlock real ML algorithms and architectures
 - 🚀 **Deploy Models** - Prestige system with permanent upgrades
-- 📈 **Watch Progress** - Animated training curves and performance metrics ✨
+- 📈 **Watch Progress** - Animated training curves and performance metrics
 - 🏆 **Unlock Achievements** - 17+ achievements with permanent bonuses
+- 📋 **Queue Training** - Automate model training with the queue system ✨ NEW
+- 🛒 **Bulk Purchase** - Buy multiple buildings with Shift+Click ✨ NEW
+- ⚙️ **Customize Settings** - Tailor your experience to your playstyle ✨ NEW
+- ⌨️ **Keyboard Shortcuts** - Efficient keyboard-driven gameplay ✨ NEW
 
 ### Educational Value
 - Learn about optimization algorithms (SGD → Adam → AdamW)
@@ -37,14 +41,59 @@ Train neural networks, optimize algorithms, and scale your AI research facility 
 - Research advanced techniques and hardware
 - Deploy models for permanent bonuses
 - Unlock achievements and milestones
-- **Optimized**: Smoother progression curve with balanced costs ✨
+- **Optimized**: Smoother progression curve with balanced costs
+
+## 🆕 What's New in v0.3.0 (Feb 10, 2026)
+
+### 🎮 Quality of Life Improvements
+
+#### 📋 **Training Queue System**
+- **Queue multiple models** for automated sequential training
+- Visual queue panel with time estimates and model previews
+- Drag-and-drop reordering (planned for v0.3.1)
+- Persistent across save/load - never lose your queue!
+- **Press Q** to toggle queue panel
+
+#### 🛒 **Bulk Purchase System**
+- **Shift+Click any building** to buy 10x instantly
+- **Flexible modes**: 1x, 10x, 25x, 50x, 100x, Max
+- **Smart "Buy Max"** - Automatically calculates how many you can afford
+- Cost preview before purchase
+- **Hotkeys**: Shift+1 through Shift+6 to switch modes quickly
+
+#### ⚙️ **Comprehensive Settings**
+- **Gameplay**: Auto-save interval, offline progress, pause on blur, number formatting
+- **Notifications**: Toggle training/research/achievements/building unlocks + sound effects
+- **Performance**: Animation quality, particle effects, canvas rendering
+- All settings persist between sessions
+- **Press E** to open settings
+
+#### ⌨️ **Keyboard Shortcuts**
+- **Navigation**: 1-6 to switch tabs instantly
+- **Actions**: Space (collect), S (save), Q (queue), T (toggle training)
+- **System**: Esc (close modals), H (show hotkey help), Ctrl+E (export), Ctrl+I (import)
+- Smart input detection - disabled when typing in text fields
+- Visual help modal with all shortcuts
+- **Press H** anytime for hotkey reference
+
+#### 📊 **Statistics Tracking** (Enhanced in v0.3.1)
+- Lifetime stats: Total resources, buildings, models, achievements
+- Session stats: Per-session tracking with reset on load
+- Records: Best combo, fastest model, peak production rates
+- Time tracking: Total playtime, offline time, longest session
+
+### 🛠️ Technical Improvements
+- **6x Performance Boost**: Optimized update loops (60 FPS → 10 FPS where appropriate)
+- **Reduced Lag**: Fewer `requestAnimationFrame` warnings
+- **Modular Architecture**: Clean separation of concerns for easy maintenance
+- **Backward Compatible**: All v0.2.x saves work seamlessly
 
 ## 🛠️ Technology Stack
 
 - **Frontend**: Vanilla JavaScript (ES6+)
 - **Styling**: CSS3 with modern animations
-- **Storage**: LocalStorage for save games
-- **Architecture**: Modular design inspired by Idle-Game-v2
+- **Storage**: LocalStorage for save games + separate settings storage
+- **Architecture**: Modular design with independent systems
 - **Visualization**: Canvas-based training curves and animations
 
 ## 📁 Project Structure
@@ -54,25 +103,38 @@ AI-Idle/
 ├── index.html              # Main game page
 ├── css/
 │   ├── styles.css          # Game styling
-│   └── training-animations.css  # Animation styles ✨
+│   └── training-animations.css  # Animation styles
 ├── src/
-│   ├── main.js             # Game initialization (optimized)
+│   ├── main.js             # Game initialization
 │   ├── modules/
-│   │   ├── game-state.js   # Central state management (optimized)
+│   │   ├── game-state.js   # Central state management
 │   │   ├── resources.js    # Resource definitions
-│   │   ├── buildings.js    # Infrastructure definitions (BALANCED)
-│   │   ├── models.js       # ML model definitions (BALANCED)
+│   │   ├── buildings.js    # Infrastructure definitions
+│   │   ├── models.js       # ML model definitions
 │   │   ├── research.js     # Research tree
 │   │   ├── achievements.js  # Achievement definitions
 │   │   ├── achievement-checker.js  # Achievement logic
-│   │   └── prestige.js     # Deployment/prestige system
+│   │   ├── prestige.js     # Deployment/prestige system
+│   │   ├── combo-system.js # Manual click combo mechanics
+│   │   ├── training-queue.js  # Training queue logic ✨ NEW
+│   │   ├── bulk-purchase.js   # Bulk building purchase ✨ NEW
+│   │   ├── settings.js        # User settings system ✨ NEW
+│   │   ├── hotkeys.js         # Keyboard shortcuts ✨ NEW
+│   │   └── statistics.js      # Stats tracking ✨ NEW
 │   └── ui/
 │       ├── ui-init.js      # UI initialization
 │       ├── ui-render.js    # Rendering functions
 │       ├── ui-tabs.js      # Tab management
-│       └── training-animations.js  # Visual training system ✨
+│       ├── training-animations.js  # Visual training system
+│       ├── combo-ui.js     # Combo system UI
+│       ├── tutorial.js     # Tutorial system
+│       ├── training-queue-ui.js  # Queue panel UI ✨ NEW
+│       ├── bulk-purchase-ui.js   # Bulk purchase UI ✨ NEW
+│       └── settings-ui.js        # Settings modal ✨ NEW
+├── docs/
+│   └── v0.3.0-RELEASE-NOTES.md  # Detailed release notes ✨ NEW
 ├── DESIGN.md               # Comprehensive design document
-├── CHANGELOG.md            # Detailed version history ✨
+├── CHANGELOG.md            # Detailed version history
 └── README.md               # This file
 ```
 
@@ -82,28 +144,34 @@ AI-Idle/
 - Click to generate your first training data
 - Build data collectors and CPU cores
 - Train your first neural network on digit recognition
-- **Optimized**: 20% faster early game with reduced costs ✨
+- **New**: Use **Space** key for quick manual collection
+- **Optimized**: 20% faster early game with reduced costs
 
 ### Phase 2: Automation (10-60 minutes)
 - Unlock passive data generation
 - Build GPU clusters for faster training
 - Research optimization algorithms
 - Train image classification models
-- **Optimized**: Smoother transition with earlier Tier 2 unlocks ✨
+- **New**: **Queue multiple models** to train while AFK
+- **New**: **Shift+Click** to bulk-buy buildings
+- **Optimized**: Smoother transition with earlier Tier 2 unlocks
 
 ### Phase 3: Scaling (1-4 hours)
 - Deploy distributed systems
 - Unlock transformer architectures
 - Train NLP and RL agents
 - Optimize with advanced regularization
-- **Optimized**: Better balanced mid-game progression ✨
+- **New**: Use **keyboard shortcuts** for efficient management
+- **New**: Customize **notification preferences** in settings
+- **Optimized**: Better balanced mid-game progression
 
 ### Phase 4: Prestige Loop (4+ hours)
 - Deploy your first model for permanent bonuses
 - Unlock transfer learning and AutoML
 - Scale to frontier models (LLMs, multimodal AI)
 - Compete in the model leaderboard
-- **Optimized**: More achievable late-game goals ✨
+- **New**: Track all your **stats and records**
+- **Optimized**: More achievable late-game goals
 
 ## 🏆 Achievements
 
@@ -134,23 +202,28 @@ Each achievement provides permanent bonuses that stack with your other upgrades!
 
 ## 💾 Save System
 
-- Auto-save every 30 seconds
+- **Auto-save** with customizable interval (10s / 30s / 60s / 5min)
 - Export/import save files
-- **Enhanced offline progression** (up to 24 hours) ✨
+- Enhanced offline progression (up to 24 hours)
 - Intelligent simulation with achievement tracking
+- **Separate settings storage** - Settings persist independently
+- **Backward compatible** with all previous versions
 - Cloud save support (planned)
 
 ## 🎨 Visual Features
 
-- ✨ **Animated training curves** - Real-time visualization of model performance
-- ✨ **Progress animations** - Smooth progress bars with dynamic effects
-- ✨ **Particle celebrations** - Visual feedback for training completion
+- Animated training curves - Real-time visualization of model performance
+- Progress animations - Smooth progress bars with dynamic effects
+- Particle celebrations - Visual feedback for training completion
 - Animated achievement unlock notifications
 - Real-time resource tracking
 - Performance metrics dashboard
+- **Keyboard shortcut badges** - Visual `<kbd>` indicators ✨ NEW
+- **Modal animations** - Smooth transitions and effects ✨ NEW
 - Responsive design for all screen sizes
 - Dark mode optimized UI
 - Smooth animations and transitions
+- **Customizable performance settings** ✨ NEW
 
 ## 📚 Learn While Playing
 
@@ -163,6 +236,35 @@ Every game mechanic is based on real Machine Learning concepts:
 - **Research tree** follows the historical development of ML
 
 Tooltips and explanations help you understand what each upgrade means in the real world of AI research.
+
+## ⌨️ Keyboard Shortcuts Quick Reference
+
+### Navigation
+- **1** - Infrastructure Tab
+- **2** - Training Tab
+- **3** - Research Tab
+- **4** - Deployment Tab
+- **5** - Achievements Tab
+- **6** - Statistics Tab
+
+### Actions
+- **Space** - Collect Data
+- **S** - Save Game
+- **Q** - Toggle Training Queue
+- **E** - Open Settings
+- **T** - Start/Stop Training
+
+### System
+- **Esc** - Close Modal
+- **H** - Show Hotkey Help
+- **Ctrl+E** - Export Save
+- **Ctrl+I** - Import Save
+
+### Bulk Purchase
+- **Shift+Click** - Buy 10x
+- **Shift+1** through **Shift+6** - Switch bulk modes
+
+**Press H in-game for complete hotkey reference!**
 
 ## 🚀 Development Roadmap
 
@@ -177,42 +279,34 @@ Tooltips and explanations help you understand what each upgrade means in the rea
 - [x] Game loop and save system
 
 ### Version 0.2 (Early Access) - ✅ Completed (Feb 9, 2026)
-- [x] **Achievement system implementation** ✅
-  - [x] 17 achievements across 3 categories
-  - [x] Automatic tracking and unlock detection
-  - [x] Animated notifications and visual feedback
-  - [x] Permanent bonus system
-- [x] **Balance adjustments** ✅
-  - [x] Early game: 20% reduced costs for smoother start
-  - [x] Mid game: Better Tier 1 to Tier 2 transition
-  - [x] Late game: 40% cheaper quantum processor
-  - [x] All models: 20% reduced requirements, 20% increased rewards
-  - [x] Buildings: 10-40% cost reductions across tiers
-- [x] **Visual training animations** ✅
-  - [x] Canvas-based training curve visualization
-  - [x] Real-time progress tracking with animations
-  - [x] Particle effects for training completion
-  - [x] Phase indicators and milestone markers
-  - [x] Enhanced progress bars with dynamic effects
-- [x] **Offline progression optimization** ✅
-  - [x] Intelligent 60-second chunk simulation
-  - [x] Achievement unlock detection during offline time
-  - [x] Production recalculation on unlocks
-  - [x] Better accuracy for extended sessions
-- [x] **Bug fixes and polish** ✅
-  - [x] Enhanced error handling throughout
-  - [x] Extracted constants for maintainability
-  - [x] Improved null-safety checks
-  - [x] Better save/load validation
-  - [x] Critical error recovery screen
+- [x] Achievement system implementation
+- [x] Balance adjustments
+- [x] Visual training animations
+- [x] Offline progression optimization
+- [x] Bug fixes and polish
 
-### Version 1.0 (Full Release) - 🔜 Planned
+### Version 0.3 (QoL Update) - ✅ Completed (Feb 10, 2026)
+- [x] **Training Queue System** - Multi-model automation
+- [x] **Bulk Purchase System** - Shift+Click and flexible modes
+- [x] **Settings System** - Comprehensive customization
+- [x] **Keyboard Shortcuts** - Efficient controls
+- [x] **Statistics Tracking** - Detailed progress metrics
+- [x] **Performance Optimizations** - Reduced lag
+- [x] **Documentation** - Complete release notes
+
+### Version 0.3.1 (Polish) - 🔜 Next
+- [ ] Enhanced Statistics Tab UI with graphs
+- [ ] Queue drag-and-drop reordering
+- [ ] Balance pass based on community feedback
+- [ ] Additional hotkey customization
+- [ ] Bug fixes
+
+### Version 1.0 (Full Release) - 📅 Planned
 - [ ] Complete model progression
 - [ ] Full research tree implementation
 - [ ] Prestige/deployment system expansion
-- [ ] Statistics and analytics dashboard
-- [ ] Mobile optimization
 - [ ] Tutorial system
+- [ ] Mobile optimization
 
 ### Future Versions
 - [ ] Competitions and leaderboards
@@ -221,38 +315,13 @@ Tooltips and explanations help you understand what each upgrade means in the rea
 - [ ] Multiplayer features
 - [ ] Mobile app version
 
-## 🔄 What's New in v0.2 (Feb 9, 2026)
-
-### ⚖️ Balance Changes
-- **Early Game**: Reduced initial costs by 20% for faster start
-- **Mid Game**: Lower unlock thresholds for Tier 2 buildings (up to 25% earlier)
-- **Late Game**: Quantum Processor 40% cheaper and unlocks at 4000 instead of 5000 accuracy
-- **Models**: All requirements -20%, all rewards +20%
-- **Progression**: Smoother difficulty curve throughout
-
-### ✨ New Features
-- **Training Visualizations**: Real-time animated training curves
-- **Progress Animations**: Enhanced visual feedback with particle effects
-- **Smart Offline Progress**: Chunked simulation with achievement tracking
-- **Better Error Handling**: Recovery options for save errors
-
-### 🛠️ Technical Improvements
-- **Code Quality**: Constants extracted, better structure
-- **Error Resilience**: Comprehensive try-catch blocks
-- **Offline Simulation**: 60s tick processing for accuracy
-- **Performance**: Optimized canvas rendering
-- **Maintainability**: Improved documentation and comments
-
-### 🐛 Bug Fixes
-- Fixed achievement bonuses not applying during offline time
-- Fixed production not updating when buildings unlock offline
-- Better handling of corrupted save files
-- Improved save version migration
-- Fixed potential undefined errors with prestige upgrades
-
 ## 🤝 Contributing
 
 This is currently a solo project, but feedback and suggestions are welcome!
+
+- **Report Bugs**: Open an issue on GitHub
+- **Feature Requests**: Use the Discussions tab
+- **Balance Feedback**: Let us know your thoughts!
 
 ## 📄 License
 
@@ -262,9 +331,13 @@ MIT License - Feel free to learn from and remix this project
 
 Inspired by:
 - Real Machine Learning research and development
-- Classic idle games (Cookie Clicker, Universal Paperclips)
+- Classic idle games (Cookie Clicker, Universal Paperclips, Idle Loops)
 - Educational games teaching programming and math
 - The Idle-Game-v2 (Space Colonies) project
+
+**Special Thanks:**
+- AI Assistant (Claude/Anthropic) for development support
+- Community playtesters for valuable feedback
 
 ## 📞 Contact
 
@@ -274,10 +347,10 @@ Inspired by:
 
 ---
 
-**Status**: ✅ Version 0.2 Complete!  
-**Version**: 0.2.0  
-**Last Updated**: February 9, 2026
+**Status**: ✅ Version 0.3.0 Complete!  
+**Version**: 0.3.0  
+**Last Updated**: February 10, 2026
 
-**Ready for v1.0 Development** 🚀
+**Major QoL Update Released!** 🎉
 
-Start your journey from simple neural networks to frontier AI models. Train, optimize, and deploy!
+Start your journey from simple neural networks to frontier AI models. Train, optimize, and deploy - now with powerful automation tools!
