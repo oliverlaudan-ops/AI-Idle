@@ -30,11 +30,21 @@ export function initializeUI(game) {
         comboUI.showFloatingText(result.amount, result.multiplier);
     });
     
-    // Update combo timer every frame
+    // Update combo timer with throttling (10 FPS instead of 60 FPS)
+    let lastComboUpdate = 0;
+    const COMBO_UPDATE_INTERVAL = 100; // Update every 100ms (10 FPS)
+    
     function updateComboTimer() {
-        if (comboUI) {
-            comboUI.updateTimer();
+        const now = Date.now();
+        
+        // Only update if enough time has passed
+        if (now - lastComboUpdate >= COMBO_UPDATE_INTERVAL) {
+            if (comboUI) {
+                comboUI.updateTimer();
+            }
+            lastComboUpdate = now;
         }
+        
         requestAnimationFrame(updateComboTimer);
     }
     updateComboTimer();
@@ -68,7 +78,7 @@ export function initializeUI(game) {
         }
     });
     
-    // Settings button - NEW!
+    // Settings button
     const settingsBtn = document.getElementById('btn-settings');
     if (settingsBtn) {
         settingsBtn.addEventListener('click', () => {
@@ -80,7 +90,7 @@ export function initializeUI(game) {
         });
     }
     
-    // Hotkeys button - NEW!
+    // Hotkeys button
     const hotkeysBtn = document.getElementById('btn-hotkeys');
     if (hotkeysBtn) {
         hotkeysBtn.addEventListener('click', () => {
