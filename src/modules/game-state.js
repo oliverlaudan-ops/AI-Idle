@@ -9,6 +9,7 @@ import { initializePrestige } from './prestige.js';
 import { checkAndUnlockAchievements, getAchievementBonus } from './achievement-checker.js';
 import { ComboSystem } from './combo-system.js';
 import { TrainingQueue } from './training-queue.js';
+import { BulkPurchase } from './bulk-purchase.js';
 
 // Game constants
 const GAME_CONSTANTS = {
@@ -32,6 +33,9 @@ export class GameState {
         
         // NEW: Training queue system
         this.trainingQueue = new TrainingQueue(this);
+        
+        // NEW: Bulk purchase system
+        this.bulkPurchase = new BulkPurchase(this);
         
         this.currentTraining = null;
         this.trainingProgress = 0;
@@ -142,7 +146,13 @@ export class GameState {
     }
     
     // Building Management
-    purchaseBuilding(buildingId) {
+    purchaseBuilding(buildingId, amount = 1) {
+        // NEW: Use bulk purchase system if amount > 1 or using bulk mode
+        if (amount !== 1 || this.bulkPurchase.getMode() !== 1) {
+            return this.bulkPurchase.purchase(buildingId, amount === 1 ? 'mode' : amount);
+        }
+        
+        // Legacy single purchase for backwards compatibility
         const building = this.buildings[buildingId];
         if (!building || !building.unlocked) return false;
         
@@ -167,7 +177,7 @@ export class GameState {
         // Check for building unlocks
         this.checkBuildingUnlocks();
         
-        return true;
+        return { success: true, amount: 1, cost };
     }
     
     checkBuildingUnlocks() {
@@ -545,7 +555,8 @@ export class GameState {
             stats: this.stats,
             settings: this.settings,
             comboSystem: this.comboSystem.save(),
-            trainingQueue: this.trainingQueue.save() // NEW: Save queue state
+            trainingQueue: this.trainingQueue.save(),
+            bulkPurchase: this.bulkPurchase.save() // NEW: Save bulk purchase state
         };
         
         this.lastSaveTime = Date.now();
@@ -588,6 +599,11 @@ export class GameState {
             // NEW: Load training queue state
             if (saveData.trainingQueue) {
                 this.trainingQueue.load(saveData.trainingQueue);
+            }
+            
+            // NEW: Load bulk purchase state
+            if (saveData.bulkPurchase) {
+                this.bulkPurchase.load(saveData.bulkPurchase);
             }
             
             // Ensure lastPlaytimeUpdate is set
