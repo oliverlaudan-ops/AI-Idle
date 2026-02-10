@@ -7,7 +7,8 @@ export class TrainingQueueUI {
         this.game = game;
         this.queueContainer = null;
         this.settingsContainer = null;
-        this.buttonsAdded = false; // Track if buttons were added
+        this.lastQueueState = null; // Track last queue state to prevent unnecessary updates
+        this.lastUnlockedModels = 0; // Track model count
     }
     
     // Initialize UI
@@ -16,7 +17,6 @@ export class TrainingQueueUI {
         this.createQueueUI();
         
         // Add queue buttons to existing model cards
-        // Delay to ensure model cards are rendered first
         setTimeout(() => {
             this.addQueueButtons();
         }, 100);
@@ -89,7 +89,7 @@ export class TrainingQueueUI {
             enabledCheckbox.addEventListener('change', (e) => {
                 const enabled = this.game.trainingQueue.toggleEnabled();
                 showToast(`Auto-queue ${enabled ? 'enabled' : 'disabled'}`, 'info');
-                this.update();
+                this.update(true); // Force update
             });
         }
         
@@ -99,7 +99,7 @@ export class TrainingQueueUI {
             repeatCheckbox.addEventListener('change', (e) => {
                 const repeat = this.game.trainingQueue.toggleRepeat();
                 showToast(`Repeat last model ${repeat ? 'enabled' : 'disabled'}`, 'info');
-                this.update();
+                this.update(true); // Force update
             });
         }
         
@@ -115,7 +115,7 @@ export class TrainingQueueUI {
                 if (confirm('Clear all models from queue?')) {
                     this.game.trainingQueue.clearQueue();
                     showToast('Queue cleared', 'success');
-                    this.update();
+                    this.update(true); // Force update
                 }
             });
         }
@@ -127,13 +127,11 @@ export class TrainingQueueUI {
         const modelCards = document.querySelectorAll('.model-card');
         
         if (modelCards.length === 0) {
-            if (!this.buttonsAdded) {
-                console.log('No model cards found yet, will retry...');
-            }
             return;
         }
         
-        console.log(`Adding queue buttons to ${modelCards.length} model cards...`);
+        // Update count
+        this.lastUnlockedModels = modelCards.length;
         
         modelCards.forEach(card => {
             // Skip if button already exists
@@ -152,7 +150,6 @@ export class TrainingQueueUI {
             // Find the train button by ID
             const trainBtn = card.querySelector(`#btn-model-${modelId}`);
             if (!trainBtn) {
-                console.warn(`Train button not found for model ${modelId}`);
                 return;
             }
             
@@ -173,9 +170,6 @@ export class TrainingQueueUI {
             // Insert after train button
             trainBtn.parentNode.insertBefore(queueBtn, trainBtn.nextSibling);
         });
-        
-        this.buttonsAdded = true;
-        console.log('Queue buttons added successfully!');
     }
     
     // Add a model to the queue
@@ -194,7 +188,7 @@ export class TrainingQueueUI {
         
         if (success) {
             showToast(`Added ${model.name} to queue`, 'success');
-            this.update();
+            this.update(true); // Force update
             
             // Try to start training if nothing is currently training
             if (!this.game.currentTraining) {
@@ -211,7 +205,7 @@ export class TrainingQueueUI {
         if (success) {
             const model = this.game.models[modelId];
             showToast(`Removed ${model ? model.name : 'model'} from queue`, 'success');
-            this.update();
+            this.update(true); // Force update
         }
     }
     
@@ -219,7 +213,7 @@ export class TrainingQueueUI {
     moveModelUp(modelId) {
         const success = this.game.trainingQueue.moveUp(modelId);
         if (success) {
-            this.update();
+            this.update(true); // Force update
         }
     }
     
@@ -227,7 +221,7 @@ export class TrainingQueueUI {
     moveModelDown(modelId) {
         const success = this.game.trainingQueue.moveDown(modelId);
         if (success) {
-            this.update();
+            this.update(true); // Force update
         }
     }
     
@@ -246,11 +240,29 @@ export class TrainingQueueUI {
         }
     }
     
-    // Update the queue UI
-    update() {
+    // Update the queue UI (with optimization to prevent flickering)
+    update(forceUpdate = false) {
         if (!this.queueContainer) return;
         
         const queue = this.game.trainingQueue;
+        const currentState = JSON.stringify(queue.queue);
+        
+        // Check if new models were unlocked
+        const currentModelCount = document.querySelectorAll('.model-card').length;
+        if (currentModelCount > this.lastUnlockedModels) {
+            console.log(`New models unlocked! Adding queue buttons...`);
+            this.addQueueButtons();
+        }
+        
+        // Only update if queue changed or forced
+        if (!forceUpdate && this.lastQueueState === currentState) {
+            // Still update button states (cheap operation)
+            this.updateQueueButtons();
+            return;
+        }
+        
+        this.lastQueueState = currentState;
+        
         const queueDetails = queue.getQueueDetails();
         const queueLength = queue.getLength();
         const estimatedTime = queue.estimateQueueTime();
