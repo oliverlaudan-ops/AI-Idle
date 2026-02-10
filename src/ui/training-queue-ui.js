@@ -14,6 +14,9 @@ export class TrainingQueueUI {
         // Create queue UI in training tab
         this.createQueueUI();
         
+        // Add queue buttons to existing model cards
+        this.addQueueButtons();
+        
         // Update UI initially
         this.update();
     }
@@ -118,6 +121,14 @@ export class TrainingQueueUI {
     addQueueButtons() {
         const modelCards = document.querySelectorAll('.model-card');
         
+        if (modelCards.length === 0) {
+            console.log('No model cards found yet, retrying in 500ms...');
+            setTimeout(() => this.addQueueButtons(), 500);
+            return;
+        }
+        
+        console.log(`Found ${modelCards.length} model cards, adding queue buttons...`);
+        
         modelCards.forEach(card => {
             // Skip if button already exists
             if (card.querySelector('.btn-add-queue')) return;
@@ -144,6 +155,8 @@ export class TrainingQueueUI {
             // Insert after train button
             trainBtn.parentNode.insertBefore(queueBtn, trainBtn.nextSibling);
         });
+        
+        console.log('Queue buttons added successfully!');
     }
     
     // Add a model to the queue
@@ -298,6 +311,9 @@ export class TrainingQueueUI {
         
         // Update "Add to Queue" buttons state
         this.updateQueueButtons();
+        
+        // Re-add queue buttons if model cards were re-rendered
+        this.addQueueButtons();
     }
     
     // Setup event listeners for queue item controls
