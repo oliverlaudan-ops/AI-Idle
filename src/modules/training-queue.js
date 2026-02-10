@@ -93,10 +93,15 @@ export class TrainingQueue {
         if (!model.unlocked) return false;
         
         // Check resource requirements
-        const hasData = this.game.resources.data.amount >= model.cost.data;
-        const hasCompute = this.game.resources.compute.amount >= model.cost.compute;
+        if (!model.requirements) return false;
         
-        return hasData && hasCompute;
+        // Check each requirement
+        for (const [resourceId, amount] of Object.entries(model.requirements)) {
+            if (!this.game.resources[resourceId]) return false;
+            if (this.game.resources[resourceId].amount < amount) return false;
+        }
+        
+        return true;
     }
     
     // Process queue when training completes
@@ -158,7 +163,7 @@ export class TrainingQueue {
                 name: model ? model.name : 'Unknown',
                 icon: model ? model.icon : '❓',
                 canTrain: this.canTrainModel(modelId),
-                cost: model ? model.cost : null
+                requirements: model ? model.requirements : null
             };
         });
     }
@@ -170,8 +175,8 @@ export class TrainingQueue {
         let totalTime = 0;
         
         // Add remaining time of current training
-        if (this.game.currentTraining) {
-            totalTime += this.game.currentTraining.timeRemaining;
+        if (this.game.training) {
+            totalTime += (this.game.training.duration - this.game.training.elapsedTime);
         }
         
         // Add time for each model in queue
@@ -179,7 +184,7 @@ export class TrainingQueue {
             const model = this.game.models[modelId];
             if (model) {
                 // Base time divided by training speed
-                const trainingSpeed = this.game.getTrainingSpeedMultiplier();
+                const trainingSpeed = this.game.multipliers?.trainingSpeed || 1.0;
                 totalTime += model.trainingTime / trainingSpeed;
             }
         }
