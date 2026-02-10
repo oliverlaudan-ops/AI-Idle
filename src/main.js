@@ -3,6 +3,7 @@
 import { GameState } from './modules/game-state.js';
 import { initializeUI } from './ui/ui-init.js';
 import { renderAll, showToast } from './ui/ui-render.js';
+import { TutorialSystem } from './ui/tutorial.js';
 
 // Game loop constants
 const LOOP_CONSTANTS = {
@@ -21,6 +22,7 @@ const STORAGE_KEY = 'ai-idle-save';
 
 // Global game instance
 window.game = null;
+window.tutorial = null; // NEW: Global tutorial instance
 let lastTick = Date.now();
 let lastSave = Date.now();
 let lastRender = Date.now();
@@ -82,18 +84,28 @@ function init() {
             }
         } else {
             console.log('✨ Starting new game');
-            showToast('Welcome to AI-Idle! Click "Collect Data" to begin.', 'success');
+            // Don't show welcome toast if tutorial will start
+            const shouldShowWelcome = localStorage.getItem('ai-idle-tutorial-completed') === 'true' || 
+                                     localStorage.getItem('ai-idle-tutorial-skipped') === 'true';
+            if (shouldShowWelcome) {
+                showToast('Welcome to AI-Idle! Click "Collect Data" to begin.', 'success');
+            }
         }
         
         // Initialize UI (includes event listeners)
         console.log('🎨 Initializing UI...');
         initializeUI(window.game);
         
+        // NEW: Initialize Tutorial System
+        console.log('🎓 Initializing Tutorial System...');
+        window.tutorial = new TutorialSystem(window.game);
+        window.tutorial.init();
+        
         // Initial render
         renderAll(window.game);
         
-        // Show offline progress modal if applicable
-        if (hasOfflineProgress && offlineGains) {
+        // Show offline progress modal if applicable (only if tutorial is completed)
+        if (hasOfflineProgress && offlineGains && window.tutorial.isComplete()) {
             setTimeout(() => showOfflineProgressModal(offlineGains), LOOP_CONSTANTS.OFFLINE_MODAL_DELAY);
         }
         
@@ -191,7 +203,7 @@ function showAchievementUnlock(achievement) {
     
     // Play sound if available
     try {
-        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZRQ0PVqzn77BdGAg+ltryxnMpBSh+zPLaizsIGGS57OihUBELTKXh8bllHAU2jtXzzn0uBSd7yvLekDcJGGe+7ueXRA0PU6nm8bllHQU4kdXzy34vBSh9y/LfkjgJGWm/7+aXRA8OU6vl8bplHgU4ktXzzn8wBSl+y/LgkzgKGWm/7+aXRQ8RUqrl8bplHgU4ktXzzoAwBil+y/LgkzkKGWnA7+aXRQ8RUqrl8bpmHgU4ktX0zoAwBil+y/LhlDoKGWnA7+aYRQ8RUqrl8bpmHgU4ktX0z4AwBil+y/Lhlj0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4E');
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZRQ0PVqzn77BdGAg+ltryxnMpBSh+zPLaizsIGGS57OihUBELTKXh8bllHAU2jtXzzn0uBSd7yvLekDcJGGe+7ueXRA0PU6nm8bllHQU4kdXzzn4vBSh9y/LfkjgJGWm/7+aXRA8OU6vl8bplHgU4ktXzzn8wBSl+y/LgkzgKGWm/7+aXRQ8RUqrl8bplHgU4ktXzzoAwBil+y/LgkzkKGWnA7+aXRQ8RUqrl8bpmHgU4ktX0zoAwBil+y/LhlDoKGWnA7+aYRQ8RUqrl8bpmHgU4ktX0z4AwBil+y/Lhlj0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4E');
         audio.volume = 0.3;
         audio.play().catch(() => {}); // Ignore errors if audio fails
     } catch (e) {
