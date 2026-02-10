@@ -9,6 +9,8 @@ import { initializePrestige } from './prestige.js';
 import { checkAndUnlockAchievements, getAchievementBonus } from './achievement-checker.js';
 import { ComboSystem } from './combo-system.js';
 import { TrainingQueue } from './training-queue.js';
+import { BulkPurchase } from './bulk-purchase.js';
+import { Settings } from './settings.js';
 
 // Game constants
 const GAME_CONSTANTS = {
@@ -27,11 +29,18 @@ export class GameState {
         this.achievements = initializeAchievements();
         this.prestige = initializePrestige();
         
-        // NEW: Combo system for manual collection
+        // NEW: Settings system
+        this.settings = new Settings();
+        this.settings.load(); // Load saved settings
+        
+        // Combo system for manual collection
         this.comboSystem = new ComboSystem();
         
-        // NEW: Training queue system
+        // Training queue system
         this.trainingQueue = new TrainingQueue(this);
+        
+        // Bulk purchase system
+        this.bulkPurchase = new BulkPurchase(this);
         
         this.currentTraining = null;
         this.trainingProgress = 0;
@@ -52,7 +61,7 @@ export class GameState {
             deploymentTokens: 1,
             permanentAccuracy: 1,
             researchPoints: 1,
-            manualCollection: 1 // NEW: For combo achievements
+            manualCollection: 1
         };
         
         // Multipliers object for UI
@@ -75,12 +84,13 @@ export class GameState {
             startTime: Date.now(),
             totalPlaytime: 0,
             lastPlaytimeUpdate: Date.now(),
-            manualClicks: 0 // NEW: Track manual clicks
+            manualClicks: 0
         };
         
-        this.settings = {
+        // Legacy settings for backwards compatibility (now handled by Settings module)
+        this.legacySettings = {
             autoSave: true,
-            autoSaveInterval: 30000, // 30 seconds
+            autoSaveInterval: 30000,
             offlineProgress: true
         };
         
@@ -105,7 +115,7 @@ export class GameState {
         }
     }
     
-    // NEW: Manual collect with combo system
+    // Manual collect with combo system
     manualCollect() {
         // Get combo multiplier
         const multiplier = this.comboSystem.click();
@@ -142,7 +152,13 @@ export class GameState {
     }
     
     // Building Management
-    purchaseBuilding(buildingId) {
+    purchaseBuilding(buildingId, amount = 1) {
+        // Use bulk purchase system if amount > 1 or using bulk mode
+        if (amount !== 1 || this.bulkPurchase.getMode() !== 1) {
+            return this.bulkPurchase.purchase(buildingId, amount === 1 ? 'mode' : amount);
+        }
+        
+        // Legacy single purchase for backwards compatibility
         const building = this.buildings[buildingId];
         if (!building || !building.unlocked) return false;
         
@@ -167,7 +183,7 @@ export class GameState {
         // Check for building unlocks
         this.checkBuildingUnlocks();
         
-        return true;
+        return { success: true, amount: 1, cost };
     }
     
     checkBuildingUnlocks() {
@@ -260,7 +276,7 @@ export class GameState {
         }
     }
     
-    // NEW: Get training speed multiplier (used by queue for estimates)
+    // Get training speed multiplier (used by queue for estimates)
     getTrainingSpeedMultiplier() {
         return this.achievementBonuses.trainingSpeed;
     }
@@ -314,7 +330,7 @@ export class GameState {
         
         this.stopTraining();
         
-        // NEW: Notify queue that training completed
+        // Notify queue that training completed
         this.trainingQueue.onTrainingComplete();
     }
     
@@ -397,7 +413,7 @@ export class GameState {
         this.stats.totalPlaytime += playtimeDelta;
         this.stats.lastPlaytimeUpdate = now;
         
-        // NEW: Update combo system
+        // Update combo system
         this.comboSystem.update(deltaTime);
         
         // Add resources from production
@@ -435,7 +451,10 @@ export class GameState {
     
     // Enhanced offline progression with simulation
     processOfflineProgress(offlineTime) {
-        if (!this.settings.offlineProgress) return;
+        // Check settings for offline progress
+        const offlineEnabled = this.settings.get('gameplay', 'offlineProgress');
+        if (!offlineEnabled) return;
+        
         if (offlineTime < GAME_CONSTANTS.MIN_OFFLINE_TIME_MS) return;
         
         const maxTime = GAME_CONSTANTS.MAX_OFFLINE_TIME_MS;
@@ -543,9 +562,10 @@ export class GameState {
             trainingProgress: this.trainingProgress,
             training: this.training,
             stats: this.stats,
-            settings: this.settings,
+            legacySettings: this.legacySettings,
             comboSystem: this.comboSystem.save(),
-            trainingQueue: this.trainingQueue.save() // NEW: Save queue state
+            trainingQueue: this.trainingQueue.save(),
+            bulkPurchase: this.bulkPurchase.save()
         };
         
         this.lastSaveTime = Date.now();
@@ -570,7 +590,7 @@ export class GameState {
             this.trainingProgress = saveData.trainingProgress;
             this.training = saveData.training || null;
             this.stats = saveData.stats;
-            this.settings = saveData.settings || this.settings; // Use default if missing
+            this.legacySettings = saveData.legacySettings || saveData.settings || this.legacySettings;
             
             // Load achievement bonuses if they exist
             if (saveData.achievementBonuses) {
@@ -580,14 +600,19 @@ export class GameState {
                 };
             }
             
-            // NEW: Load combo system state
+            // Load combo system state
             if (saveData.comboSystem) {
                 this.comboSystem.load(saveData.comboSystem);
             }
             
-            // NEW: Load training queue state
+            // Load training queue state
             if (saveData.trainingQueue) {
                 this.trainingQueue.load(saveData.trainingQueue);
+            }
+            
+            // Load bulk purchase state
+            if (saveData.bulkPurchase) {
+                this.bulkPurchase.load(saveData.bulkPurchase);
             }
             
             // Ensure lastPlaytimeUpdate is set

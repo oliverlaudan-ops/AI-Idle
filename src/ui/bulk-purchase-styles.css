@@ -1,0 +1,274 @@
+/* Bulk Purchase UI Styles */
+
+/* Mode Selector Container */
+.bulk-purchase-selector {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(0, 136, 255, 0.05));
+    border: 2px solid rgba(0, 212, 255, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.bulk-purchase-selector:hover {
+    border-color: rgba(0, 212, 255, 0.4);
+    box-shadow: 0 6px 16px rgba(0, 212, 255, 0.2);
+}
+
+/* Header */
+.bulk-purchase-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.bulk-purchase-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+/* Mode Buttons */
+.bulk-purchase-modes {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.bulk-mode-btn {
+    padding: 8px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 60px;
+    text-align: center;
+}
+
+.bulk-mode-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(0, 212, 255, 0.5);
+    color: var(--text-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 212, 255, 0.2);
+}
+
+.bulk-mode-btn.active {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border-color: var(--accent-primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+}
+
+.bulk-mode-btn.active:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 212, 255, 0.5);
+}
+
+/* Hint Section */
+.bulk-purchase-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+}
+
+.hint-text {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+kbd {
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Active Modifier States */
+.bulk-purchase-selector.shift-active kbd:first-of-type,
+.bulk-purchase-selector.both-active kbd:first-of-type {
+    background: rgba(0, 212, 255, 0.3);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+}
+
+.bulk-purchase-selector.ctrl-active kbd:nth-of-type(2),
+.bulk-purchase-selector.both-active kbd:nth-of-type(2) {
+    background: rgba(0, 212, 255, 0.3);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+}
+
+.bulk-purchase-selector.both-active kbd:last-of-type {
+    background: rgba(255, 215, 0, 0.3);
+    border-color: gold;
+    color: gold;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+/* Building Button Bulk Mode Styling */
+.card-button.bulk-mode {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border-color: var(--accent-primary);
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+}
+
+.card-button.bulk-mode:hover:not(:disabled) {
+    box-shadow: 0 6px 16px rgba(0, 212, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+/* Cost Preview Tooltip */
+.bulk-cost-preview {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    padding: 12px 16px;
+    background: rgba(15, 15, 30, 0.98);
+    border: 2px solid var(--accent-primary);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    white-space: nowrap;
+    animation: fadeInUp 0.2s ease;
+    pointer-events: none;
+}
+
+.bulk-cost-preview::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: var(--accent-primary);
+}
+
+.bulk-preview-header {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.bulk-cost-preview .cost-item {
+    display: inline-block;
+    margin: 4px 8px 4px 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.bulk-preview-note {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
+/* Building Card Positioning */
+.building-card {
+    position: relative;
+}
+
+/* Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 8px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .bulk-purchase-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .bulk-purchase-modes {
+        width: 100%;
+    }
+    
+    .bulk-mode-btn {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .bulk-purchase-hint {
+        font-size: 0.75rem;
+    }
+    
+    kbd {
+        padding: 1px 6px;
+        font-size: 0.7rem;
+    }
+    
+    .bulk-cost-preview {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        margin-bottom: 0;
+        max-width: 90vw;
+    }
+}
+
+/* Dark Theme Enhancement */
+@media (prefers-color-scheme: dark) {
+    .bulk-purchase-selector {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(0, 136, 255, 0.08));
+    }
+    
+    .bulk-mode-btn {
+        background: rgba(255, 255, 255, 0.03);
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .bulk-purchase-selector,
+    .bulk-mode-btn,
+    .card-button.bulk-mode,
+    .bulk-cost-preview {
+        transition: none;
+        animation: none;
+    }
+    
+    .bulk-mode-btn:hover,
+    .card-button.bulk-mode:hover:not(:disabled) {
+        transform: none;
+    }
+}
