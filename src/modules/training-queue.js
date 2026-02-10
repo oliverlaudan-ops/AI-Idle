@@ -21,7 +21,7 @@ export class TrainingQueue {
         
         // Check if already in queue
         if (this.queue.includes(modelId)) {
-            console.log(`Model ${modelId} already in queue`);
+            // Silent - this is normal when repeat is on
             return false;
         }
         
@@ -33,7 +33,8 @@ export class TrainingQueue {
         
         // Add to queue
         this.queue.push(modelId);
-        console.log(`Added ${model.name} to training queue. Queue size: ${this.queue.length}`);
+        // Only log on manual adds, not auto-repeat (verbose)
+        // console.log(`Added ${model.name} to training queue. Queue size: ${this.queue.length}`);
         return true;
     }
     
@@ -45,7 +46,7 @@ export class TrainingQueue {
         }
         
         this.queue.splice(index, 1);
-        console.log(`Removed ${modelId} from queue. Queue size: ${this.queue.length}`);
+        // Silent - happens automatically
         return true;
     }
     
@@ -112,7 +113,7 @@ export class TrainingQueue {
         if (this.queue.length > 0) {
             const completedModel = this.queue.shift();
             this.lastTrainedModel = completedModel;
-            console.log(`Training complete for ${completedModel}. Queue size: ${this.queue.length}`);
+            // Silent - training completion is shown in UI
         }
         
         // Try to start next training
@@ -141,13 +142,17 @@ export class TrainingQueue {
                 // Start training
                 const success = this.game.startTraining(nextModelId);
                 if (success) {
-                    console.log(`Auto-started training: ${nextModelId}`);
+                    // Silent - training start is shown in UI
                     return true;
                 }
             }
             
             // Can't train this model, remove it from queue
-            console.log(`Skipping ${nextModelId} - insufficient resources or locked`);
+            // Only warn if model is locked (user error), not insufficient resources (normal)
+            const model = this.game.models[nextModelId];
+            if (model && !model.unlocked) {
+                console.warn(`Skipping ${model.name} - model is locked`);
+            }
             this.queue.shift();
         }
         
@@ -195,7 +200,7 @@ export class TrainingQueue {
     // Toggle auto-queue
     toggleEnabled() {
         this.enabled = !this.enabled;
-        console.log(`Auto-queue ${this.enabled ? 'enabled' : 'disabled'}`);
+        console.log(`🎯 Auto-queue ${this.enabled ? 'enabled' : 'disabled'}`);
         
         // Try to start training if enabled and queue has items
         if (this.enabled) {
@@ -208,7 +213,7 @@ export class TrainingQueue {
     // Toggle repeat last model
     toggleRepeat() {
         this.repeatLastModel = !this.repeatLastModel;
-        console.log(`Repeat last model ${this.repeatLastModel ? 'enabled' : 'disabled'}`);
+        console.log(`🔁 Repeat last model ${this.repeatLastModel ? 'enabled' : 'disabled'}`);
         return this.repeatLastModel;
     }
     
@@ -246,6 +251,9 @@ export class TrainingQueue {
         this.repeatLastModel = data.repeatLastModel || false;
         this.lastTrainedModel = data.lastTrainedModel || null;
         
-        console.log(`Loaded training queue with ${this.queue.length} models`);
+        // Only log on initial load
+        if (this.queue.length > 0) {
+            console.log(`📋 Loaded training queue with ${this.queue.length} model(s)`);
+        }
     }
 }
