@@ -68,6 +68,30 @@ export function initializeUI(game) {
         }
     });
     
+    // Settings button - NEW!
+    const settingsBtn = document.getElementById('btn-settings');
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            if (window.settingsUI) {
+                window.settingsUI.open();
+            } else {
+                showToast('Settings not available yet.', 'warning');
+            }
+        });
+    }
+    
+    // Hotkeys button - NEW!
+    const hotkeysBtn = document.getElementById('btn-hotkeys');
+    if (hotkeysBtn) {
+        hotkeysBtn.addEventListener('click', () => {
+            if (window.hotkeys) {
+                window.hotkeys.showHelp();
+            } else {
+                showToast('Hotkeys not available yet.', 'warning');
+            }
+        });
+    }
+    
     // Reset button
     document.getElementById('btn-reset').addEventListener('click', () => {
         const confirmed = confirm('Are you sure you want to reset? This will delete ALL progress!');

@@ -35,7 +35,7 @@ export class HotkeySystem {
             
             // Modals
             'close_modal': { key: 'Escape', ctrl: false, shift: false, alt: false, description: 'Close Modal/Cancel' },
-            'show_help': { key: '?', ctrl: false, shift: false, alt: false, description: 'Show Hotkey Help' },
+            'show_help': { key: 'h', ctrl: false, shift: false, alt: false, description: 'Show Hotkey Help' },
             
             // Export/Import
             'export_save': { key: 'e', ctrl: true, shift: false, alt: false, description: 'Export Save' },
@@ -375,7 +375,7 @@ export class HotkeySystem {
                     ${contentHTML}
                 </div>
                 <div class="modal-footer">
-                    <p class="hotkey-hint">Press <kbd>?</kbd> or <kbd>Esc</kbd> to close</p>
+                    <p class="hotkey-hint">Press <kbd>H</kbd> or <kbd>Esc</kbd> to close</p>
                 </div>
             </div>
         `;
@@ -405,7 +405,7 @@ export class HotkeySystem {
         if (mainKey === ' ') mainKey = 'Space';
         if (mainKey === 'Escape') mainKey = 'Esc';
         
-        keys.push(`<kbd>${mainKey}</kbd>`);
+        keys.push(`<kbd>${mainKey.toUpperCase()}</kbd>`);
         
         return keys.join(' + ');
     }
