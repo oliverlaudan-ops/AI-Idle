@@ -7,13 +7,14 @@ import { initializeResearch } from './research.js';
 import { initializeAchievements } from './achievements.js';
 import { initializePrestige } from './prestige.js';
 import { checkAndUnlockAchievements, getAchievementBonus } from './achievement-checker.js';
+import { ComboSystem } from './combo-system.js';
 
 // Game constants
 const GAME_CONSTANTS = {
     MAX_OFFLINE_TIME_MS: 24 * 60 * 60 * 1000, // 24 hours
     OFFLINE_TICK_INTERVAL: 60, // Process offline progress in 60 second chunks
     MIN_OFFLINE_TIME_MS: 5000, // Minimum 5 seconds to trigger offline progress
-    SAVE_VERSION: '0.2'
+    SAVE_VERSION: '0.3'
 };
 
 export class GameState {
@@ -24,6 +25,9 @@ export class GameState {
         this.research = initializeResearch();
         this.achievements = initializeAchievements();
         this.prestige = initializePrestige();
+        
+        // NEW: Combo system for manual collection
+        this.comboSystem = new ComboSystem();
         
         this.currentTraining = null;
         this.trainingProgress = 0;
@@ -43,7 +47,8 @@ export class GameState {
             globalMultiplier: 1,
             deploymentTokens: 1,
             permanentAccuracy: 1,
-            researchPoints: 1
+            researchPoints: 1,
+            manualCollection: 1 // NEW: For combo achievements
         };
         
         // Multipliers object for UI
@@ -65,7 +70,8 @@ export class GameState {
             deployments: 0,
             startTime: Date.now(),
             totalPlaytime: 0,
-            lastPlaytimeUpdate: Date.now()
+            lastPlaytimeUpdate: Date.now(),
+            manualClicks: 0 // NEW: Track manual clicks
         };
         
         this.settings = {
@@ -93,6 +99,24 @@ export class GameState {
             this.stats.totalAccuracy += amount;
             this.stats.maxAccuracy = Math.max(this.stats.maxAccuracy, this.resources.accuracy.amount);
         }
+    }
+    
+    // NEW: Manual collect with combo system
+    manualCollect() {
+        // Get combo multiplier
+        const multiplier = this.comboSystem.click();
+        
+        // Base amount is 1, modified by combo and achievement bonuses
+        const baseAmount = 1;
+        const amount = baseAmount * multiplier * this.achievementBonuses.manualCollection;
+        
+        // Add the resource
+        this.addResource('data', amount);
+        
+        // Update stats
+        this.stats.manualClicks++;
+        
+        return { amount, multiplier };
     }
     
     canAfford(costs) {
@@ -361,6 +385,9 @@ export class GameState {
         this.stats.totalPlaytime += playtimeDelta;
         this.stats.lastPlaytimeUpdate = now;
         
+        // NEW: Update combo system
+        this.comboSystem.update(deltaTime);
+        
         // Add resources from production
         for (const [resourceId, resource] of Object.entries(this.resources)) {
             if (resource.perSecond > 0) {
@@ -504,7 +531,8 @@ export class GameState {
             trainingProgress: this.trainingProgress,
             training: this.training,
             stats: this.stats,
-            settings: this.settings
+            settings: this.settings,
+            comboSystem: this.comboSystem.save() // NEW: Save combo system state
         };
         
         this.lastSaveTime = Date.now();
@@ -533,12 +561,25 @@ export class GameState {
             
             // Load achievement bonuses if they exist
             if (saveData.achievementBonuses) {
-                this.achievementBonuses = saveData.achievementBonuses;
+                this.achievementBonuses = {
+                    ...this.achievementBonuses,
+                    ...saveData.achievementBonuses
+                };
+            }
+            
+            // NEW: Load combo system state
+            if (saveData.comboSystem) {
+                this.comboSystem.load(saveData.comboSystem);
             }
             
             // Ensure lastPlaytimeUpdate is set
             if (!this.stats.lastPlaytimeUpdate) {
                 this.stats.lastPlaytimeUpdate = Date.now();
+            }
+            
+            // Ensure manualClicks stat exists
+            if (this.stats.manualClicks === undefined) {
+                this.stats.manualClicks = 0;
             }
             
             this.recalculateProduction();
