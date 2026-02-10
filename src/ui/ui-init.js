@@ -58,6 +58,16 @@ export function initializeUI(game) {
         showImportModal(game);
     });
     
+    // Restart Tutorial button
+    document.getElementById('btn-restart-tutorial').addEventListener('click', () => {
+        if (window.tutorial) {
+            window.tutorial.restart();
+            showToast('Tutorial restarted!', 'success');
+        } else {
+            showToast('Tutorial system not available.', 'warning');
+        }
+    });
+    
     // Reset button
     document.getElementById('btn-reset').addEventListener('click', () => {
         const confirmed = confirm('Are you sure you want to reset? This will delete ALL progress!');
