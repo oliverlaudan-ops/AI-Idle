@@ -35,19 +35,19 @@ export class AIInterface {
             
             // Research (4 features)
             this.normalize(g.resources.research.amount, 0, 1e4),
-            this.normalize(Object.keys(g.research).filter(id => g.research[id].unlocked).length, 0, 20),
+            this.normalize(Object.keys(g.research).filter(id => g.research[id].researched).length, 0, 20),
             
             // Training (3 features)
             g.currentTraining ? 1 : 0,
-            this.normalize(g.statistics.trainingCompleted || 0, 0, 100),
+            this.normalize(g.stats.modelsTrained || 0, 0, 100),
             this.normalize(g.resources.accuracy.perSecond, 0, 10),
             
             // Achievements (2 features)
             this.normalize(this.getAchievementCount(), 0, 30),
-            this.normalize(g.statistics.achievementPoints || 0, 0, 500),
+            this.normalize(this.getTotalAchievementReward(), 0, 500),
             
             // Game progress (1 feature)
-            this.normalize(g.statistics.playtime || 0, 0, 3600000) // normalized to 1 hour
+            this.normalize(g.stats.totalPlaytime || 0, 0, 3600000) // normalized to 1 hour
         ];
     }
 
@@ -126,68 +126,41 @@ export class AIInterface {
     // === Helper Methods ===
 
     normalize(value, min, max) {
+        if (max === min) return 0;
         return Math.max(0, Math.min(1, (value - min) / (max - min)));
     }
 
     getBuildingCount(buildingId) {
         const building = this.game.buildings[buildingId];
-        return building ? building.owned : 0;
+        return building ? building.count : 0; // Fixed: owned -> count
     }
 
     getAchievementCount() {
         return Object.values(this.game.achievements).filter(a => a.unlocked).length;
     }
+    
+    getTotalAchievementReward() {
+        return Object.values(this.game.achievements)
+            .filter(a => a.unlocked)
+            .reduce((sum, a) => sum + (a.reward || 0), 0);
+    }
 
     collectData() {
-        const amount = this.game.getManualCollectionAmount();
-        this.game.resources.data.amount += amount;
-        return { success: true, gained: amount };
+        const result = this.game.manualCollect();
+        return { success: true, gained: result.amount };
     }
 
     buyBuilding(buildingId) {
-        const building = this.game.buildings[buildingId];
-        if (!building) {
-            return { success: false, reason: 'Building not found' };
-        }
-
-        const cost = building.getCurrentCost();
-        if (this.game.resources.data.amount >= cost) {
-            this.game.resources.data.amount -= cost;
-            building.owned++;
-            building.totalBought++;
-            return { success: true, cost: cost };
-        }
-        
-        return { success: false, reason: 'Insufficient data' };
+        const result = this.game.purchaseBuilding(buildingId, 1);
+        return result || { success: false, reason: 'Purchase failed' };
     }
 
     startTraining(modelId) {
-        const model = this.game.models[modelId];
-        if (!model) {
-            return { success: false, reason: 'Model not found' };
+        const success = this.game.startTraining(modelId);
+        if (success) {
+            return { success: true, model: modelId };
         }
-
-        if (this.game.currentTraining) {
-            return { success: false, reason: 'Already training' };
-        }
-
-        if (!model.canStart(this.game)) {
-            return { success: false, reason: 'Requirements not met' };
-        }
-
-        // Consume data cost
-        this.game.resources.data.amount -= model.dataCost;
-        
-        // Start training
-        this.game.currentTraining = {
-            modelId: modelId,
-            model: model,
-            progress: 0,
-            duration: model.duration,
-            elapsed: 0
-        };
-
-        return { success: true, model: modelId };
+        return { success: false, reason: 'Cannot start training' };
     }
 
     stopTraining() {
@@ -195,27 +168,16 @@ export class AIInterface {
             return { success: false, reason: 'No training active' };
         }
 
-        this.game.currentTraining = null;
+        this.game.stopTraining();
         return { success: true };
     }
 
     unlockResearch(researchId) {
-        const research = this.game.research[researchId];
-        if (!research) {
-            return { success: false, reason: 'Research not found' };
+        const success = this.game.performResearch(researchId);
+        if (success) {
+            return { success: true, research: researchId };
         }
-
-        if (research.unlocked) {
-            return { success: false, reason: 'Already unlocked' };
-        }
-
-        if (this.game.resources.research.amount < research.cost) {
-            return { success: false, reason: 'Insufficient research points' };
-        }
-
-        this.game.resources.research.amount -= research.cost;
-        research.unlocked = true;
-        return { success: true, research: researchId };
+        return { success: false, reason: 'Cannot unlock research' };
     }
 
     buyBestBuilding() {
@@ -226,9 +188,9 @@ export class AIInterface {
 
         for (const buildingId of buildings) {
             const building = this.game.buildings[buildingId];
-            if (!building) continue;
+            if (!building || !building.unlocked) continue;
 
-            const cost = building.getCurrentCost();
+            const cost = building.cost.data || 0;
             if (this.game.resources.data.amount < cost) continue;
 
             const production = building.production.data || 0;
@@ -268,8 +230,6 @@ export class AIInterface {
 
     estimateAchievementProgress(id, achievement) {
         // Simple heuristic progress estimation
-        // Will be replaced with ML predictor
-        
         if (achievement.unlocked) return 1.0;
 
         // Check condition and estimate progress
@@ -312,8 +272,8 @@ export class AIInterface {
         reward += achievementGain * 10;
 
         // Reward for research unlocks
-        const researchGain = Object.keys(newState.research || {}).filter(id => newState.research[id].unlocked).length -
-                            Object.keys(previousState.research || {}).filter(id => previousState.research[id].unlocked).length;
+        const researchGain = Object.keys(newState.research || {}).filter(id => newState.research[id].researched).length -
+                            Object.keys(previousState.research || {}).filter(id => previousState.research[id].researched).length;
         reward += researchGain * 5;
 
         // Small penalty for idle time (encourage action)
@@ -333,10 +293,11 @@ export class AIInterface {
      * Check if game is in terminal state (episode done)
      */
     isDone() {
-        // Episode ends when first achievement is unlocked or 1000 ticks
+        // Episode ends when first achievement is unlocked or after enough ticks
         const hasAchievement = this.getAchievementCount() > 0;
-        const ticks = this.game.statistics.totalTicks || 0;
-        return hasAchievement || ticks >= 1000;
+        const playtime = this.game.stats.totalPlaytime || 0;
+        const maxPlaytime = 300000; // 5 minutes
+        return hasAchievement || playtime >= maxPlaytime;
     }
 
     /**
@@ -346,8 +307,8 @@ export class AIInterface {
         // Save achievement progress before reset
         const achievementCount = this.getAchievementCount();
         
-        // Reset game to initial state (without full page reload)
-        this.game.hardReset();
+        // Reset game to initial state
+        this.game.reset();
         
         return {
             achievementCount: achievementCount,
