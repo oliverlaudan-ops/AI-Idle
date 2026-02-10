@@ -33,8 +33,10 @@ export class AIInterface {
             this.normalize(this.getBuildingCount('server'), 0, 100),
             this.normalize(this.getBuildingCount('cluster'), 0, 50),
             
-            // Research (4 features)
+            // Research (4 features) - FIXED: Now actually 4!
             this.normalize(g.resources.research.amount, 0, 1e4),
+            this.normalize(g.resources.research.perSecond, 0, 100),
+            this.normalize(g.stats.completedResearch.length, 0, 20),
             this.normalize(Object.keys(g.research).filter(id => g.research[id].researched).length, 0, 20),
             
             // Training (3 features)
@@ -49,6 +51,7 @@ export class AIInterface {
             // Game progress (1 feature)
             this.normalize(g.stats.totalPlaytime || 0, 0, 3600000) // normalized to 1 hour
         ];
+        // Total: 4 + 6 + 4 + 3 + 2 + 1 = 20 features ✓
     }
 
     /**
@@ -132,7 +135,7 @@ export class AIInterface {
 
     getBuildingCount(buildingId) {
         const building = this.game.buildings[buildingId];
-        return building ? building.count : 0; // Fixed: owned -> count
+        return building ? building.count : 0;
     }
 
     getAchievementCount() {
