@@ -1,20 +1,16 @@
 /**
  * AI Lab UI - User Interface for Real Machine Learning Features
  * 
- * Manages the UI for:
- * - Achievement Predictor (with REAL progress bars + Polish!)
- * - RL Bot Training
- * - Watch AI Play Mode
- * - Human vs AI Competition
+ * Now with SMART PREDICTIONS powered by player-specific ML!
  */
 
-import { AchievementPredictor } from '../ai/achievement-predictor.js';
+import { getSmartPredictor } from '../modules/achievements.js';
 import { RLEnvironment } from '../ai/rl-environment.js';
 
 export class AILabUI {
     constructor(gameState) {
         this.game = gameState;
-        this.predictor = null;
+        this.smartPredictor = null;
         this.environment = null;
         this.isInitialized = false;
         this.updateInterval = null;
@@ -39,9 +35,12 @@ export class AILabUI {
 
             console.log('[AI Lab] TensorFlow.js version:', tf.version.tfjs);
 
-            // Initialize AI modules
-            this.predictor = new AchievementPredictor(this.game);
-            await this.predictor.init();
+            // Get Smart Predictor from achievements module
+            this.smartPredictor = getSmartPredictor();
+            
+            if (!this.smartPredictor) {
+                throw new Error('Smart Predictor not initialized');
+            }
 
             this.environment = new RLEnvironment(this.game);
 
@@ -64,6 +63,8 @@ export class AILabUI {
     render() {
         const content = document.getElementById('ai-lab-content');
         if (!content) return;
+        
+        const modelInfo = this.smartPredictor ? this.smartPredictor.getModelInfo() : null;
 
         content.innerHTML = `
             <div class="ai-lab-container">
@@ -75,34 +76,40 @@ export class AILabUI {
                     </div>
                     <div class="status-item">
                         <span class="status-icon">🧠</span>
-                        <span>Achievement Predictor: Ready</span>
+                        <span>Smart Predictor: ${modelInfo?.modelLoaded ? 'Trained' : 'Ready'}</span>
                     </div>
                     <div class="status-item">
-                        <span class="status-icon">🤖</span>
-                        <span>RL Environment: Ready</span>
+                        <span class="status-icon">📊</span>
+                        <span>Training Data: ${modelInfo?.trainingDataSize || 0} unlocks</span>
                     </div>
                 </div>
 
                 <!-- Achievement Predictor Section -->
                 <div class="ai-section">
                     <div class="ai-section-header">
-                        <h3>🎯 Achievement Predictor</h3>
-                        <p>ML model that predicts which achievements you'll unlock next</p>
+                        <h3>🎯 Smart Achievement Predictor</h3>
+                        <p>Personalized ML predictions based on YOUR playstyle</p>
                     </div>
                     <div class="ai-section-content">
                         <div class="predictor-controls">
-                            <button class="btn-primary" id="btn-train-predictor">
-                                🎓 Retrain Model
-                            </button>
                             <button class="btn-secondary" id="btn-predict">
                                 🔮 Make Predictions
                             </button>
+                            ${modelInfo?.canTrain ? `
+                                <button class="btn-primary" id="btn-train-predictor">
+                                    🎓 Train ML Model
+                                </button>
+                            ` : `
+                                <div class="training-hint">
+                                    🌱 Unlock ${modelInfo?.minDataRequired || 5} achievements to enable ML training
+                                </div>
+                            `}
                         </div>
-                        <div id="predictor-status" class="predictor-status">
-                            <p style="color: #4ade80;">✅ Training complete! Model ready for predictions.</p>
+                        <div id="predictor-status" class="predictor-status" style="display: none;">
+                            <!-- Training status appears here -->
                         </div>
                         <div id="predictor-results" class="predictor-results">
-                            <p style="color: var(--text-secondary);">Click "Make Predictions" to analyze your progress!</p>
+                            <p style="color: var(--text-secondary);">Click "Make Predictions" to see which achievements you'll unlock next!</p>
                         </div>
                     </div>
                 </div>
@@ -130,11 +137,11 @@ export class AILabUI {
                     </div>
                     <div class="ai-section-content">
                         <div class="tech-info">
-                            <h4>Achievement Predictor Architecture:</h4>
-                            <pre>Input (20 features) → Dense (16, ReLU) → Dense (8, ReLU) → Output (30, Sigmoid)</pre>
-                            <p><strong>Input Features:</strong> Resources, buildings, research, progress</p>
-                            <p><strong>Output:</strong> Probability for each achievement (0-1)</p>
-                            <p><strong>Training:</strong> Binary cross-entropy loss, Adam optimizer</p>
+                            <h4>Smart Achievement Predictor:</h4>
+                            <pre>Input (30 features) → Dense (24, ReLU) → Dropout → Dense (12, ReLU) → Output (1, Sigmoid)</pre>
+                            <p><strong>Personalization:</strong> Learns from your achievement unlock patterns</p>
+                            <p><strong>Features:</strong> Progress, playstyle, skill level, temporal patterns</p>
+                            <p><strong>Hybrid:</strong> Combines ML predictions with progress calculations</p>
                             
                             <h4 style="margin-top: 1rem;">RL Environment:</h4>
                             <pre>State Space: 20 dimensions | Action Space: 15 actions</pre>
@@ -167,67 +174,66 @@ export class AILabUI {
     }
 
     /**
-     * Train achievement predictor
+     * Train Smart Predictor
      */
     async trainPredictor() {
         const status = document.getElementById('predictor-status');
         const trainBtn = document.getElementById('btn-train-predictor');
-        const predictBtn = document.getElementById('btn-predict');
 
-        if (!this.predictor || !status || !trainBtn) return;
+        if (!this.smartPredictor || !status || !trainBtn) return;
 
         try {
+            status.style.display = 'block';
             trainBtn.disabled = true;
             trainBtn.textContent = '⏳ Training...';
-            status.innerHTML = '<p>Training in progress...</p><div class="training-progress"></div>';
+            status.innerHTML = '<p>Training ML model on your achievement history...</p><div class="training-progress"></div>';
 
-            // Train model with progress callback
-            const success = await this.predictor.train((progress) => {
-                status.innerHTML = `
-                    <p>Training: Epoch ${progress.epoch}/${progress.totalEpochs}</p>
-                    <div class="training-progress">
-                        <div class="progress-bar" style="width: ${(progress.epoch / progress.totalEpochs) * 100}%"></div>
-                    </div>
-                    <p style="font-size: 0.9rem; color: var(--text-secondary);">
-                        Loss: ${progress.loss.toFixed(4)} | Accuracy: ${(progress.accuracy * 100).toFixed(1)}%
-                    </p>
-                `;
+            const success = await this.smartPredictor.train((progress) => {
+                if (progress.epoch % 10 === 0) {
+                    status.innerHTML = `
+                        <p>Training: Epoch ${progress.epoch}/${progress.totalEpochs}</p>
+                        <div class="training-progress">
+                            <div class="progress-bar" style="width: ${(progress.epoch / progress.totalEpochs) * 100}%"></div>
+                        </div>
+                        <p style="font-size: 0.9rem; color: var(--text-secondary);">
+                            Loss: ${progress.loss.toFixed(4)} | Accuracy: ${(progress.accuracy * 100).toFixed(1)}%
+                        </p>
+                    `;
+                }
             });
 
             if (success) {
-                status.innerHTML = '<p style="color: #4ade80;">✅ Training complete! Model ready for predictions.</p>';
+                status.innerHTML = '<p style="color: #4ade80;">✅ ML model trained! Predictions are now personalized to your playstyle.</p>';
                 trainBtn.textContent = '🔄 Retrain Model';
                 trainBtn.disabled = false;
                 
-                if (predictBtn) {
-                    predictBtn.disabled = false;
-                }
-
                 // Auto-predict after training
-                setTimeout(() => this.makePredictions(), 500);
+                setTimeout(() => {
+                    this.makePredictions();
+                    // Hide status after a bit
+                    setTimeout(() => { status.style.display = 'none'; }, 3000);
+                }, 500);
             } else {
-                throw new Error('Training failed');
+                throw new Error('Training failed - need more achievement unlocks');
             }
 
         } catch (error) {
             console.error('[AI Lab] Training error:', error);
-            status.innerHTML = `<p style="color: #e63946;">❌ Training failed: ${error.message}</p>`;
+            status.innerHTML = `<p style="color: #e63946;">❌ ${error.message}</p>`;
             trainBtn.disabled = false;
-            trainBtn.textContent = '🎓 Train Model';
+            trainBtn.textContent = '🎓 Train ML Model';
         }
     }
 
     /**
-     * Make predictions (with REAL progress bars + Polish!)
+     * Make predictions with Smart Predictor
      */
     async makePredictions() {
         const results = document.getElementById('predictor-results');
-        if (!this.predictor || !results) return;
+        if (!this.smartPredictor || !results) return;
 
         try {
-            // Get predictions with real progress data
-            const predictions = await this.predictor.predict();
-            const topPredictions = this.predictor.getTopPredictions(5);
+            const topPredictions = await this.smartPredictor.getTopPredictions(5);
 
             if (topPredictions.length === 0) {
                 results.innerHTML = `
@@ -241,23 +247,35 @@ export class AILabUI {
                 return;
             }
 
+            const modelInfo = this.smartPredictor.getModelInfo();
+
             results.style.display = 'block';
             results.innerHTML = `
-                <h4>Top 5 Achievements (Most Likely to Unlock Soon):</h4>
+                <div class="prediction-header-banner">
+                    <h4>Top 5 Predictions</h4>
+                    ${modelInfo.modelLoaded ? `
+                        <div class="ml-badge">
+                            <span class="ml-icon">✨</span>
+                            <span>ML-Enhanced (${modelInfo.trainingDataSize} unlocks)</span>
+                        </div>
+                    ` : `
+                        <div class="ml-badge basic">
+                            <span class="ml-icon">📊</span>
+                            <span>Progress-Based</span>
+                        </div>
+                    `}
+                </div>
                 <div class="prediction-list">
-                    ${topPredictions.map((pred, index) => this.renderPrediction(pred, index)).join('')}
+                    ${topPredictions.map((pred, index) => this.renderPrediction(pred, index, modelInfo.modelLoaded)).join('')}
                 </div>
                 <div class="prediction-footer">
                     <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem;">
-                        ℹ️ Progress and time estimates update every 5 seconds based on your production rates.
+                        ℹ️ ${modelInfo.modelLoaded ? 'Predictions combine ML analysis with progress tracking.' : 'Unlock more achievements to enable ML personalization!'}
                     </p>
                 </div>
             `;
 
-            // Setup tooltips after rendering
             this.setupTooltips();
-
-            // Start auto-updating predictions
             this.startAutoUpdate();
 
         } catch (error) {
@@ -267,10 +285,10 @@ export class AILabUI {
     }
 
     /**
-     * Render a single prediction with confidence indicator and tooltip
+     * Render a single prediction with ML confidence
      */
-    renderPrediction(pred, index) {
-        const confidence = this.calculateConfidence(pred);
+    renderPrediction(pred, index, hasMLModel) {
+        const confidence = pred.confidence || 0.5;
         const confidenceClass = this.getConfidenceClass(confidence);
         const shouldPulse = confidence >= 0.8 && pred.progressPercent > 80;
         
@@ -279,11 +297,10 @@ export class AILabUI {
                  style="animation-delay: ${index * 0.1}s;"
                  data-achievement-id="${pred.id}">
                 
-                <!-- Header -->
                 <div class="prediction-header">
                     <div class="prediction-name">
-                        <span class="achievement-icon">${pred.icon || '🏆'}</span>
-                        <span>${pred.name}</span>
+                        <span class="achievement-icon">${pred.achievement.icon || '🏆'}</span>
+                        <span>${pred.achievement.name}</span>
                         <span class="confidence-badge ${confidenceClass}" 
                               title="Prediction confidence: ${(confidence * 100).toFixed(0)}%">
                             ${this.getConfidenceEmoji(confidence)}
@@ -291,12 +308,29 @@ export class AILabUI {
                     </div>
                     <div class="prediction-eta">
                         <span class="eta-icon">⏱️</span>
-                        ${this.predictor.formatTimeEstimate(pred.timeEstimate)}
+                        ${this.formatTimeEstimate(pred.timeEstimate)}
                     </div>
                 </div>
                 
-                <!-- Description -->
-                <div class="prediction-description">${pred.description || ''}</div>
+                <div class="prediction-description">${pred.achievement.description || ''}</div>
+                
+                <!-- Probability Breakdown (if ML available) -->
+                ${hasMLModel ? `
+                    <div class="probability-breakdown">
+                        <div class="prob-item">
+                            <span class="prob-label">🧠 ML:</span>
+                            <span class="prob-value">${(pred.mlProbability * 100).toFixed(0)}%</span>
+                        </div>
+                        <div class="prob-item">
+                            <span class="prob-label">📊 Progress:</span>
+                            <span class="prob-value">${(pred.progressProbability * 100).toFixed(0)}%</span>
+                        </div>
+                        <div class="prob-item combined">
+                            <span class="prob-label">✨ Combined:</span>
+                            <span class="prob-value">${(pred.combinedProbability * 100).toFixed(0)}%</span>
+                        </div>
+                    </div>
+                ` : ''}
                 
                 <!-- Progress Bar -->
                 <div class="prediction-bar-container">
@@ -305,7 +339,6 @@ export class AILabUI {
                     <span class="prediction-percent">${pred.progressPercent.toFixed(1)}%</span>
                 </div>
                 
-                <!-- Details -->
                 <div class="prediction-details">
                     <div class="detail-item">
                         <span class="detail-label">Progress:</span>
@@ -319,13 +352,11 @@ export class AILabUI {
                     ` : ''}
                 </div>
                 
-                <!-- Tooltip trigger -->
                 <div class="info-trigger" data-tooltip-id="tooltip-${pred.id}">
                     <span>💡</span>
-                    <span class="info-text">Why this prediction?</span>
+                    <span class="info-text">Strategy tips</span>
                 </div>
                 
-                <!-- Hidden tooltip content -->
                 <div class="tooltip-content" id="tooltip-${pred.id}" style="display: none;">
                     ${this.generateTooltipContent(pred)}
                 </div>
@@ -334,38 +365,18 @@ export class AILabUI {
     }
 
     /**
-     * Calculate confidence level for prediction
+     * Calculate confidence level
      */
     calculateConfidence(pred) {
-        // Confidence based on:
-        // 1. Progress percentage (higher = more confident)
-        // 2. Time estimate (shorter = more confident)
-        // 3. Production rate (higher = more confident)
-        
-        let confidence = 0;
-        
-        // Progress weight: 50%
-        confidence += (pred.progressPercent / 100) * 0.5;
-        
-        // Time weight: 30%
-        if (pred.timeEstimate < 60) confidence += 0.3;
-        else if (pred.timeEstimate < 300) confidence += 0.2;
-        else if (pred.timeEstimate < 3600) confidence += 0.1;
-        
-        // Rate weight: 20%
-        if (pred.rate > 0) {
-            confidence += Math.min(pred.rate / 10, 0.2);
-        }
-        
-        return Math.min(confidence, 1);
+        return pred.confidence || 0.5;
     }
 
     /**
      * Get confidence CSS class
      */
     getConfidenceClass(confidence) {
-        if (confidence >= 0.8) return 'high-confidence';
-        if (confidence >= 0.5) return 'medium-confidence';
+        if (confidence >= 0.7) return 'high-confidence';
+        if (confidence >= 0.4) return 'medium-confidence';
         return 'low-confidence';
     }
 
@@ -373,16 +384,16 @@ export class AILabUI {
      * Get confidence emoji
      */
     getConfidenceEmoji(confidence) {
-        if (confidence >= 0.8) return '🔥';
-        if (confidence >= 0.5) return '✨';
+        if (confidence >= 0.7) return '🔥';
+        if (confidence >= 0.4) return '✨';
         return '🌱';
     }
 
     /**
-     * Generate tooltip content with strategy tips
+     * Generate tooltip content
      */
     generateTooltipContent(pred) {
-        const achievement = this.game.achievements[pred.id];
+        const achievement = pred.achievement;
         const req = achievement?.requirement;
         
         let strategy = 'Keep playing to make progress!';
@@ -414,8 +425,8 @@ export class AILabUI {
         
         return `
             <div class="tooltip-inner">
-                <h5>🎯 ${pred.name}</h5>
-                <p class="tooltip-desc">${pred.description}</p>
+                <h5>🎯 ${achievement.name}</h5>
+                <p class="tooltip-desc">${achievement.description}</p>
                 <div class="tooltip-divider"></div>
                 <p class="tooltip-strategy"><strong>Strategy:</strong> ${strategy}</p>
                 <p class="tooltip-progress"><strong>Current Progress:</strong> ${pred.progressPercent.toFixed(1)}%</p>
@@ -425,7 +436,7 @@ export class AILabUI {
     }
 
     /**
-     * Setup interactive tooltips
+     * Setup tooltips
      */
     setupTooltips() {
         const triggers = document.querySelectorAll('.info-trigger');
@@ -437,18 +448,14 @@ export class AILabUI {
                 const tooltip = document.getElementById(tooltipId);
                 
                 if (tooltip) {
-                    // Close all other tooltips
                     document.querySelectorAll('.tooltip-content').forEach(t => {
                         if (t.id !== tooltipId) t.style.display = 'none';
                     });
-                    
-                    // Toggle this tooltip
                     tooltip.style.display = tooltip.style.display === 'none' ? 'block' : 'none';
                 }
             });
         });
         
-        // Close tooltips when clicking outside
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.info-trigger')) {
                 document.querySelectorAll('.tooltip-content').forEach(t => {
@@ -459,32 +466,32 @@ export class AILabUI {
     }
 
     /**
-     * Format numeric values for display
+     * Format values
      */
     formatValue(value) {
-        if (value >= 1000000000) {
-            return (value / 1000000000).toFixed(1) + 'B';
-        } else if (value >= 1000000) {
-            return (value / 1000000).toFixed(1) + 'M';
-        } else if (value >= 1000) {
-            return (value / 1000).toFixed(1) + 'K';
-        } else if (value >= 1) {
-            return value.toFixed(1);
-        } else {
-            return value.toFixed(3);
-        }
+        if (value >= 1000000000) return (value / 1000000000).toFixed(1) + 'B';
+        if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+        if (value >= 1000) return (value / 1000).toFixed(1) + 'K';
+        if (value >= 1) return value.toFixed(1);
+        return value.toFixed(3);
     }
 
     /**
-     * Start auto-updating predictions
+     * Format time estimate
+     */
+    formatTimeEstimate(seconds) {
+        if (!isFinite(seconds) || seconds < 0) return 'Unknown';
+        if (seconds < 60) return `≈${Math.ceil(seconds)}s`;
+        if (seconds < 3600) return `≈${Math.ceil(seconds / 60)}m`;
+        if (seconds < 86400) return `≈${Math.ceil(seconds / 3600)}h`;
+        return `≈${Math.ceil(seconds / 86400)}d`;
+    }
+
+    /**
+     * Start auto-updating
      */
     startAutoUpdate() {
-        // Clear existing interval
-        if (this.updateInterval) {
-            clearInterval(this.updateInterval);
-        }
-
-        // Update every 5 seconds
+        if (this.updateInterval) clearInterval(this.updateInterval);
         this.updateInterval = setInterval(() => {
             const results = document.getElementById('predictor-results');
             if (results && results.style.display !== 'none') {
@@ -493,9 +500,6 @@ export class AILabUI {
         }, 5000);
     }
 
-    /**
-     * Stop auto-updating
-     */
     stopAutoUpdate() {
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
@@ -503,20 +507,13 @@ export class AILabUI {
         }
     }
 
-    /**
-     * Render error state
-     */
     renderError(error) {
         const content = document.getElementById('ai-lab-content');
         if (!content) return;
-
         content.innerHTML = `
             <div style="text-align: center; padding: 2rem; color: #e63946;">
                 <h3>⚠️ AI Lab Failed to Initialize</h3>
                 <p>${error.message}</p>
-                <p style="color: var(--text-secondary); margin-top: 1rem;">
-                    Make sure TensorFlow.js loaded correctly. Try reloading the page.
-                </p>
                 <button class="btn-primary" onclick="location.reload()" style="margin-top: 1rem;">
                     🔄 Reload Page
                 </button>
@@ -524,415 +521,90 @@ export class AILabUI {
         `;
     }
 
-    /**
-     * Cleanup
-     */
     destroy() {
         this.stopAutoUpdate();
     }
 }
 
-// Add AI Lab styles (UPDATED WITH POLISH!)
+// Enhanced styles with ML probability breakdown
 const style = document.createElement('style');
 style.textContent = `
-    .ai-lab-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 1rem;
-    }
-
-    .ai-status-banner {
-        display: flex;
-        gap: 2rem;
-        padding: 1rem;
-        background: var(--bg-secondary);
-        border: 2px solid var(--accent-primary);
-        border-radius: 12px;
-        margin-bottom: 2rem;
-        flex-wrap: wrap;
-    }
-
-    .status-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+    ${document.getElementById('ai-lab-styles')?.textContent || ''}
+    
+    .training-hint {
+        padding: 0.5rem 1rem;
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+        color: var(--text-secondary);
         font-size: 0.9rem;
     }
-
-    .status-icon {
-        font-size: 1.2rem;
+    
+    .prediction-header-banner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
     }
-
-    .ai-section {
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .ai-section-header h3 {
-        margin: 0 0 0.5rem 0;
-        color: var(--accent-primary);
-    }
-
-    .ai-section-header p {
+    
+    .prediction-header-banner h4 {
         margin: 0;
-        color: var(--text-secondary);
-        font-size: 0.9rem;
     }
-
-    .ai-section-content {
-        margin-top: 1rem;
-    }
-
-    .predictor-controls {
+    
+    .ml-badge {
         display: flex;
-        gap: 1rem;
-        margin-bottom: 1rem;
-        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.8rem;
+        background: linear-gradient(135deg, rgba(74, 222, 128, 0.2), rgba(34, 197, 94, 0.2));
+        border: 1px solid #22c55e;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
     }
-
-    .predictor-status {
-        padding: 1rem;
-        background: var(--bg-tertiary);
-        border-radius: 8px;
-        margin-bottom: 1rem;
-    }
-
-    .training-progress {
-        width: 100%;
-        height: 8px;
-        background: var(--bg-tertiary);
-        border-radius: 4px;
-        overflow: hidden;
-        margin: 0.5rem 0;
-    }
-
-    .progress-bar {
-        height: 100%;
-        background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-        transition: width 0.3s ease;
-    }
-
-    .predictor-results {
-        padding: 1rem;
-        background: var(--bg-tertiary);
-        border-radius: 8px;
-    }
-
-    .prediction-list {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        margin-top: 1rem;
-    }
-
-    .prediction-item {
-        padding: 1rem;
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        opacity: 0;
-        animation: fadeIn 0.5s ease forwards;
-        position: relative;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .prediction-item:hover {
-        border-color: var(--accent-primary);
-        box-shadow: 0 4px 12px rgba(0, 255, 255, 0.1);
-        transform: translateY(-2px);
-    }
-
-    .prediction-item.high-confidence {
-        border-color: #22c55e;
-    }
-
-    .prediction-item.medium-confidence {
-        border-color: #eab308;
-    }
-
-    .prediction-item.low-confidence {
+    
+    .ml-badge.basic {
+        background: rgba(100, 100, 100, 0.2);
         border-color: var(--border-color);
-        opacity: 0.8;
     }
-
-    .pulse-animation {
-        animation: fadeIn 0.5s ease forwards, pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        50% { box-shadow: 0 0 20px 5px rgba(34, 197, 94, 0.3); }
-    }
-
-    .prediction-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-
-    .prediction-name {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-weight: 600;
-        font-size: 1.1rem;
-    }
-
-    .achievement-icon {
-        font-size: 1.5rem;
-    }
-
-    .confidence-badge {
-        font-size: 0.9rem;
-        padding: 0.2rem 0.4rem;
-        border-radius: 4px;
-        background: var(--bg-tertiary);
-        cursor: help;
-    }
-
-    .confidence-badge.high-confidence {
-        background: rgba(34, 197, 94, 0.2);
-    }
-
-    .confidence-badge.medium-confidence {
-        background: rgba(234, 179, 8, 0.2);
-    }
-
-    .prediction-eta {
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
+    
+    .ml-icon {
         font-size: 1rem;
-        font-weight: 600;
-        color: var(--accent-secondary);
     }
-
-    .eta-icon {
-        font-size: 1.2rem;
-    }
-
-    .prediction-description {
-        color: var(--text-secondary);
-        font-size: 0.9rem;
-        margin-bottom: 0.75rem;
-    }
-
-    .prediction-bar-container {
-        position: relative;
-        height: 32px;
-        background: var(--bg-tertiary);
-        border-radius: 16px;
-        overflow: hidden;
-        margin-bottom: 0.5rem;
-    }
-
-    .prediction-bar {
-        height: 100%;
-        background: linear-gradient(90deg, #4ade80, #22c55e);
-        transition: width 0.8s ease;
-        box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
-    }
-
-    .prediction-bar.high-confidence {
-        background: linear-gradient(90deg, #22c55e, #16a34a);
-        box-shadow: 0 0 15px rgba(34, 197, 94, 0.6);
-    }
-
-    .prediction-bar.medium-confidence {
-        background: linear-gradient(90deg, #eab308, #ca8a04);
-        box-shadow: 0 0 10px rgba(234, 179, 8, 0.5);
-    }
-
-    .prediction-percent {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 0.9rem;
-        font-weight: 700;
-        text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-    }
-
-    .prediction-details {
+    
+    .probability-breakdown {
         display: flex;
-        justify-content: space-between;
         gap: 1rem;
-        margin-bottom: 0.5rem;
+        margin: 0.75rem 0;
+        padding: 0.5rem;
+        background: var(--bg-tertiary);
+        border-radius: 6px;
         flex-wrap: wrap;
     }
-
-    .detail-item {
-        display: flex;
-        gap: 0.5rem;
-        font-size: 0.85rem;
-    }
-
-    .detail-label {
-        color: var(--text-secondary);
-    }
-
-    .detail-value {
-        color: var(--text-primary);
-        font-weight: 600;
-    }
-
-    .info-trigger {
+    
+    .prob-item {
         display: flex;
         align-items: center;
         gap: 0.3rem;
         font-size: 0.85rem;
+    }
+    
+    .prob-item.combined {
+        font-weight: 700;
         color: var(--accent-primary);
-        cursor: pointer;
-        margin-top: 0.5rem;
-        padding: 0.3rem;
-        border-radius: 4px;
-        transition: background 0.2s;
-        width: fit-content;
+        margin-left: auto;
     }
-
-    .info-trigger:hover {
-        background: var(--bg-tertiary);
-    }
-
-    .info-text {
-        text-decoration: underline;
-    }
-
-    .tooltip-content {
-        position: absolute;
-        top: calc(100% + 0.5rem);
-        left: 0;
-        right: 0;
-        z-index: 1000;
-        background: var(--bg-primary);
-        border: 2px solid var(--accent-primary);
-        border-radius: 8px;
-        padding: 1rem;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-        animation: tooltipFadeIn 0.3s ease;
-    }
-
-    @keyframes tooltipFadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .tooltip-inner h5 {
-        margin: 0 0 0.5rem 0;
-        color: var(--accent-primary);
-    }
-
-    .tooltip-desc {
-        color: var(--text-secondary);
-        font-size: 0.9rem;
-        margin: 0 0 0.5rem 0;
-    }
-
-    .tooltip-divider {
-        height: 1px;
-        background: var(--border-color);
-        margin: 0.75rem 0;
-    }
-
-    .tooltip-strategy,
-    .tooltip-progress,
-    .tooltip-rate {
-        font-size: 0.85rem;
-        margin: 0.25rem 0;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 3rem 1rem;
-    }
-
-    .empty-icon {
-        font-size: 4rem;
-        margin-bottom: 1rem;
-    }
-
-    .empty-state h4 {
-        color: var(--accent-primary);
-        margin: 0.5rem 0;
-    }
-
-    .empty-state p {
-        color: var(--text-secondary);
-        margin: 0.5rem 0;
-    }
-
-    .empty-hint {
-        font-size: 0.9rem;
-        color: var(--text-tertiary) !important;
-        margin-top: 1rem !important;
-    }
-
-    .prediction-footer {
-        margin-top: 1rem;
-        text-align: center;
-    }
-
-    .rl-status {
-        padding: 2rem;
-        text-align: center;
-        background: var(--bg-tertiary);
-        border-radius: 8px;
-    }
-
-    .tech-info {
-        font-size: 0.9rem;
-    }
-
-    .tech-info h4 {
-        margin: 0.5rem 0;
-        color: var(--accent-secondary);
-    }
-
-    .tech-info pre {
-        background: var(--bg-tertiary);
-        padding: 0.75rem;
-        border-radius: 6px;
-        overflow-x: auto;
-        margin: 0.5rem 0;
-    }
-
-    .tech-info p {
-        margin: 0.25rem 0;
+    
+    .prob-label {
         color: var(--text-secondary);
     }
-
-    @media (max-width: 768px) {
-        .prediction-item {
-            padding: 0.75rem;
-        }
-
-        .prediction-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.5rem;
-        }
-
-        .prediction-details {
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
-        .tooltip-content {
-            position: fixed;
-            left: 1rem;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-        }
+    
+    .prob-value {
+        font-weight: 600;
     }
 `;
-document.head.appendChild(style);
+if (!document.getElementById('ai-lab-ml-styles')) {
+    style.id = 'ai-lab-ml-styles';
+    document.head.appendChild(style);
+}
