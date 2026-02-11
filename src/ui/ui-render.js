@@ -404,13 +404,14 @@ function updateResearchCard(card, research, gameState) {
         card.style.borderColor = 'var(--accent-success)';
     }
     
-    // Update cost
+    // Update cost - NOW DISPLAYS RESEARCH POINTS CORRECTLY
     const costDiv = document.getElementById(`research-cost-${id}`);
     costDiv.innerHTML = '';
     
     for (const [resourceId, amount] of Object.entries(research.cost)) {
-        const resource = gameState.resources[resourceId];
-        const hasEnough = gameState.resources[resourceId].amount >= amount;
+        // Research always costs 'research' resource now
+        const resource = gameState.resources.research;
+        const hasEnough = gameState.resources.research.amount >= amount;
         
         const costItem = document.createElement('span');
         costItem.className = `cost-item ${hasEnough ? 'affordable' : 'unaffordable'}`;
