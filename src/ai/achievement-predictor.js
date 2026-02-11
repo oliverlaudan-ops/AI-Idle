@@ -9,14 +9,18 @@
  * - Hidden Layer 1: 16 neurons, ReLU activation
  * - Hidden Layer 2: 8 neurons, ReLU activation
  * - Output: 1 neuron per achievement, Sigmoid activation (probability)
+ * 
+ * NEW: Integrated with AchievementProgressCalculator for accurate estimates!
  */
 
 import { AIInterface } from './ai-interface.js';
+import { AchievementProgressCalculator } from './achievement-progress-calculator.js';
 
 export class AchievementPredictor {
     constructor(gameState) {
         this.game = gameState;
         this.aiInterface = new AIInterface(gameState);
+        this.progressCalculator = new AchievementProgressCalculator(gameState);
         this.model = null;
         this.isTraining = false;
         this.trainingProgress = 0;
@@ -257,80 +261,97 @@ export class AchievementPredictor {
 
     /**
      * Predict achievement probabilities for current game state
+     * Now uses REAL progress calculation!
      */
     async predict() {
-        if (!this.model) {
-            console.warn('[AchievementPredictor] Model not initialized');
-            return null;
-        }
-
-        try {
-            // Get current state
-            const state = this.aiInterface.getStateVector();
-            const stateTensor = tf.tensor2d([state]);
-
-            // Make prediction
-            const predictionTensor = this.model.predict(stateTensor);
-            const probabilities = await predictionTensor.data();
-
-            // Cleanup
-            stateTensor.dispose();
-            predictionTensor.dispose();
-
-            // Store predictions
-            const achievements = Object.keys(this.game.achievements);
-            this.predictions = {};
-
-            achievements.forEach((id, index) => {
-                if (index < probabilities.length) {
-                    this.predictions[id] = probabilities[index];
-                }
-            });
-
-            return this.predictions;
-        } catch (error) {
-            console.error('[AchievementPredictor] Prediction failed:', error);
-            return null;
-        }
+        console.log('[AchievementPredictor] Making predictions...');
+        
+        // Use the progress calculator for accurate estimates
+        const progressData = this.progressCalculator.calculateAllProgress();
+        
+        // Convert progress to predictions format
+        this.predictions = {};
+        
+        Object.entries(progressData).forEach(([id, data]) => {
+            // Use progress as "probability" - higher progress = more likely to unlock soon
+            this.predictions[id] = {
+                probability: data.progress,
+                progressPercent: data.progressPercent,
+                current: data.current,
+                target: data.target,
+                remaining: data.remaining,
+                rate: data.rate,
+                timeEstimate: data.timeEstimate,
+                achievable: data.achievable
+            };
+        });
+        
+        console.log(`[AchievementPredictor] Generated predictions for ${Object.keys(this.predictions).length} achievements`);
+        
+        return this.predictions;
     }
 
     /**
      * Get prediction for specific achievement
      */
     getPrediction(achievementId) {
-        return this.predictions[achievementId] || 0;
+        return this.predictions[achievementId] || {
+            probability: 0,
+            progressPercent: 0,
+            timeEstimate: Infinity,
+            achievable: false
+        };
     }
 
     /**
      * Get top N achievements most likely to unlock soon
+     * Now returns achievements with REAL progress and time estimates!
      */
     getTopPredictions(n = 5) {
         const unlocked = Object.entries(this.game.achievements)
             .filter(([id, ach]) => !ach.unlocked);
 
         return unlocked
-            .map(([id, ach]) => ({
-                id: id,
-                name: ach.name,
-                probability: this.predictions[id] || 0
-            }))
-            .sort((a, b) => b.probability - a.probability)
+            .map(([id, ach]) => {
+                const prediction = this.predictions[id] || {};
+                return {
+                    id: id,
+                    name: ach.name,
+                    icon: ach.icon,
+                    description: ach.description,
+                    probability: prediction.probability || 0,
+                    progressPercent: prediction.progressPercent || 0,
+                    current: prediction.current || 0,
+                    target: prediction.target || 0,
+                    timeEstimate: prediction.timeEstimate || Infinity,
+                    achievable: prediction.achievable || false
+                };
+            })
+            .filter(a => a.achievable) // Only show achievable ones
+            .sort((a, b) => {
+                // Sort by progress (high to low), then by time (low to high)
+                if (Math.abs(a.progressPercent - b.progressPercent) > 5) {
+                    return b.progressPercent - a.progressPercent;
+                }
+                return a.timeEstimate - b.timeEstimate;
+            })
             .slice(0, n);
     }
 
     /**
      * Estimate time to unlock achievement (based on current rates)
+     * Now uses progress calculator!
      */
     estimateTimeToUnlock(achievementId) {
-        const probability = this.predictions[achievementId] || 0;
-        
-        // Simple heuristic: higher probability = less time
-        // In reality, this would consider resource production rates
-        if (probability > 0.9) return 30; // 30 seconds
-        if (probability > 0.7) return 120; // 2 minutes
-        if (probability > 0.5) return 300; // 5 minutes
-        if (probability > 0.3) return 600; // 10 minutes
-        return 1800; // 30 minutes
+        const prediction = this.getPrediction(achievementId);
+        return prediction.timeEstimate;
+    }
+
+    /**
+     * Format time estimate for display
+     */
+    formatTimeEstimate(seconds) {
+        return this.progressCalculator.formatTimeEstimate(seconds);
     }
 
     /**
