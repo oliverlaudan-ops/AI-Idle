@@ -8,6 +8,7 @@ import { TrainingQueueUI } from './ui/training-queue-ui.js';
 import { BulkPurchaseUI } from './ui/bulk-purchase-ui.js';
 import { SettingsUI } from './ui/settings-ui.js';
 import { HotkeySystem } from './modules/hotkeys.js';
+import { initializeSmartPredictor } from './modules/achievements.js';
 
 // Game loop constants - OPTIMIZED
 const LOOP_CONSTANTS = {
@@ -41,7 +42,7 @@ let lastSave = Date.now();
 let performanceWarningCount = 0;
 
 // Initialize the game
-function init() {
+async function init() {
     console.log('🤖 AI-Idle starting...');
     
     try {
@@ -95,6 +96,20 @@ function init() {
             if (shouldShowWelcome) {
                 showToast('Welcome to AI-Idle! Click "Collect Data" to begin.', 'success');
             }
+        }
+        
+        // Initialize Smart Achievement Predictor BEFORE UI
+        console.log('🧠 Initializing Smart Achievement Predictor...');
+        try {
+            // Check if TensorFlow.js is available
+            if (typeof tf !== 'undefined') {
+                await initializeSmartPredictor(window.game);
+                console.log('✅ Smart Predictor ready');
+            } else {
+                console.log('⚠️ TensorFlow.js not loaded - will initialize predictor when AI Lab opens');
+            }
+        } catch (error) {
+            console.warn('⚠️ Smart Predictor initialization deferred:', error.message);
         }
         
         // Initialize UI
@@ -162,10 +177,20 @@ function setupAILabLazyLoad() {
         if (statusEl) statusEl.textContent = 'Loading TensorFlow.js...';
         
         try {
-            // Load TensorFlow.js dynamically
+            // Load TensorFlow.js dynamically if not already loaded
             await loadTensorFlow();
             
             if (statusEl) statusEl.textContent = 'Initializing AI modules...';
+            
+            // Initialize Smart Predictor now if not already done
+            const { getSmartPredictor } = await import('./modules/achievements.js');
+            let predictor = getSmartPredictor();
+            
+            if (!predictor) {
+                console.log('[AI Lab] Initializing Smart Predictor...');
+                const { initializeSmartPredictor } = await import('./modules/achievements.js');
+                predictor = await initializeSmartPredictor(window.game);
+            }
             
             // Dynamically import AI modules
             const { AILabUI } = await import('./ui/ai-lab-ui.js');
@@ -182,7 +207,10 @@ function setupAILabLazyLoad() {
                     <div style="text-align: center; padding: 2rem; color: #e63946;">
                         <h3>⚠️ Failed to load AI Lab</h3>
                         <p>${error.message}</p>
-                        <button class="btn-primary" onclick="location.reload()">Reload Page</button>
+                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 1rem;">
+                            ${error.stack ? error.stack.split('\n').slice(0, 3).join('<br>') : ''}
+                        </p>
+                        <button class="btn-primary" onclick="location.reload()" style="margin-top: 1rem;">Reload Page</button>
                     </div>
                 `;
             }
@@ -336,7 +364,7 @@ function showAchievementUnlock(achievement) {
     
     if (window.game.settings.get('notifications', 'sound')) {
         try {
-            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZRQ0PVqzn77BdGAg+ltryxnMpBSh+zPLaizsIGGS57OihUBELTKXh8bllHAU2jtXzzn0uBSd7yvLekDcJGGe+7ueXRA0PU6nm8bllHQU4kdXzzn4vBSh9y/LfkjgJGWm/7+aXRA8OU6vl8bplHgU4ktXzzn8wBSl+y/LgkzgKGWm/7+aXRQ8RUqrl8bplHgU4ktXzzoAwBil+y/LgkzkKGWnA7+aXRQ8RUqrl8bpmHgU4ktX0zoAwBil+y/LhlDoKGWnA7+aYRQ8RUqrl8bpmHgU4ktX0z4AwBil+y/Lhlj0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4E');
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZRQ0PVqzn77BdGAg+ltryxnMpBSh+zPLaizsIGGS57OihUBELTKXh8bllHAU2jtXzzn0uBSd7yvLekDcJGGe+7ueXRA0PU6nm8bllHQU4kdXzzn4vBSh9y/LfkjgJGWm/7+aXRA8OU6vl8bplHgU4ktXzzn8wBSl+y/LgkzgKGWm/7+aXRQ8RUqrl8bplHgU4ktXzzoAwBil+y/LgkzkKGWnA7+aXRQ8RUqrl8bpmHgU4ktX0zoAwBil+y/LhlDoKGWnA7+aYRQ8RUqrl8bpmHgU4ktX0z4AwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4E');
             audio.volume = 0.3;
             audio.play().catch(() => {});
         } catch (e) {}
@@ -487,7 +515,7 @@ if (document.readyState === 'loading') {
     init();
 }
 
-console.log('📜 main.js loaded (optimized)');
+console.log('📋 main.js loaded (optimized)');
 
 // Add styles
 const style = document.createElement('style');
