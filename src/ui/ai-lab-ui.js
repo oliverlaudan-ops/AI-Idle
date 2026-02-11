@@ -2,7 +2,7 @@
  * AI Lab UI - User Interface for Real Machine Learning Features
  * 
  * Manages the UI for:
- * - Achievement Predictor (with REAL progress bars!)
+ * - Achievement Predictor (with REAL progress bars + Polish!)
  * - RL Bot Training
  * - Watch AI Play Mode
  * - Human vs AI Competition
@@ -218,7 +218,7 @@ export class AILabUI {
     }
 
     /**
-     * Make predictions (with REAL progress bars!)
+     * Make predictions (with REAL progress bars + Polish!)
      */
     async makePredictions() {
         const results = document.getElementById('predictor-results');
@@ -231,9 +231,11 @@ export class AILabUI {
 
             if (topPredictions.length === 0) {
                 results.innerHTML = `
-                    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
-                        <p>🎉 No achievements in range!</p>
-                        <p style="font-size: 0.9rem;">You've unlocked everything achievable, or need more resources to progress.</p>
+                    <div class="empty-state">
+                        <div class="empty-icon">🎉</div>
+                        <h4>All Caught Up!</h4>
+                        <p>You've unlocked all achievements currently in reach.</p>
+                        <p class="empty-hint">Keep playing to unlock resources for more achievements!</p>
                     </div>
                 `;
                 return;
@@ -243,33 +245,17 @@ export class AILabUI {
             results.innerHTML = `
                 <h4>Top 5 Achievements (Most Likely to Unlock Soon):</h4>
                 <div class="prediction-list">
-                    ${topPredictions.map(pred => `
-                        <div class="prediction-item ${ pred.achievable ? '' : 'unachievable' }">
-                            <div class="prediction-header">
-                                <div class="prediction-name">
-                                    <span class="achievement-icon">${pred.icon || '🏆'}</span>
-                                    <span>${pred.name}</span>
-                                </div>
-                                <div class="prediction-eta">${this.predictor.formatTimeEstimate(pred.timeEstimate)}</div>
-                            </div>
-                            <div class="prediction-description">${pred.description || ''}</div>
-                            <div class="prediction-bar-container">
-                                <div class="prediction-bar" style="width: ${pred.progressPercent}%"></div>
-                                <span class="prediction-percent">${pred.progressPercent.toFixed(1)}%</span>
-                            </div>
-                            <div class="prediction-details">
-                                Current: ${this.formatValue(pred.current)} / ${this.formatValue(pred.target)}
-                                ${pred.rate > 0 ? ` • Rate: ${this.formatValue(pred.rate)}/s` : ''}
-                            </div>
-                        </div>
-                    `).join('')}
+                    ${topPredictions.map((pred, index) => this.renderPrediction(pred, index)).join('')}
                 </div>
                 <div class="prediction-footer">
                     <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem;">
-                        ℹ️ Progress and time estimates update in real-time based on your current production rates.
+                        ℹ️ Progress and time estimates update every 5 seconds based on your production rates.
                     </p>
                 </div>
             `;
+
+            // Setup tooltips after rendering
+            this.setupTooltips();
 
             // Start auto-updating predictions
             this.startAutoUpdate();
@@ -281,10 +267,204 @@ export class AILabUI {
     }
 
     /**
+     * Render a single prediction with confidence indicator and tooltip
+     */
+    renderPrediction(pred, index) {
+        const confidence = this.calculateConfidence(pred);
+        const confidenceClass = this.getConfidenceClass(confidence);
+        const shouldPulse = confidence >= 0.8 && pred.progressPercent > 80;
+        
+        return `
+            <div class="prediction-item ${confidenceClass} ${shouldPulse ? 'pulse-animation' : ''}" 
+                 style="animation-delay: ${index * 0.1}s;"
+                 data-achievement-id="${pred.id}">
+                
+                <!-- Header -->
+                <div class="prediction-header">
+                    <div class="prediction-name">
+                        <span class="achievement-icon">${pred.icon || '🏆'}</span>
+                        <span>${pred.name}</span>
+                        <span class="confidence-badge ${confidenceClass}" 
+                              title="Prediction confidence: ${(confidence * 100).toFixed(0)}%">
+                            ${this.getConfidenceEmoji(confidence)}
+                        </span>
+                    </div>
+                    <div class="prediction-eta">
+                        <span class="eta-icon">⏱️</span>
+                        ${this.predictor.formatTimeEstimate(pred.timeEstimate)}
+                    </div>
+                </div>
+                
+                <!-- Description -->
+                <div class="prediction-description">${pred.description || ''}</div>
+                
+                <!-- Progress Bar -->
+                <div class="prediction-bar-container">
+                    <div class="prediction-bar ${confidenceClass}" 
+                         style="width: ${pred.progressPercent}%"></div>
+                    <span class="prediction-percent">${pred.progressPercent.toFixed(1)}%</span>
+                </div>
+                
+                <!-- Details -->
+                <div class="prediction-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Progress:</span>
+                        <span class="detail-value">${this.formatValue(pred.current)} / ${this.formatValue(pred.target)}</span>
+                    </div>
+                    ${pred.rate > 0 ? `
+                        <div class="detail-item">
+                            <span class="detail-label">Rate:</span>
+                            <span class="detail-value">+${this.formatValue(pred.rate)}/s</span>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <!-- Tooltip trigger -->
+                <div class="info-trigger" data-tooltip-id="tooltip-${pred.id}">
+                    <span>💡</span>
+                    <span class="info-text">Why this prediction?</span>
+                </div>
+                
+                <!-- Hidden tooltip content -->
+                <div class="tooltip-content" id="tooltip-${pred.id}" style="display: none;">
+                    ${this.generateTooltipContent(pred)}
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Calculate confidence level for prediction
+     */
+    calculateConfidence(pred) {
+        // Confidence based on:
+        // 1. Progress percentage (higher = more confident)
+        // 2. Time estimate (shorter = more confident)
+        // 3. Production rate (higher = more confident)
+        
+        let confidence = 0;
+        
+        // Progress weight: 50%
+        confidence += (pred.progressPercent / 100) * 0.5;
+        
+        // Time weight: 30%
+        if (pred.timeEstimate < 60) confidence += 0.3;
+        else if (pred.timeEstimate < 300) confidence += 0.2;
+        else if (pred.timeEstimate < 3600) confidence += 0.1;
+        
+        // Rate weight: 20%
+        if (pred.rate > 0) {
+            confidence += Math.min(pred.rate / 10, 0.2);
+        }
+        
+        return Math.min(confidence, 1);
+    }
+
+    /**
+     * Get confidence CSS class
+     */
+    getConfidenceClass(confidence) {
+        if (confidence >= 0.8) return 'high-confidence';
+        if (confidence >= 0.5) return 'medium-confidence';
+        return 'low-confidence';
+    }
+
+    /**
+     * Get confidence emoji
+     */
+    getConfidenceEmoji(confidence) {
+        if (confidence >= 0.8) return '🔥';
+        if (confidence >= 0.5) return '✨';
+        return '🌱';
+    }
+
+    /**
+     * Generate tooltip content with strategy tips
+     */
+    generateTooltipContent(pred) {
+        const achievement = this.game.achievements[pred.id];
+        const req = achievement?.requirement;
+        
+        let strategy = 'Keep playing to make progress!';
+        
+        if (req) {
+            switch (req.type) {
+                case 'modelsTrained':
+                    strategy = `Complete ${req.value} training tasks. Focus on quick training cycles!`;
+                    break;
+                case 'totalDataGenerated':
+                    strategy = `Generate ${this.formatValue(req.value)} training data. Build more data generators!`;
+                    break;
+                case 'maxAccuracy':
+                    strategy = `Reach ${req.value}% accuracy. Upgrade your models and research better algorithms!`;
+                    break;
+                case 'buildingCount':
+                    strategy = `Build ${req.value} ${req.building}. Save up resources and purchase them!`;
+                    break;
+                case 'totalCompute':
+                    strategy = `Reach ${this.formatValue(req.value)} TFLOPS. Invest in GPU clusters!`;
+                    break;
+                case 'specificResearch':
+                    strategy = `Unlock the "${req.research}" research. Earn research points!`;
+                    break;
+                default:
+                    strategy = 'Continue progressing through the game!';
+            }
+        }
+        
+        return `
+            <div class="tooltip-inner">
+                <h5>🎯 ${pred.name}</h5>
+                <p class="tooltip-desc">${pred.description}</p>
+                <div class="tooltip-divider"></div>
+                <p class="tooltip-strategy"><strong>Strategy:</strong> ${strategy}</p>
+                <p class="tooltip-progress"><strong>Current Progress:</strong> ${pred.progressPercent.toFixed(1)}%</p>
+                ${pred.rate > 0 ? `<p class="tooltip-rate"><strong>Production Rate:</strong> +${this.formatValue(pred.rate)}/s</p>` : ''}
+            </div>
+        `;
+    }
+
+    /**
+     * Setup interactive tooltips
+     */
+    setupTooltips() {
+        const triggers = document.querySelectorAll('.info-trigger');
+        
+        triggers.forEach(trigger => {
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const tooltipId = trigger.getAttribute('data-tooltip-id');
+                const tooltip = document.getElementById(tooltipId);
+                
+                if (tooltip) {
+                    // Close all other tooltips
+                    document.querySelectorAll('.tooltip-content').forEach(t => {
+                        if (t.id !== tooltipId) t.style.display = 'none';
+                    });
+                    
+                    // Toggle this tooltip
+                    tooltip.style.display = tooltip.style.display === 'none' ? 'block' : 'none';
+                }
+            });
+        });
+        
+        // Close tooltips when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.info-trigger')) {
+                document.querySelectorAll('.tooltip-content').forEach(t => {
+                    t.style.display = 'none';
+                });
+            }
+        });
+    }
+
+    /**
      * Format numeric values for display
      */
     formatValue(value) {
-        if (value >= 1000000) {
+        if (value >= 1000000000) {
+            return (value / 1000000000).toFixed(1) + 'B';
+        } else if (value >= 1000000) {
             return (value / 1000000).toFixed(1) + 'M';
         } else if (value >= 1000) {
             return (value / 1000).toFixed(1) + 'K';
@@ -306,7 +486,8 @@ export class AILabUI {
 
         // Update every 5 seconds
         this.updateInterval = setInterval(() => {
-            if (document.getElementById('predictor-results').style.display !== 'none') {
+            const results = document.getElementById('predictor-results');
+            if (results && results.style.display !== 'none') {
                 this.makePredictions();
             }
         }, 5000);
@@ -351,7 +532,7 @@ export class AILabUI {
     }
 }
 
-// Add AI Lab styles
+// Add AI Lab styles (UPDATED WITH POLISH!)
 const style = document.createElement('style');
 style.textContent = `
     .ai-lab-container {
@@ -453,15 +634,42 @@ style.textContent = `
         border: 1px solid var(--border-color);
         border-radius: 8px;
         transition: all 0.3s ease;
+        opacity: 0;
+        animation: fadeIn 0.5s ease forwards;
+        position: relative;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     .prediction-item:hover {
         border-color: var(--accent-primary);
         box-shadow: 0 4px 12px rgba(0, 255, 255, 0.1);
+        transform: translateY(-2px);
     }
 
-    .prediction-item.unachievable {
-        opacity: 0.6;
+    .prediction-item.high-confidence {
+        border-color: #22c55e;
+    }
+
+    .prediction-item.medium-confidence {
+        border-color: #eab308;
+    }
+
+    .prediction-item.low-confidence {
+        border-color: var(--border-color);
+        opacity: 0.8;
+    }
+
+    .pulse-animation {
+        animation: fadeIn 0.5s ease forwards, pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        50% { box-shadow: 0 0 20px 5px rgba(34, 197, 94, 0.3); }
     }
 
     .prediction-header {
@@ -481,6 +689,35 @@ style.textContent = `
 
     .achievement-icon {
         font-size: 1.5rem;
+    }
+
+    .confidence-badge {
+        font-size: 0.9rem;
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        background: var(--bg-tertiary);
+        cursor: help;
+    }
+
+    .confidence-badge.high-confidence {
+        background: rgba(34, 197, 94, 0.2);
+    }
+
+    .confidence-badge.medium-confidence {
+        background: rgba(234, 179, 8, 0.2);
+    }
+
+    .prediction-eta {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--accent-secondary);
+    }
+
+    .eta-icon {
+        font-size: 1.2rem;
     }
 
     .prediction-description {
@@ -505,6 +742,16 @@ style.textContent = `
         box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
     }
 
+    .prediction-bar.high-confidence {
+        background: linear-gradient(90deg, #22c55e, #16a34a);
+        box-shadow: 0 0 15px rgba(34, 197, 94, 0.6);
+    }
+
+    .prediction-bar.medium-confidence {
+        background: linear-gradient(90deg, #eab308, #ca8a04);
+        box-shadow: 0 0 10px rgba(234, 179, 8, 0.5);
+    }
+
     .prediction-percent {
         position: absolute;
         right: 12px;
@@ -518,14 +765,115 @@ style.textContent = `
     .prediction-details {
         display: flex;
         justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .detail-item {
+        display: flex;
+        gap: 0.5rem;
         font-size: 0.85rem;
+    }
+
+    .detail-label {
         color: var(--text-secondary);
     }
 
-    .prediction-eta {
-        font-size: 1rem;
+    .detail-value {
+        color: var(--text-primary);
         font-weight: 600;
-        color: var(--accent-secondary);
+    }
+
+    .info-trigger {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.85rem;
+        color: var(--accent-primary);
+        cursor: pointer;
+        margin-top: 0.5rem;
+        padding: 0.3rem;
+        border-radius: 4px;
+        transition: background 0.2s;
+        width: fit-content;
+    }
+
+    .info-trigger:hover {
+        background: var(--bg-tertiary);
+    }
+
+    .info-text {
+        text-decoration: underline;
+    }
+
+    .tooltip-content {
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: var(--bg-primary);
+        border: 2px solid var(--accent-primary);
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        animation: tooltipFadeIn 0.3s ease;
+    }
+
+    @keyframes tooltipFadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tooltip-inner h5 {
+        margin: 0 0 0.5rem 0;
+        color: var(--accent-primary);
+    }
+
+    .tooltip-desc {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .tooltip-divider {
+        height: 1px;
+        background: var(--border-color);
+        margin: 0.75rem 0;
+    }
+
+    .tooltip-strategy,
+    .tooltip-progress,
+    .tooltip-rate {
+        font-size: 0.85rem;
+        margin: 0.25rem 0;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h4 {
+        color: var(--accent-primary);
+        margin: 0.5rem 0;
+    }
+
+    .empty-state p {
+        color: var(--text-secondary);
+        margin: 0.5rem 0;
+    }
+
+    .empty-hint {
+        font-size: 0.9rem;
+        color: var(--text-tertiary) !important;
+        margin-top: 1rem !important;
     }
 
     .prediction-footer {
@@ -576,6 +924,14 @@ style.textContent = `
         .prediction-details {
             flex-direction: column;
             gap: 0.25rem;
+        }
+
+        .tooltip-content {
+            position: fixed;
+            left: 1rem;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
         }
     }
 `;
