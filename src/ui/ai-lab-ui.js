@@ -2,7 +2,7 @@
  * AI Lab UI - User Interface for Real Machine Learning Features
  * 
  * Manages the UI for:
- * - Achievement Predictor
+ * - Achievement Predictor (with REAL progress bars!)
  * - RL Bot Training
  * - Watch AI Play Mode
  * - Human vs AI Competition
@@ -17,6 +17,7 @@ export class AILabUI {
         this.predictor = null;
         this.environment = null;
         this.isInitialized = false;
+        this.updateInterval = null;
     }
 
     /**
@@ -91,17 +92,17 @@ export class AILabUI {
                     <div class="ai-section-content">
                         <div class="predictor-controls">
                             <button class="btn-primary" id="btn-train-predictor">
-                                🎓 Train Model (50 epochs)
+                                🎓 Retrain Model
                             </button>
-                            <button class="btn-secondary" id="btn-predict" disabled>
+                            <button class="btn-secondary" id="btn-predict">
                                 🔮 Make Predictions
                             </button>
                         </div>
                         <div id="predictor-status" class="predictor-status">
-                            <p>Model not trained yet. Click "Train Model" to begin!</p>
+                            <p style="color: #4ade80;">✅ Training complete! Model ready for predictions.</p>
                         </div>
-                        <div id="predictor-results" class="predictor-results" style="display: none;">
-                            <!-- Predictions will appear here -->
+                        <div id="predictor-results" class="predictor-results">
+                            <p style="color: var(--text-secondary);">Click "Make Predictions" to analyze your progress!</p>
                         </div>
                     </div>
                 </div>
@@ -217,36 +218,107 @@ export class AILabUI {
     }
 
     /**
-     * Make predictions
+     * Make predictions (with REAL progress bars!)
      */
     async makePredictions() {
         const results = document.getElementById('predictor-results');
         if (!this.predictor || !results) return;
 
         try {
+            // Get predictions with real progress data
             const predictions = await this.predictor.predict();
             const topPredictions = this.predictor.getTopPredictions(5);
+
+            if (topPredictions.length === 0) {
+                results.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        <p>🎉 No achievements in range!</p>
+                        <p style="font-size: 0.9rem;">You've unlocked everything achievable, or need more resources to progress.</p>
+                    </div>
+                `;
+                return;
+            }
 
             results.style.display = 'block';
             results.innerHTML = `
                 <h4>Top 5 Achievements (Most Likely to Unlock Soon):</h4>
                 <div class="prediction-list">
                     ${topPredictions.map(pred => `
-                        <div class="prediction-item">
-                            <div class="prediction-name">${pred.name}</div>
-                            <div class="prediction-bar-container">
-                                <div class="prediction-bar" style="width: ${pred.probability * 100}%"></div>
-                                <span class="prediction-percent">${(pred.probability * 100).toFixed(1)}%</span>
+                        <div class="prediction-item ${ pred.achievable ? '' : 'unachievable' }">
+                            <div class="prediction-header">
+                                <div class="prediction-name">
+                                    <span class="achievement-icon">${pred.icon || '🏆'}</span>
+                                    <span>${pred.name}</span>
+                                </div>
+                                <div class="prediction-eta">${this.predictor.formatTimeEstimate(pred.timeEstimate)}</div>
                             </div>
-                            <div class="prediction-eta">≈${this.predictor.estimateTimeToUnlock(pred.id)}s</div>
+                            <div class="prediction-description">${pred.description || ''}</div>
+                            <div class="prediction-bar-container">
+                                <div class="prediction-bar" style="width: ${pred.progressPercent}%"></div>
+                                <span class="prediction-percent">${pred.progressPercent.toFixed(1)}%</span>
+                            </div>
+                            <div class="prediction-details">
+                                Current: ${this.formatValue(pred.current)} / ${this.formatValue(pred.target)}
+                                ${pred.rate > 0 ? ` • Rate: ${this.formatValue(pred.rate)}/s` : ''}
+                            </div>
                         </div>
                     `).join('')}
                 </div>
+                <div class="prediction-footer">
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem;">
+                        ℹ️ Progress and time estimates update in real-time based on your current production rates.
+                    </p>
+                </div>
             `;
+
+            // Start auto-updating predictions
+            this.startAutoUpdate();
 
         } catch (error) {
             console.error('[AI Lab] Prediction error:', error);
             results.innerHTML = `<p style="color: #e63946;">❌ Prediction failed: ${error.message}</p>`;
+        }
+    }
+
+    /**
+     * Format numeric values for display
+     */
+    formatValue(value) {
+        if (value >= 1000000) {
+            return (value / 1000000).toFixed(1) + 'M';
+        } else if (value >= 1000) {
+            return (value / 1000).toFixed(1) + 'K';
+        } else if (value >= 1) {
+            return value.toFixed(1);
+        } else {
+            return value.toFixed(3);
+        }
+    }
+
+    /**
+     * Start auto-updating predictions
+     */
+    startAutoUpdate() {
+        // Clear existing interval
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+        }
+
+        // Update every 5 seconds
+        this.updateInterval = setInterval(() => {
+            if (document.getElementById('predictor-results').style.display !== 'none') {
+                this.makePredictions();
+            }
+        }, 5000);
+    }
+
+    /**
+     * Stop auto-updating
+     */
+    stopAutoUpdate() {
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+            this.updateInterval = null;
         }
     }
 
@@ -269,6 +341,13 @@ export class AILabUI {
                 </button>
             </div>
         `;
+    }
+
+    /**
+     * Cleanup
+     */
+    destroy() {
+        this.stopAutoUpdate();
     }
 }
 
@@ -330,6 +409,7 @@ style.textContent = `
         display: flex;
         gap: 1rem;
         margin-bottom: 1rem;
+        flex-wrap: wrap;
     }
 
     .predictor-status {
@@ -368,47 +448,89 @@ style.textContent = `
     }
 
     .prediction-item {
-        display: grid;
-        grid-template-columns: 200px 1fr 80px;
-        gap: 1rem;
-        align-items: center;
-        padding: 0.75rem;
+        padding: 1rem;
         background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
         border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .prediction-item:hover {
+        border-color: var(--accent-primary);
+        box-shadow: 0 4px 12px rgba(0, 255, 255, 0.1);
+    }
+
+    .prediction-item.unachievable {
+        opacity: 0.6;
+    }
+
+    .prediction-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
     }
 
     .prediction-name {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
         font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .achievement-icon {
+        font-size: 1.5rem;
+    }
+
+    .prediction-description {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
     }
 
     .prediction-bar-container {
         position: relative;
-        height: 24px;
+        height: 32px;
         background: var(--bg-tertiary);
-        border-radius: 12px;
+        border-radius: 16px;
         overflow: hidden;
+        margin-bottom: 0.5rem;
     }
 
     .prediction-bar {
         height: 100%;
         background: linear-gradient(90deg, #4ade80, #22c55e);
-        transition: width 0.5s ease;
+        transition: width 0.8s ease;
+        box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
     }
 
     .prediction-percent {
         position: absolute;
-        right: 8px;
+        right: 12px;
         top: 50%;
         transform: translateY(-50%);
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    .prediction-details {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
     }
 
     .prediction-eta {
-        text-align: right;
-        font-size: 0.9rem;
-        color: var(--text-secondary);
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--accent-secondary);
+    }
+
+    .prediction-footer {
+        margin-top: 1rem;
+        text-align: center;
     }
 
     .rl-status {
@@ -438,6 +560,23 @@ style.textContent = `
     .tech-info p {
         margin: 0.25rem 0;
         color: var(--text-secondary);
+    }
+
+    @media (max-width: 768px) {
+        .prediction-item {
+            padding: 0.75rem;
+        }
+
+        .prediction-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .prediction-details {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
     }
 `;
 document.head.appendChild(style);
