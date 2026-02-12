@@ -5,13 +5,14 @@ import { initializeResources } from './resources.js';
 import { initializeBuildings, getBuildingCost } from './buildings.js';
 import { initializeModels } from './models.js';
 import { initializeResearch } from './research.js';
-import { initializeAchievements } from './achievements.js';
 import { initializeDeployment, getDeploymentInfo } from './deployment.js';
-import { checkAndUnlockAchievements } from './achievement-checker.js';
 import { ComboSystem } from './combo-system.js';
 import { TrainingQueue } from './training-queue.js';
 import { BulkPurchase } from './bulk-purchase.js';
 import { Settings } from './settings.js';
+
+// Achievement system (now organized)
+import { initializeAchievements, checkAndUnlockAchievements } from '../systems/achievements/index.js';
 
 // Core system imports
 import { ResourceManager } from '../core/resource-manager.js';
@@ -308,7 +309,7 @@ export class GameState {
         }
     }
     
-    // ========== Achievement Management ==========
+    // ========== Achievement Management (delegated to Achievement System) ==========
     
     checkAchievements() {
         const newUnlocks = checkAndUnlockAchievements(this);
