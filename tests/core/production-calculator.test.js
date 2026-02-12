@@ -27,6 +27,9 @@ describe('ProductionCalculator', () => {
       models: {},
       training: null,
       currentTraining: null,
+      stats: {
+        completedResearch: []
+      },
       achievementBonuses: {
         dataGeneration: 1.5,
         allProduction: 1.2,
