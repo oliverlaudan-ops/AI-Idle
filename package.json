@@ -1,28 +1,17 @@
 {
   "name": "ai-idle",
   "version": "0.2.0",
-  "description": "An Idle Game about Machine Learning and AI Training",
   "type": "module",
   "scripts": {
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "@vitest/ui": "^1.2.0",
     "@vitest/coverage-v8": "^1.2.0",
+    "@vitest/ui": "^1.2.0",
     "vite": "^5.0.0",
     "vitest": "^1.2.0"
   },
-  "keywords": [
-    "idle-game",
-    "machine-learning",
-    "ai",
-    "incremental-game"
-  ],
-  "author": "Oliver Laudan",
   "license": "MIT"
 }
