@@ -1,0 +1,251 @@
+/**
+ * Training Queue System
+ * Automatic model training queue management
+ */
+
+export class TrainingQueue {
+    constructor(game) {
+        this.game = game;
+        this.queue = [];
+        this.enabled = true;
+        this.repeatLastModel = false;
+        this.maxQueueSize = 10;
+        this.lastTrainedModel = null;
+    }
+    
+    /**
+     * Add a model to the queue
+     */
+    addToQueue(modelId) {
+        const model = this.game.models[modelId];
+        if (!model) {
+            console.warn(`Model not found: ${modelId}`);
+            return false;
+        }
+        
+        if (this.queue.includes(modelId)) {
+            return false;
+        }
+        
+        if (this.queue.length >= this.maxQueueSize) {
+            console.warn('Queue is full!');
+            return false;
+        }
+        
+        this.queue.push(modelId);
+        return true;
+    }
+    
+    /**
+     * Remove a model from the queue
+     */
+    removeFromQueue(modelId) {
+        const index = this.queue.indexOf(modelId);
+        if (index === -1) return false;
+        
+        this.queue.splice(index, 1);
+        return true;
+    }
+    
+    /**
+     * Move model up in queue
+     */
+    moveUp(modelId) {
+        const index = this.queue.indexOf(modelId);
+        if (index <= 0) return false;
+        
+        [this.queue[index - 1], this.queue[index]] = [this.queue[index], this.queue[index - 1]];
+        return true;
+    }
+    
+    /**
+     * Move model down in queue
+     */
+    moveDown(modelId) {
+        const index = this.queue.indexOf(modelId);
+        if (index === -1 || index >= this.queue.length - 1) return false;
+        
+        [this.queue[index], this.queue[index + 1]] = [this.queue[index + 1], this.queue[index]];
+        return true;
+    }
+    
+    /**
+     * Clear entire queue
+     */
+    clearQueue() {
+        this.queue = [];
+        console.log('Training queue cleared');
+    }
+    
+    /**
+     * Get next model from queue
+     */
+    getNextModel() {
+        return this.queue.length > 0 ? this.queue[0] : null;
+    }
+    
+    /**
+     * Check if model can be trained
+     */
+    canTrainModel(modelId) {
+        const model = this.game.models[modelId];
+        if (!model || !model.unlocked || !model.requirements) return false;
+        
+        for (const [resourceId, amount] of Object.entries(model.requirements)) {
+            if (!this.game.resources[resourceId] || 
+                this.game.resources[resourceId].amount < amount) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Process queue when training completes
+     */
+    onTrainingComplete() {
+        if (!this.enabled) return;
+        
+        if (this.queue.length > 0) {
+            const completedModel = this.queue.shift();
+            this.lastTrainedModel = completedModel;
+        }
+        
+        this.tryStartNextTraining();
+    }
+    
+    /**
+     * Try to start the next model in queue
+     */
+    tryStartNextTraining() {
+        if (!this.enabled || this.game.currentTraining) return false;
+        
+        // Handle repeat last model
+        if (this.repeatLastModel && this.lastTrainedModel && this.queue.length === 0) {
+            if (this.canTrainModel(this.lastTrainedModel)) {
+                this.addToQueue(this.lastTrainedModel);
+            }
+        }
+        
+        // Try each model in queue
+        while (this.queue.length > 0) {
+            const nextModelId = this.queue[0];
+            
+            if (this.canTrainModel(nextModelId)) {
+                const success = this.game.startTraining(nextModelId);
+                if (success) return true;
+            }
+            
+            const model = this.game.models[nextModelId];
+            if (model && !model.unlocked) {
+                console.warn(`Skipping ${model.name} - model is locked`);
+            }
+            this.queue.shift();
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get queue with model details
+     */
+    getQueueDetails() {
+        return this.queue.map(modelId => {
+            const model = this.game.models[modelId];
+            return {
+                id: modelId,
+                name: model ? model.name : 'Unknown',
+                icon: model ? model.icon : '❓',
+                canTrain: this.canTrainModel(modelId),
+                requirements: model ? model.requirements : null
+            };
+        });
+    }
+    
+    /**
+     * Estimate total queue completion time
+     */
+    estimateQueueTime() {
+        if (this.queue.length === 0) return 0;
+        
+        let totalTime = 0;
+        
+        if (this.game.training) {
+            totalTime += (this.game.training.duration - this.game.training.elapsedTime);
+        }
+        
+        for (const modelId of this.queue) {
+            const model = this.game.models[modelId];
+            if (model) {
+                const trainingSpeed = this.game.multipliers?.trainingSpeed || 1.0;
+                totalTime += model.trainingTime / trainingSpeed;
+            }
+        }
+        
+        return totalTime;
+    }
+    
+    /**
+     * Toggle auto-queue
+     */
+    toggleEnabled() {
+        this.enabled = !this.enabled;
+        console.log(`🎯 Auto-queue ${this.enabled ? 'enabled' : 'disabled'}`);
+        
+        if (this.enabled) {
+            this.tryStartNextTraining();
+        }
+        
+        return this.enabled;
+    }
+    
+    /**
+     * Toggle repeat last model
+     */
+    toggleRepeat() {
+        this.repeatLastModel = !this.repeatLastModel;
+        console.log(`🔁 Repeat last model ${this.repeatLastModel ? 'enabled' : 'disabled'}`);
+        return this.repeatLastModel;
+    }
+    
+    isEmpty() {
+        return this.queue.length === 0;
+    }
+    
+    isFull() {
+        return this.queue.length >= this.maxQueueSize;
+    }
+    
+    getLength() {
+        return this.queue.length;
+    }
+    
+    /**
+     * Save queue state
+     */
+    save() {
+        return {
+            queue: this.queue,
+            enabled: this.enabled,
+            repeatLastModel: this.repeatLastModel,
+            lastTrainedModel: this.lastTrainedModel
+        };
+    }
+    
+    /**
+     * Load queue state
+     */
+    load(data) {
+        if (!data) return;
+        
+        this.queue = data.queue || [];
+        this.enabled = data.enabled !== undefined ? data.enabled : true;
+        this.repeatLastModel = data.repeatLastModel || false;
+        this.lastTrainedModel = data.lastTrainedModel || null;
+        
+        if (this.queue.length > 0) {
+            console.log(`📋 Loaded training queue with ${this.queue.length} model(s)`);
+        }
+    }
+}
