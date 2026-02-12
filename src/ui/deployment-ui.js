@@ -1,5 +1,7 @@
 // Deployment (Prestige) UI System
 
+import { formatNumber } from '../utils/format.js';
+
 export class DeploymentUI {
     constructor(gameState) {
         this.gameState = gameState;
@@ -178,7 +180,7 @@ export class DeploymentUI {
         const etaText = document.getElementById('next-token-eta');
         if (etaText) {
             if (info.requiredForNext > 0) {
-                etaText.textContent = this.formatNumber(info.requiredForNext) + ' Accuracy needed';
+                etaText.textContent = formatNumber(info.requiredForNext) + ' Accuracy needed';
             } else {
                 etaText.textContent = 'Next milestone reached!';
             }
@@ -261,7 +263,7 @@ export class DeploymentUI {
                 deployBtn.title = `Deploy to earn ${info.tokensOnDeploy} token${info.tokensOnDeploy !== 1 ? 's' : ''}!`;
             } else {
                 deployBtn.classList.remove('available');
-                deployBtn.title = `Need ${this.formatNumber(info.requiredForNext)} more Accuracy`;
+                deployBtn.title = `Need ${formatNumber(info.requiredForNext)} more Accuracy`;
             }
         }
         
@@ -269,13 +271,5 @@ export class DeploymentUI {
         if (this.modalOpen) {
             this.updateModalContent();
         }
-    }
-    
-    // Format large numbers
-    formatNumber(num) {
-        if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
-        if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-        if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
-        return Math.floor(num).toString();
     }
 }
