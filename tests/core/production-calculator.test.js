@@ -27,15 +27,23 @@ describe('ProductionCalculator', () => {
       models: {},
       training: null,
       currentTraining: null,
+      research: {},
       stats: {
         completedResearch: []
+      },
+      multipliers: {
+        global: 1,
+        trainingSpeed: 1
       },
       achievementBonuses: {
         dataGeneration: 1.5,
         allProduction: 1.2,
         computePower: 1.0,
         allResources: 1.0,
-        researchPoints: 1.0
+        researchPoints: 1.0,
+        globalMultiplier: 1.0,
+        trainingSpeed: 1.0,
+        modelPerformance: 1.0
       }
     };
   });
