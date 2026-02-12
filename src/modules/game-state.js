@@ -2,7 +2,6 @@
 // Now delegates to specialized core modules
 
 import { initializeResources } from './resources.js';
-import { initializeResearch } from './research.js';
 import { initializeDeployment, getDeploymentInfo } from './deployment.js';
 import { ComboSystem } from './combo-system.js';
 import { BulkPurchase } from './bulk-purchase.js';
@@ -16,6 +15,9 @@ import { initializeModels, TrainingQueue } from '../systems/training/index.js';
 
 // Building system
 import { initializeBuildings, getBuildingCost } from '../systems/buildings/index.js';
+
+// Research system
+import { initializeResearch } from '../systems/research/index.js';
 
 // Core system imports
 import { ResourceManager } from '../core/resource-manager.js';
