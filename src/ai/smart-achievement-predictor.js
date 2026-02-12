@@ -7,8 +7,7 @@
  * - Which types of achievements the player prioritizes
  * - Typical progression patterns and pacing
  * - Player skill level and efficiency
- * - Preferred gameplay styles (idle vs active, building vs research, etc.)
- * 
+ * - Preferred gameplay styles (idle vs active, building vs research, etc.)\ * 
  * This creates PERSONALIZED predictions that adapt to each player!
  */
 
@@ -35,6 +34,46 @@ export class SmartAchievementPredictor {
         
         // Load training history from localStorage
         this.loadTrainingHistory();
+        
+        // NEW: Sync already-unlocked achievements from game state
+        this.syncUnlockedAchievements();
+    }
+
+    /**
+     * Sync already-unlocked achievements from game state to training history
+     * This fixes the bug where loading a save doesn't count existing achievements
+     */
+    syncUnlockedAchievements() {
+        const unlockedAchievements = Object.entries(this.game.achievements)
+            .filter(([id, ach]) => ach.unlocked);
+        
+        let syncedCount = 0;
+        
+        for (const [id, achievement] of unlockedAchievements) {
+            // Check if this achievement is already in training history
+            const alreadyRecorded = this.trainingHistory.some(entry => entry.achievementId === id);
+            
+            if (!alreadyRecorded) {
+                // Add to training history
+                const entry = {
+                    achievementId: id,
+                    timestamp: Date.now() / 1000, // Use current time as approximation
+                    features: this.extractFeatures(achievement),
+                    unlocked: true,
+                    synced: true // Mark as synced from save (not organically unlocked)
+                };
+                
+                this.trainingHistory.push(entry);
+                syncedCount++;
+            }
+        }
+        
+        if (syncedCount > 0) {
+            console.log(`[SmartPredictor] Synced ${syncedCount} unlocked achievements from save`);
+            this.saveTrainingHistory();
+        }
+        
+        console.log(`[SmartPredictor] Total training data: ${this.trainingHistory.length} unlocks`);
     }
 
     /**
@@ -206,6 +245,13 @@ export class SmartAchievementPredictor {
     recordUnlock(achievementId) {
         const achievement = this.game.achievements[achievementId];
         if (!achievement) return;
+        
+        // Check if already recorded (avoid duplicates)
+        const alreadyRecorded = this.trainingHistory.some(entry => entry.achievementId === achievementId);
+        if (alreadyRecorded) {
+            console.log('[SmartPredictor] Achievement already recorded:', achievementId);
+            return;
+        }
         
         const entry = {
             achievementId: achievementId,
