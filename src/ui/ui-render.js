@@ -5,6 +5,7 @@ import { buildings } from '../modules/buildings.js';
 import { models } from '../modules/models.js';
 import { research } from '../modules/research.js';
 import { TrainingAnimations } from './training-animations.js';
+import { formatNumber, formatTime, formatTrainingTime } from '../utils/format.js';
 
 // Training animations instance
 let trainingAnimations = null;
@@ -340,12 +341,6 @@ export function renderTrainingStatus(gameState) {
     }
 }
 
-function formatTrainingTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-}
-
 export function renderResearch(gameState) {
     const categories = {
         'optimizers': document.getElementById('research-optimizers'),
@@ -536,38 +531,7 @@ export function renderStatistics(gameState) {
     }
 }
 
-// Utility Functions
-export function formatNumber(num, decimals = 0) {
-    if (num < 1000) {
-        return num.toFixed(decimals);
-    }
-    
-    const units = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
-    const tier = Math.floor(Math.log10(Math.abs(num)) / 3);
-    
-    if (tier <= 0) return num.toFixed(decimals);
-    if (tier >= units.length) return num.toExponential(2);
-    
-    const unit = units[tier];
-    const scaled = num / Math.pow(10, tier * 3);
-    
-    return scaled.toFixed(decimals) + unit;
-}
-
-export function formatTime(seconds) {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    
-    if (hours > 0) {
-        return `${hours}h ${minutes}m`;
-    } else if (minutes > 0) {
-        return `${minutes}m ${secs}s`;
-    } else {
-        return `${secs}s`;
-    }
-}
-
+// Toast notification system
 export function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
     if (!container) return;
@@ -606,3 +570,6 @@ export function showTrainingCompleteAnimation(modelName) {
         setTimeout(() => celebration.remove(), 300);
     }, 5000);
 }
+
+// Re-export formatNumber and formatTime for backwards compatibility
+export { formatNumber, formatTime };

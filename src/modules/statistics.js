@@ -1,6 +1,8 @@
 // Statistics Tracking System
 // Tracks detailed game statistics for the Statistics tab
 
+import { formatNumber, formatTime } from '../utils/format.js';
+
 export class StatisticsTracker {
     constructor() {
         this.stats = this.getDefaultStats();
@@ -267,7 +269,7 @@ export class StatisticsTracker {
         const formatted = {};
         for (const [key, value] of Object.entries(group)) {
             if (key === 'startTime' || key === 'sessionDuration') continue;
-            formatted[key] = this.formatNumber(value);
+            formatted[key] = formatNumber(value);
         }
         return formatted;
     }
@@ -280,12 +282,12 @@ export class StatisticsTracker {
             bestCombo: this.stats.records.bestCombo + 'x',
             bestComboMultiplier: this.stats.records.bestComboMultiplier.toFixed(2) + 'x',
             fastestModel: this.stats.records.fastestModelCompletion === Infinity ? 
-                'N/A' : this.formatTime(this.stats.records.fastestModelCompletion),
-            peakDataRate: this.formatNumber(this.stats.records.mostDataPerSecond) + '/s',
-            peakAccuracyRate: this.formatNumber(this.stats.records.mostAccuracyPerSecond) + '/s',
-            peakResearchRate: this.formatNumber(this.stats.records.mostResearchPerSecond) + '/s',
+                'N/A' : formatTime(this.stats.records.fastestModelCompletion / 1000),
+            peakDataRate: formatNumber(this.stats.records.mostDataPerSecond) + '/s',
+            peakAccuracyRate: formatNumber(this.stats.records.mostAccuracyPerSecond) + '/s',
+            peakResearchRate: formatNumber(this.stats.records.mostResearchPerSecond) + '/s',
             highestAccuracy: this.stats.records.highestAccuracy.toFixed(2) + '%',
-            largestClick: this.formatNumber(this.stats.records.largestSingleClick)
+            largestClick: formatNumber(this.stats.records.largestSingleClick)
         };
     }
     
@@ -294,10 +296,10 @@ export class StatisticsTracker {
      */
     formatTimeTracking() {
         return {
-            totalPlaytime: this.formatTime(this.stats.timeTracking.totalPlaytime),
-            totalOfflineTime: this.formatTime(this.stats.timeTracking.totalOfflineTime),
-            longestSession: this.formatTime(this.stats.timeTracking.longestSession),
-            currentSession: this.formatTime(this.stats.session.sessionDuration),
+            totalPlaytime: formatTime(this.stats.timeTracking.totalPlaytime / 1000),
+            totalOfflineTime: formatTime(this.stats.timeTracking.totalOfflineTime / 1000),
+            longestSession: formatTime(this.stats.timeTracking.longestSession / 1000),
+            currentSession: formatTime(this.stats.session.sessionDuration / 1000),
             totalSessions: this.stats.timeTracking.totalSessions
         };
     }
@@ -313,7 +315,7 @@ export class StatisticsTracker {
         return sorted.map(([id, count]) => ({
             id,
             count,
-            formatted: this.formatNumber(count)
+            formatted: formatNumber(count)
         }));
     }
     
@@ -328,39 +330,8 @@ export class StatisticsTracker {
         return sorted.map(([id, count]) => ({
             id,
             count,
-            formatted: this.formatNumber(count)
+            formatted: formatNumber(count)
         }));
-    }
-    
-    /**
-     * Format large numbers
-     */
-    formatNumber(num) {
-        if (num < 1000) return Math.floor(num).toString();
-        if (num < 1000000) return (num / 1000).toFixed(1) + 'K';
-        if (num < 1000000000) return (num / 1000000).toFixed(1) + 'M';
-        if (num < 1000000000000) return (num / 1000000000).toFixed(1) + 'B';
-        return (num / 1000000000000).toFixed(1) + 'T';
-    }
-    
-    /**
-     * Format time duration
-     */
-    formatTime(ms) {
-        const seconds = Math.floor(ms / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-        const days = Math.floor(hours / 24);
-        
-        if (days > 0) {
-            return `${days}d ${hours % 24}h`;
-        } else if (hours > 0) {
-            return `${hours}h ${minutes % 60}m`;
-        } else if (minutes > 0) {
-            return `${minutes}m ${seconds % 60}s`;
-        } else {
-            return `${seconds}s`;
-        }
     }
     
     /**
