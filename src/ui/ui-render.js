@@ -530,8 +530,8 @@ export function renderStatistics(gameState) {
         gameInfoTable.innerHTML = `
             <tr><td>Playtime</td><td>${formatTime(playtime)}</td></tr>
             <tr><td>Game Version</td><td>0.2.0</td></tr>
-            <tr><td>Deployments</td><td>${gameState.prestige.deployments}</td></tr>
-            <tr><td>Tokens</td><td>${gameState.prestige.tokens}</td></tr>
+            <tr><td>Deployments</td><td>${gameState.deployment.deployments}</td></tr>
+            <tr><td>Tokens</td><td>${gameState.deployment.tokens}</td></tr>
         `;
     }
 }
