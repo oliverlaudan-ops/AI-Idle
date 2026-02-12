@@ -3,16 +3,17 @@
 
 import { initializeResources } from './resources.js';
 import { initializeBuildings, getBuildingCost } from './buildings.js';
-import { initializeModels } from './models.js';
 import { initializeResearch } from './research.js';
 import { initializeDeployment, getDeploymentInfo } from './deployment.js';
 import { ComboSystem } from './combo-system.js';
-import { TrainingQueue } from './training-queue.js';
 import { BulkPurchase } from './bulk-purchase.js';
 import { Settings } from './settings.js';
 
-// Achievement system (now organized)
+// Achievement system
 import { initializeAchievements, checkAndUnlockAchievements } from '../systems/achievements/index.js';
+
+// Training system
+import { initializeModels, TrainingQueue } from '../systems/training/index.js';
 
 // Core system imports
 import { ResourceManager } from '../core/resource-manager.js';
