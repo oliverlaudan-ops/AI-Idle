@@ -34,6 +34,7 @@ window.bulkPurchaseUI = null;
 window.settingsUI = null;
 window.hotkeys = null;
 window.aiLab = null; // Lazy-loaded AI Lab
+window.deploymentUI = null; // Deployment UI
 
 // Game loop state
 let gameLoopInterval = null;
@@ -299,6 +300,7 @@ function startGameLoops() {
             
             if (window.queueUI) window.queueUI.update();
             if (window.bulkPurchaseUI) window.bulkPurchaseUI.update();
+            if (window.deploymentUI) window.deploymentUI.update();
             
         } catch (error) {
             console.error('💥 Error in render loop:', error);
@@ -364,7 +366,7 @@ function showAchievementUnlock(achievement) {
     
     if (window.game.settings.get('notifications', 'sound')) {
         try {
-            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZRQ0PVqzn77BdGAg+ltryxnMpBSh+zPLaizsIGGS57OihUBELTKXh8bllHAU2jtXzzn0uBSd7yvLekDcJGGe+7ueXRA0PU6nm8bllHQU4kdXzzn4vBSh9y/LfkjgJGWm/7+aXRA8OU6vl8bplHgU4ktXzzn8wBSl+y/LgkzgKGWm/7+aXRQ8RUqrl8bplHgU4ktXzzoAwBil+y/LgkzkKGWnA7+aXRQ8RUqrl8bpmHgU4ktX0zoAwBil+y/LhlDoKGWnA7+aYRQ8RUqrl8bpmHgU4ktX0z4AwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4E');
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZRQ0PVqzn77BdGAg+ltryxnMpBSh+zPLaizsIGGS57OihUBELTKXh8bllHAU2jtXzzn0uBSd7yvLekDcJGGe+7ueXRA0PU6nm8bllHQU4kdXzzn4vBSh9y/LfkjgJGWm/7+aXRA8OU6vl8bplHgU4ktXzzn8wBSl+y/LgkzgKGWm/7+aXRQ8RUqrl8bplHgU4ktXzzoAwBil+y/LgkzkKGWnA7+aXRQ8RUqrl8bpmHgU4ktX0zoAwBil+y/LhlDoKGWnA7+aYRQ8RUqrl8bpmHgU4ktX0z4AwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4E');
             audio.volume = 0.3;
             audio.play().catch(() => {});
         } catch (e) {}
@@ -491,6 +493,7 @@ document.addEventListener('visibilitychange', () => {
             renderAll(window.game);
             if (window.queueUI) window.queueUI.update();
             if (window.bulkPurchaseUI) window.bulkPurchaseUI.update();
+            if (window.deploymentUI) window.deploymentUI.update();
         }
         wasHidden = false;
     }
