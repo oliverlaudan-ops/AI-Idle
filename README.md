@@ -1,356 +1,323 @@
-# 🤖 AI-Idle
+# 🧠 AI Idle Game
 
-**An incremental idle game about Machine Learning and AI infrastructure**
+**Ein Idle Game über Machine Learning und KI-Training**
 
-Train neural networks, optimize algorithms, and scale your AI research facility in this educational idle game that teaches real ML concepts through gameplay.
+Trainiere neuronale Netzwerke, optimiere Algorithmen und skaliere deine KI-Infrastruktur!
 
-## 🎮 Play Now
+[![Tests](https://github.com/oliverlaudan-ops/AI-Idle/actions/workflows/test.yml/badge.svg)](https://github.com/oliverlaudan-ops/AI-Idle/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/oliverlaudan-ops/AI-Idle)
 
-🚀 **[Play AI-Idle](https://ai-idle.future-pulse.tech)**
+## 🎮 Features
 
-## 🌟 Features
+- **Resource Management**: Sammle Data, Compute, Accuracy und Research Points
+- **Building System**: Baue Data Centers, Compute Clusters und mehr
+- **Model Training**: Trainiere verschiedene ML-Modelle von Linear Regression bis zu Transformers
+- **Research Tree**: Erforsche Optimizers, Aktivierungsfunktionen und Architekturen
+- **Achievement System**: Schalte Achievements frei für Boni
+- **Deployment System**: Deploye deine Modelle für Tokens
+- **Offline Progress**: Sammle Ressourcen auch wenn du offline bist
+- **Auto-Save**: Automatisches Speichern deines Fortschritts
 
-### Core Gameplay
-- 📊 **Train AI Models** - From simple digit recognition to frontier LLMs
-- 🏭 **Build Infrastructure** - Data centers, GPU clusters, quantum processors
-- 🔬 **Research Technologies** - Unlock real ML algorithms and architectures
-- 🚀 **Deploy Models** - Prestige system with permanent upgrades
-- 📈 **Watch Progress** - Animated training curves and performance metrics
-- 🏆 **Unlock Achievements** - 17+ achievements with permanent bonuses
-- 📋 **Queue Training** - Automate model training with the queue system ✨ NEW
-- 🛒 **Bulk Purchase** - Buy multiple buildings with Shift+Click ✨ NEW
-- ⚙️ **Customize Settings** - Tailor your experience to your playstyle ✨ NEW
-- ⌨️ **Keyboard Shortcuts** - Efficient keyboard-driven gameplay ✨ NEW
+## 🏗️ Architektur
 
-### Educational Value
-- Learn about optimization algorithms (SGD → Adam → AdamW)
-- Understand activation functions (Sigmoid → ReLU → GELU)
-- Explore architectures (Dense → CNN → Transformer → Diffusion)
-- Discover regularization techniques (Dropout, Batch Norm, etc.)
-- Experience the ML training lifecycle
+Das Projekt wurde in **Phase 1 & 2** umfassend refactored für bessere Wartbarkeit, Testbarkeit und Skalierbarkeit.
 
-### Resource Management
-- **Training Data** - Generate and collect datasets
-- **Compute Power** - Measured in TFLOPS (like real ML hardware)
-- **Model Accuracy** - Your primary currency for progression
-- **Research Points** - Unlock cutting-edge technologies
-
-### Progression System
-- Start with basic neural networks
-- Scale to complex vision and language models
-- Research advanced techniques and hardware
-- Deploy models for permanent bonuses
-- Unlock achievements and milestones
-- **Optimized**: Smoother progression curve with balanced costs
-
-## 🆕 What's New in v0.3.0 (Feb 10, 2026)
-
-### 🎮 Quality of Life Improvements
-
-#### 📋 **Training Queue System**
-- **Queue multiple models** for automated sequential training
-- Visual queue panel with time estimates and model previews
-- Drag-and-drop reordering (planned for v0.3.1)
-- Persistent across save/load - never lose your queue!
-- **Press Q** to toggle queue panel
-
-#### 🛒 **Bulk Purchase System**
-- **Shift+Click any building** to buy 10x instantly
-- **Flexible modes**: 1x, 10x, 25x, 50x, 100x, Max
-- **Smart "Buy Max"** - Automatically calculates how many you can afford
-- Cost preview before purchase
-- **Hotkeys**: Shift+1 through Shift+6 to switch modes quickly
-
-#### ⚙️ **Comprehensive Settings**
-- **Gameplay**: Auto-save interval, offline progress, pause on blur, number formatting
-- **Notifications**: Toggle training/research/achievements/building unlocks + sound effects
-- **Performance**: Animation quality, particle effects, canvas rendering
-- All settings persist between sessions
-- **Press E** to open settings
-
-#### ⌨️ **Keyboard Shortcuts**
-- **Navigation**: 1-6 to switch tabs instantly
-- **Actions**: Space (collect), S (save), Q (queue), T (toggle training)
-- **System**: Esc (close modals), H (show hotkey help), Ctrl+E (export), Ctrl+I (import)
-- Smart input detection - disabled when typing in text fields
-- Visual help modal with all shortcuts
-- **Press H** anytime for hotkey reference
-
-#### 📊 **Statistics Tracking** (Enhanced in v0.3.1)
-- Lifetime stats: Total resources, buildings, models, achievements
-- Session stats: Per-session tracking with reset on load
-- Records: Best combo, fastest model, peak production rates
-- Time tracking: Total playtime, offline time, longest session
-
-### 🛠️ Technical Improvements
-- **6x Performance Boost**: Optimized update loops (60 FPS → 10 FPS where appropriate)
-- **Reduced Lag**: Fewer `requestAnimationFrame` warnings
-- **Modular Architecture**: Clean separation of concerns for easy maintenance
-- **Backward Compatible**: All v0.2.x saves work seamlessly
-
-## 🛠️ Technology Stack
-
-- **Frontend**: Vanilla JavaScript (ES6+)
-- **Styling**: CSS3 with modern animations
-- **Storage**: LocalStorage for save games + separate settings storage
-- **Architecture**: Modular design with independent systems
-- **Visualization**: Canvas-based training curves and animations
-
-## 📁 Project Structure
+### 📁 Directory Structure
 
 ```
-AI-Idle/
-├── index.html              # Main game page
-├── css/
-│   ├── styles.css          # Game styling
-│   └── training-animations.css  # Animation styles
+ai-idle/
 ├── src/
-│   ├── main.js             # Game initialization
-│   ├── modules/
-│   │   ├── game-state.js   # Central state management
-│   │   ├── resources.js    # Resource definitions
-│   │   ├── buildings.js    # Infrastructure definitions
-│   │   ├── models.js       # ML model definitions
-│   │   ├── research.js     # Research tree
-│   │   ├── achievements.js  # Achievement definitions
-│   │   ├── achievement-checker.js  # Achievement logic
-│   │   ├── prestige.js     # Deployment/prestige system
-│   │   ├── combo-system.js # Manual click combo mechanics
-│   │   ├── training-queue.js  # Training queue logic ✨ NEW
-│   │   ├── bulk-purchase.js   # Bulk building purchase ✨ NEW
-│   │   ├── settings.js        # User settings system ✨ NEW
-│   │   ├── hotkeys.js         # Keyboard shortcuts ✨ NEW
-│   │   └── statistics.js      # Stats tracking ✨ NEW
-│   └── ui/
-│       ├── ui-init.js      # UI initialization
-│       ├── ui-render.js    # Rendering functions
-│       ├── ui-tabs.js      # Tab management
-│       ├── training-animations.js  # Visual training system
-│       ├── combo-ui.js     # Combo system UI
-│       ├── tutorial.js     # Tutorial system
-│       ├── training-queue-ui.js  # Queue panel UI ✨ NEW
-│       ├── bulk-purchase-ui.js   # Bulk purchase UI ✨ NEW
-│       └── settings-ui.js        # Settings modal ✨ NEW
-├── docs/
-│   └── v0.3.0-RELEASE-NOTES.md  # Detailed release notes ✨ NEW
-├── DESIGN.md               # Comprehensive design document
-├── CHANGELOG.md            # Detailed version history
-└── README.md               # This file
+│   ├── core/              # Core game logic
+│   │   ├── resource-manager.js
+│   │   ├── production-calculator.js
+│   │   ├── save-system.js
+│   │   └── offline-progress.js
+│   │
+│   ├── systems/           # Game systems (organized by domain)
+│   │   ├── achievements/
+│   │   │   ├── definitions.js
+│   │   │   ├── checker.js
+│   │   │   ├── rewards.js
+│   │   │   └── index.js
+│   │   ├── training/
+│   │   │   ├── models.js
+│   │   │   ├── queue.js
+│   │   │   └── index.js
+│   │   ├── buildings/
+│   │   │   ├── definitions.js
+│   │   │   ├── costs.js
+│   │   │   └── index.js
+│   │   └── research/
+│   │       ├── definitions.js
+│   │       ├── effects.js
+│   │       └── index.js
+│   │
+│   ├── modules/           # Game modules (legacy, being phased out)
+│   │   ├── game-state.js  # Central game state (delegates to core & systems)
+│   │   ├── resources.js
+│   │   ├── deployment.js
+│   │   ├── combo-system.js
+│   │   ├── bulk-purchase.js
+│   │   └── settings.js
+│   │
+│   ├── ui/                # UI components
+│   │   ├── ui-init.js
+│   │   ├── ui-render.js
+│   │   ├── ui-tabs.js
+│   │   ├── ai-lab-ui.js
+│   │   ├── combo-ui.js
+│   │   ├── deployment-ui.js
+│   │   ├── bulk-purchase-ui.js
+│   │   ├── training-queue-ui.js
+│   │   ├── settings-ui.js
+│   │   ├── tutorial.js
+│   │   └── training-animations.js
+│   │
+│   ├── utils/             # Utility functions
+│   │   ├── format.js      # Number, time formatting
+│   │   ├── calculations.js # Cost calculations, scaling
+│   │   └── storage.js     # LocalStorage helpers
+│   │
+│   └── main.js            # Application entry point
+│
+├── tests/                 # Test suite (Vitest)
+│   ├── core/
+│   │   ├── resource-manager.test.js
+│   │   ├── production-calculator.test.js
+│   │   └── save-system.test.js
+│   └── setup.js
+│
+├── .github/
+│   └── workflows/
+│       └── test.yml       # CI/CD pipeline
+│
+├── styles/                # CSS styles
+├── index.html            # Main HTML file
+├── package.json          # Dependencies & scripts
+├── vitest.config.js      # Test configuration
+└── README.md             # This file
 ```
 
-## 🎯 Gameplay Phases
+## 📦 Module Overview
 
-### Phase 1: Foundation (0-10 minutes)
-- Click to generate your first training data
-- Build data collectors and CPU cores
-- Train your first neural network on digit recognition
-- **New**: Use **Space** key for quick manual collection
-- **Optimized**: 20% faster early game with reduced costs
+### Core Modules (`src/core/`)
 
-### Phase 2: Automation (10-60 minutes)
-- Unlock passive data generation
-- Build GPU clusters for faster training
-- Research optimization algorithms
-- Train image classification models
-- **New**: **Queue multiple models** to train while AFK
-- **New**: **Shift+Click** to bulk-buy buildings
-- **Optimized**: Smoother transition with earlier Tier 2 unlocks
+#### `resource-manager.js`
+**Verantwortlich für**: Zentrale Ressourcen-Verwaltung
+- `addResource(resourceId, amount)` - Fügt Ressourcen hinzu
+- `canAfford(costs)` - Prüft ob Kosten bezahlbar sind
+- `spendResources(costs)` - Gibt Ressourcen aus
+- Aktualisiert automatisch Stats (totalDataGenerated, maxAccuracy, etc.)
 
-### Phase 3: Scaling (1-4 hours)
-- Deploy distributed systems
-- Unlock transformer architectures
-- Train NLP and RL agents
-- Optimize with advanced regularization
-- **New**: Use **keyboard shortcuts** for efficient management
-- **New**: Customize **notification preferences** in settings
-- **Optimized**: Better balanced mid-game progression
+#### `production-calculator.js`
+**Verantwortlich für**: Berechnung aller Produktionsraten
+- `recalculateProduction(gameState)` - Berechnet perSecond für alle Ressourcen
+- Berücksichtigt Buildings, Training, Achievement-Boni
+- Wendet Multiplikatoren korrekt an (dataGeneration, allProduction, etc.)
 
-### Phase 4: Prestige Loop (4+ hours)
-- Deploy your first model for permanent bonuses
-- Unlock transfer learning and AutoML
-- Scale to frontier models (LLMs, multimodal AI)
-- Compete in the model leaderboard
-- **New**: Track all your **stats and records**
-- **Optimized**: More achievable late-game goals
+#### `save-system.js`
+**Verantwortlich für**: Speichern & Laden des Spielstands
+- `saveGame(gameState)` - Speichert in localStorage
+- `loadGame(gameState)` - Lädt aus localStorage
+- `exportSave(gameState)` - Exportiert als Base64 String
+- `importSave(gameState, saveString)` - Importiert aus String
+- Unterstützt Backwards-Compatibility
 
-## 🏆 Achievements
+#### `offline-progress.js`
+**Verantwortlich für**: Offline-Fortschritt Berechnung
+- `processOfflineProgress(gameState, offlineTime)` - Simuliert offline Zeit
+- Begrenzt auf Maximum (z.B. 24 Stunden)
+- Gibt Bericht über generierten Fortschritt
 
-Track your progress through 17+ achievements across 3 categories:
+### System Modules (`src/systems/`)
 
-### Training Milestones
-- **First Steps** - Train your first model → Unlock manual data generation
-- **Data Hoarder** - Accumulate 1 million training data → +5% data generation
-- **Accuracy King** - Reach 99.9% accuracy → +10% all production
-- **Generalist AI** - Complete 10 different training tasks → Unlock AutoML features
-- **First Deployment** - Deploy your first model → +5% deployment token gain
-- **Veteran Researcher** - Deploy 5 models → +10% permanent accuracy gain
-- **AGI Researcher** - Reach 1 billion total accuracy → Unlock experimental AGI projects
+Jedes System folgt dem gleichen Pattern:
+- `definitions.js` - Daten & Konfiguration
+- `[logic].js` - Geschäftslogik
+- `index.js` - Public API (was exportiert wird)
 
-### Research Breakthroughs
-- **Optimization Expert** - Unlock all optimizers → +15% training speed
-- **Activation Master** - Research all activation functions → +20% model performance
-- **Transformer Revolution** - Unlock transformer architecture → +50% research point generation
-- **Research Completionist** - Complete entire research tree → Permanent 2x multiplier
+#### Achievement System
+- **definitions.js**: Alle Achievement-Definitionen
+- **checker.js**: Prüft Unlock-Conditions
+- **rewards.js**: Wendet Achievement-Boni an
 
-### Infrastructure
-- **GPU Enthusiast** - Build 10 GPU clusters → +10% compute power
-- **Supercomputer** - Reach 10,000 TFLOPS → Unlock quantum research
-- **Quantum Leap** - Build first quantum processor → +25% all resource generation
-- **Data Center Tycoon** - Own 100 total buildings → Buildings cost 10% less
+#### Training System
+- **models.js**: ML-Model Definitionen
+- **queue.js**: Training Queue Management
 
-Each achievement provides permanent bonuses that stack with your other upgrades!
+#### Buildings System
+- **definitions.js**: Building Definitionen
+- **costs.js**: Kosten-Berechnung mit Scaling
 
-## 💾 Save System
+#### Research System
+- **definitions.js**: Research Tree
+- **effects.js**: Anwendung von Research-Effekten
 
-- **Auto-save** with customizable interval (10s / 30s / 60s / 5min)
-- Export/import save files
-- Enhanced offline progression (up to 24 hours)
-- Intelligent simulation with achievement tracking
-- **Separate settings storage** - Settings persist independently
-- **Backward compatible** with all previous versions
-- Cloud save support (planned)
+## 🚀 Getting Started
 
-## 🎨 Visual Features
+### Prerequisites
 
-- Animated training curves - Real-time visualization of model performance
-- Progress animations - Smooth progress bars with dynamic effects
-- Particle celebrations - Visual feedback for training completion
-- Animated achievement unlock notifications
-- Real-time resource tracking
-- Performance metrics dashboard
-- **Keyboard shortcut badges** - Visual `<kbd>` indicators ✨ NEW
-- **Modal animations** - Smooth transitions and effects ✨ NEW
-- Responsive design for all screen sizes
-- Dark mode optimized UI
-- Smooth animations and transitions
-- **Customizable performance settings** ✨ NEW
+- Node.js 18+ oder 20+
+- npm oder yarn
 
-## 📚 Learn While Playing
+### Installation
 
-Every game mechanic is based on real Machine Learning concepts:
+```bash
+# Clone repository
+git clone https://github.com/oliverlaudan-ops/AI-Idle.git
+cd AI-Idle
 
-- **Training Data** represents datasets like MNIST, ImageNet
-- **TFLOPS** is the actual metric used for ML hardware
-- **Optimization algorithms** are real techniques (Adam, SGD)
-- **Model architectures** reflect actual neural network designs
-- **Research tree** follows the historical development of ML
+# Install dependencies
+npm install
 
-Tooltips and explanations help you understand what each upgrade means in the real world of AI research.
+# Run development server
+npm run dev
+```
 
-## ⌨️ Keyboard Shortcuts Quick Reference
+### Testing
 
-### Navigation
-- **1** - Infrastructure Tab
-- **2** - Training Tab
-- **3** - Research Tab
-- **4** - Deployment Tab
-- **5** - Achievements Tab
-- **6** - Statistics Tab
+```bash
+# Run tests
+npm test
 
-### Actions
-- **Space** - Collect Data
-- **S** - Save Game
-- **Q** - Toggle Training Queue
-- **E** - Open Settings
-- **T** - Start/Stop Training
+# Run tests with UI
+npm run test:ui
 
-### System
-- **Esc** - Close Modal
-- **H** - Show Hotkey Help
-- **Ctrl+E** - Export Save
-- **Ctrl+I** - Import Save
+# Generate coverage report
+npm run test:coverage
+```
 
-### Bulk Purchase
-- **Shift+Click** - Buy 10x
-- **Shift+1** through **Shift+6** - Switch bulk modes
+## 🧪 Testing
 
-**Press H in-game for complete hotkey reference!**
+Das Projekt verwendet **Vitest** für Unit- und Integration-Tests.
 
-## 🚀 Development Roadmap
+### Test Structure
 
-### Version 0.1 (MVP) - ✅ Completed (Jan 30, 2026)
-- [x] Game design document
-- [x] README and documentation
-- [x] Basic resource system (data, compute, accuracy)
-- [x] Infrastructure buildings (Tier 1-3)
-- [x] Training models (8 different tasks)
-- [x] Research tree
-- [x] UI and rendering
-- [x] Game loop and save system
+```javascript
+import { describe, it, expect, beforeEach } from 'vitest';
 
-### Version 0.2 (Early Access) - ✅ Completed (Feb 9, 2026)
-- [x] Achievement system implementation
-- [x] Balance adjustments
-- [x] Visual training animations
-- [x] Offline progression optimization
-- [x] Bug fixes and polish
+describe('ModuleName', () => {
+  let gameState;
+  
+  beforeEach(() => {
+    // Setup vor jedem Test
+    gameState = createTestGameState();
+  });
+  
+  it('should do something', () => {
+    // Test implementation
+    expect(result).toBe(expected);
+  });
+});
+```
 
-### Version 0.3 (QoL Update) - ✅ Completed (Feb 10, 2026)
-- [x] **Training Queue System** - Multi-model automation
-- [x] **Bulk Purchase System** - Shift+Click and flexible modes
-- [x] **Settings System** - Comprehensive customization
-- [x] **Keyboard Shortcuts** - Efficient controls
-- [x] **Statistics Tracking** - Detailed progress metrics
-- [x] **Performance Optimizations** - Reduced lag
-- [x] **Documentation** - Complete release notes
+### Coverage Goals
 
-### Version 0.3.1 (Polish) - 🔜 Next
-- [ ] Enhanced Statistics Tab UI with graphs
-- [ ] Queue drag-and-drop reordering
-- [ ] Balance pass based on community feedback
-- [ ] Additional hotkey customization
-- [ ] Bug fixes
+- ✅ Core Modules: **>90% Coverage**
+- ✅ System Modules: **>80% Coverage**
+- 🔄 UI Modules: **>60% Coverage** (in progress)
 
-### Version 1.0 (Full Release) - 📅 Planned
-- [ ] Complete model progression
-- [ ] Full research tree implementation
-- [ ] Prestige/deployment system expansion
-- [ ] Tutorial system
-- [ ] Mobile optimization
+## 📊 Architecture Decisions
 
-### Future Versions
-- [ ] Competitions and leaderboards
-- [ ] Model Zoo collection
-- [ ] Mini-games (GANs, adversarial training)
-- [ ] Multiplayer features
-- [ ] Mobile app version
+### Phase 1: Core Refactoring
+
+**Problem**: `game-state.js` war 850+ Zeilen mit vermischten Concerns
+
+**Lösung**: Extraktion in spezialisierte Module
+- ✅ `resource-manager.js` - Ressourcen-Logik
+- ✅ `production-calculator.js` - Produktions-Berechnung
+- ✅ `save-system.js` - Speichern/Laden
+- ✅ `offline-progress.js` - Offline-Simulation
+
+**Resultat**: `game-state.js` von 850 → 450 Zeilen (-47%)
+
+### Phase 2: Systems Organization
+
+**Problem**: Große Monolithen (`buildings.js`, `research.js`, etc.)
+
+**Lösung**: Organisation in domain-spezifische Systeme
+- ✅ `systems/achievements/` - Achievement-System
+- ✅ `systems/training/` - Training-System
+- ✅ `systems/buildings/` - Building-System
+- ✅ `systems/research/` - Research-System
+
+**Pattern**: `definitions.js` + `logic.js` + `index.js` (Public API)
+
+### Phase 3: Testing & Documentation (Current)
+
+**Ziel**: Validation der Refactorings und Dokumentation
+- ✅ Unit Tests für Core Module
+- ✅ Architecture Documentation
+- 🔄 Integration Tests (in progress)
+- 🔄 API Documentation (in progress)
 
 ## 🤝 Contributing
 
-This is currently a solo project, but feedback and suggestions are welcome!
+### Development Workflow
 
-- **Report Bugs**: Open an issue on GitHub
-- **Feature Requests**: Use the Discussions tab
-- **Balance Feedback**: Let us know your thoughts!
+1. **Fork** das Repository
+2. **Create Branch**: `git checkout -b feature/amazing-feature`
+3. **Write Tests**: Tests zuerst für neue Features
+4. **Implement Feature**: Schreibe den Code
+5. **Run Tests**: `npm test` - Stelle sicher alle Tests bestehen
+6. **Commit**: `git commit -m 'feat: Add amazing feature'`
+7. **Push**: `git push origin feature/amazing-feature`
+8. **Pull Request**: Öffne einen PR
 
-## 📄 License
+### Commit Convention
 
-MIT License - Feel free to learn from and remix this project
+Wir verwenden [Conventional Commits](https://www.conventionalcommits.org/):
+
+- `feat:` - Neues Feature
+- `fix:` - Bug Fix
+- `refactor:` - Code-Refactoring
+- `test:` - Test-bezogen
+- `docs:` - Dokumentation
+- `style:` - Code-Style (formatting)
+- `perf:` - Performance-Verbesserung
+
+### Code Style
+
+- **Indentation**: 4 Spaces
+- **Quotes**: Single quotes für Strings
+- **Semicolons**: Ja
+- **Line Length**: Max 100 Zeichen
+- **Comments**: JSDoc für Public APIs
+
+## 🗺️ Roadmap
+
+### v0.3.0 - UI Refactoring
+- [ ] Komponenten-basierte UI-Architektur
+- [ ] State Management verbessern
+- [ ] Performance-Optimierung für Rendering
+
+### v0.4.0 - Advanced Features
+- [ ] Prestige System erweitern
+- [ ] Neue Model-Kategorien
+- [ ] Multiplayer-Leaderboards
+
+### v0.5.0 - Polish
+- [ ] Animationen & VFX
+- [ ] Sound System
+- [ ] Mobile Optimierung
+
+## 📝 License
+
+MIT License - siehe [LICENSE](LICENSE) für Details
 
 ## 🙏 Acknowledgments
 
-Inspired by:
-- Real Machine Learning research and development
-- Classic idle games (Cookie Clicker, Universal Paperclips, Idle Loops)
-- Educational games teaching programming and math
-- The Idle-Game-v2 (Space Colonies) project
+- Inspiriert von klassischen Idle Games
+- Machine Learning Concepts von verschiedenen ML-Frameworks
+- Community Feedback & Contributions
 
-**Special Thanks:**
-- AI Assistant (Claude/Anthropic) for development support
-- Community playtesters for valuable feedback
+## 📧 Contact
 
-## 📞 Contact
+Oliver Laudan - oliver.laudan@gmail.com
 
-- **GitHub**: [oliverlaudan-ops](https://github.com/oliverlaudan-ops)
-- **Project**: [AI-Idle Repository](https://github.com/oliverlaudan-ops/AI-Idle)
-- **Play**: [ai-idle.future-pulse.tech](https://ai-idle.future-pulse.tech)
+Project Link: [https://github.com/oliverlaudan-ops/AI-Idle](https://github.com/oliverlaudan-ops/AI-Idle)
 
 ---
 
-**Status**: ✅ Version 0.3.0 Complete!  
-**Version**: 0.3.0  
-**Last Updated**: February 10, 2026
-
-**Major QoL Update Released!** 🎉
-
-Start your journey from simple neural networks to frontier AI models. Train, optimize, and deploy - now with powerful automation tools!
+**Made with ❤️ and ☕ in Munich, Germany**
