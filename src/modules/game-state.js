@@ -251,6 +251,14 @@ export class GameState {
             this.resources.research.perSecond *= this.achievementBonuses.researchPoints;
         }
         
+        // Calculate building bonuses (e.g. Cooling System)
+        let buildingBonusMultiplier = 1;
+        for (const building of Object.values(this.buildings)) {
+            if (building.count > 0 && building.bonus && building.bonus.globalProduction) {
+                buildingBonusMultiplier += building.bonus.globalProduction * building.count;
+            }
+        }
+        
         // Apply global multipliers from research
         let globalMultiplier = 1;
         for (const researchId of this.stats.completedResearch) {
@@ -264,6 +272,9 @@ export class GameState {
         globalMultiplier *= this.achievementBonuses.globalMultiplier;
         globalMultiplier *= this.achievementBonuses.allProduction;
         globalMultiplier *= this.achievementBonuses.allResources;
+        
+        // Apply building bonuses (e.g. Cooling System +15%)
+        globalMultiplier *= buildingBonusMultiplier;
         
         // Store multipliers for UI
         this.multipliers.global = globalMultiplier;
