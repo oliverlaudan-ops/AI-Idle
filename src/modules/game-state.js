@@ -5,7 +5,7 @@ import { initializeBuildings, getBuildingCost } from './buildings.js';
 import { initializeModels } from './models.js';
 import { initializeResearch } from './research.js';
 import { initializeAchievements } from './achievements.js';
-import { initializePrestige } from './prestige.js';
+import { initializeDeployment, calculateDeploymentTokens, getDeploymentInfo } from './deployment.js';
 import { checkAndUnlockAchievements, getAchievementBonus } from './achievement-checker.js';
 import { ComboSystem } from './combo-system.js';
 import { TrainingQueue } from './training-queue.js';
@@ -18,7 +18,7 @@ const GAME_CONSTANTS = {
     OFFLINE_TICK_INTERVAL: 60, // Process offline progress in 60 second chunks
     MIN_OFFLINE_TIME_MS: 5000, // Minimum 5 seconds to trigger offline progress
     ACHIEVEMENT_CHECK_INTERVAL: 5.0, // Check achievements every 5 seconds (not every tick!)
-    SAVE_VERSION: '0.3'
+    SAVE_VERSION: '0.4' // Updated for deployment system
 };
 
 export class GameState {
@@ -28,7 +28,7 @@ export class GameState {
         this.models = initializeModels();
         this.research = initializeResearch();
         this.achievements = initializeAchievements();
-        this.prestige = initializePrestige();
+        this.deployment = initializeDeployment(); // Changed from prestige to deployment
         
         // NEW: Settings system
         this.settings = new Settings();
@@ -110,12 +110,16 @@ export class GameState {
         
         this.resources[resourceId].amount += amount;
         
-        // Update stats
+        // Update stats (including lifetime stats for deployment)
         if (resourceId === 'data') {
             this.stats.totalDataGenerated += amount;
+            this.deployment.lifetimeStats.totalData += amount;
         } else if (resourceId === 'accuracy') {
             this.stats.totalAccuracy += amount;
+            this.deployment.lifetimeStats.totalAccuracy += amount;
             this.stats.maxAccuracy = Math.max(this.stats.maxAccuracy, this.resources.accuracy.amount);
+        } else if (resourceId === 'compute') {
+            this.deployment.lifetimeStats.totalCompute += amount;
         }
     }
     
@@ -256,12 +260,6 @@ export class GameState {
             }
         }
         
-        // Apply prestige bonuses
-        if (this.prestige.upgrades.ensemblelearning && this.prestige.upgrades.ensemblelearning.level > 0) {
-            const bonus = this.prestige.upgrades.ensemblelearning.effect.value * this.prestige.upgrades.ensemblelearning.level;
-            globalMultiplier *= (1 + bonus);
-        }
-        
         // Apply achievement bonuses
         globalMultiplier *= this.achievementBonuses.globalMultiplier;
         globalMultiplier *= this.achievementBonuses.allProduction;
@@ -336,6 +334,7 @@ export class GameState {
         
         const modelId = this.currentTraining;
         this.stats.modelsTrained++;
+        this.deployment.lifetimeStats.modelsTrained++;
         
         if (!this.stats.trainedModels.includes(modelId)) {
             this.stats.trainedModels.push(modelId);
@@ -360,6 +359,11 @@ export class GameState {
         
         research.researched = true;
         this.stats.completedResearch.push(researchId);
+        
+        // Track in lifetime stats
+        if (!this.deployment.lifetimeStats.researchCompleted.includes(researchId)) {
+            this.deployment.lifetimeStats.researchCompleted.push(researchId);
+        }
         
         // Apply research effects
         if (research.effect.type === 'unlockModels') {
@@ -414,6 +418,13 @@ export class GameState {
         const newUnlocks = checkAndUnlockAchievements(this);
         if (newUnlocks.length > 0) {
             this.newlyUnlockedAchievements.push(...newUnlocks);
+            
+            // Track in lifetime stats
+            for (const achievement of newUnlocks) {
+                if (!this.deployment.lifetimeStats.achievements.includes(achievement.id)) {
+                    this.deployment.lifetimeStats.achievements.push(achievement.id);
+                }
+            }
         }
         return newUnlocks;
     }
@@ -423,6 +434,82 @@ export class GameState {
         const achievements = this.newlyUnlockedAchievements;
         this.newlyUnlockedAchievements = [];
         return achievements;
+    }
+    
+    // Deployment (Prestige) Management
+    getDeploymentInfo() {
+        return getDeploymentInfo(
+            this.deployment.lifetimeStats.totalAccuracy,
+            this.deployment.tokens
+        );
+    }
+    
+    performDeployment() {
+        const deployInfo = this.getDeploymentInfo();
+        
+        if (!deployInfo.canDeploy) {
+            return { success: false, reason: 'Not enough progress for deployment' };
+        }
+        
+        // Calculate tokens earned
+        const tokensEarned = deployInfo.tokensOnDeploy;
+        
+        // Record deployment in history
+        const deploymentRecord = {
+            timestamp: Date.now(),
+            tokensEarned: tokensEarned,
+            totalAccuracy: this.deployment.lifetimeStats.totalAccuracy,
+            deploymentNumber: this.deployment.deployments + 1
+        };
+        
+        this.deployment.history.push(deploymentRecord);
+        this.deployment.tokens += tokensEarned;
+        this.deployment.lifetimeTokens += tokensEarned;
+        this.deployment.deployments++;
+        this.stats.deployments++;
+        
+        // Reset game state (keep deployment data and achievements)
+        this.resources = initializeResources();
+        this.buildings = initializeBuildings();
+        this.models = initializeModels();
+        this.research = initializeResearch();
+        
+        // Keep achievements but reset current progress
+        // Achievements stay unlocked in this.achievements
+        
+        this.currentTraining = null;
+        this.trainingProgress = 0;
+        this.training = null;
+        
+        // Reset current run stats (but keep lifetime stats in deployment)
+        this.stats.totalDataGenerated = 0;
+        this.stats.totalAccuracy = 0;
+        this.stats.maxAccuracy = 0;
+        this.stats.totalCompute = 0;
+        this.stats.totalBuildings = 0;
+        this.stats.modelsTrained = 0;
+        this.stats.uniqueModelsTrained = 0;
+        this.stats.trainedModels = [];
+        this.stats.completedResearch = [];
+        this.stats.manualClicks = 0;
+        
+        // Reset combo
+        this.comboSystem = new ComboSystem();
+        
+        // Reset training queue
+        this.trainingQueue = new TrainingQueue(this);
+        
+        // Recalculate everything
+        this.recalculateProduction();
+        
+        console.log(`🚀 Deployment #${this.deployment.deployments} complete! Earned ${tokensEarned} tokens.`);
+        
+        return {
+            success: true,
+            tokensEarned: tokensEarned,
+            newTotalTokens: this.deployment.tokens,
+            deploymentRecord: deploymentRecord
+        };
     }
     
     // Game Loop Update - OPTIMIZED
@@ -575,7 +662,7 @@ export class GameState {
             research: this.research,
             achievements: this.achievements,
             achievementBonuses: this.achievementBonuses,
-            prestige: this.prestige,
+            deployment: this.deployment, // Changed from prestige
             currentTraining: this.currentTraining,
             trainingProgress: this.trainingProgress,
             training: this.training,
@@ -601,7 +688,21 @@ export class GameState {
             this.models = saveData.models;
             this.research = saveData.research;
             this.achievements = saveData.achievements;
-            this.prestige = saveData.prestige;
+            
+            // Handle migration from prestige to deployment
+            if (saveData.deployment) {
+                this.deployment = saveData.deployment;
+            } else if (saveData.prestige) {
+                // Migrate old prestige data
+                this.deployment = initializeDeployment();
+                this.deployment.tokens = saveData.prestige.tokens || 0;
+                this.deployment.lifetimeTokens = saveData.prestige.lifetimeTokens || 0;
+                this.deployment.deployments = saveData.prestige.deployments || 0;
+                console.log('✅ Migrated prestige data to deployment system');
+            } else {
+                this.deployment = initializeDeployment();
+            }
+            
             this.currentTraining = saveData.currentTraining;
             this.trainingProgress = saveData.trainingProgress;
             this.training = saveData.training || null;
