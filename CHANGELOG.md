@@ -16,6 +16,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.1] - 2026-02-12
+
+### Fixed
+- **Critical**: Fixed game initialization crash caused by `prestige` to `deployment` migration
+  - `ui-render.js` now correctly references `gameState.deployment` instead of `gameState.prestige`
+  - Fixes "Cannot read properties of undefined (reading 'deployments')" error
+- **Building Bonuses**: Fixed Cooling System and other bonus buildings not applying their effects
+  - `game-state.js` now calculates and applies `building.bonus.globalProduction` multipliers
+  - Cooling System (+15% production) now works correctly
+  - Production rates update immediately after purchasing bonus buildings
+
+### Changed
+- Improved production calculation logic to support building-based multipliers
+- Enhanced error handling during game state initialization
+
+### Technical Details
+- Modified `src/ui/ui-render.js`: Updated `renderStatistics()` to use `deployment` property
+- Modified `src/modules/game-state.js`: Added `buildingBonusMultiplier` calculation in `recalculateProduction()`
+
+---
+
 ## [0.3.0] - 2026-02-10
 
 ### 🎉 Major Release: Quality of Life Improvements
@@ -279,12 +300,12 @@ This release focuses on **automation**, **customization**, and **efficiency** wi
 
 ## Development Roadmap
 
-### v0.3.1 (Next) - Polish
+### v0.3.2 (Next) - Enhanced Features
 - Enhanced Statistics Tab UI with graphs and leaderboards
 - Training Queue drag-and-drop reordering
 - Balance pass based on community feedback
 - Additional hotkey customization
-- Bug fixes
+- Token Shop implementation (Deployment upgrades)
 
 ### v1.0.0 (Future) - Complete Release
 - Expanded Prestige system
