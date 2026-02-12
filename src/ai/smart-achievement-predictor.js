@@ -7,7 +7,8 @@
  * - Which types of achievements the player prioritizes
  * - Typical progression patterns and pacing
  * - Player skill level and efficiency
- * - Preferred gameplay styles (idle vs active, building vs research, etc.)\ * 
+ * - Preferred gameplay styles (idle vs active, building vs research, etc.)
+ * 
  * This creates PERSONALIZED predictions that adapt to each player!
  */
 
@@ -35,7 +36,7 @@ export class SmartAchievementPredictor {
         // Load training history from localStorage
         this.loadTrainingHistory();
         
-        // NEW: Sync already-unlocked achievements from game state
+        // Sync already-unlocked achievements from game state
         this.syncUnlockedAchievements();
     }
 
@@ -92,37 +93,7 @@ export class SmartAchievementPredictor {
             
             if (!loaded) {
                 // Create new model
-                this.model = tf.sequential({
-                    layers: [
-                        tf.layers.dense({
-                            inputShape: [this.config.inputSize],
-                            units: this.config.hiddenSize1,
-                            activation: 'relu',
-                            kernelInitializer: 'heNormal',
-                            kernelRegularizer: tf.regularizers.l2({ l2: 0.01 })
-                        }),
-                        tf.layers.dropout({ rate: 0.2 }),
-                        
-                        tf.layers.dense({
-                            units: this.config.hiddenSize2,
-                            activation: 'relu',
-                            kernelInitializer: 'heNormal',
-                            kernelRegularizer: tf.regularizers.l2({ l2: 0.01 })
-                        }),
-                        tf.layers.dropout({ rate: 0.1 }),
-                        
-                        tf.layers.dense({
-                            units: this.config.outputSize,
-                            activation: 'sigmoid'
-                        })
-                    ]
-                });
-
-                this.model.compile({
-                    optimizer: tf.train.adam(this.config.learningRate),
-                    loss: 'binaryCrossentropy',
-                    metrics: ['accuracy', 'precision']
-                });
+                this.createModel();
             }
 
             console.log('[SmartPredictor] Model ready!');
@@ -131,6 +102,52 @@ export class SmartAchievementPredictor {
             console.error('[SmartPredictor] Failed to initialize:', error);
             return false;
         }
+    }
+
+    /**
+     * Create and compile a new model
+     */
+    createModel() {
+        this.model = tf.sequential({
+            layers: [
+                tf.layers.dense({
+                    inputShape: [this.config.inputSize],
+                    units: this.config.hiddenSize1,
+                    activation: 'relu',
+                    kernelInitializer: 'heNormal',
+                    kernelRegularizer: tf.regularizers.l2({ l2: 0.01 })
+                }),
+                tf.layers.dropout({ rate: 0.2 }),
+                
+                tf.layers.dense({
+                    units: this.config.hiddenSize2,
+                    activation: 'relu',
+                    kernelInitializer: 'heNormal',
+                    kernelRegularizer: tf.regularizers.l2({ l2: 0.01 })
+                }),
+                tf.layers.dropout({ rate: 0.1 }),
+                
+                tf.layers.dense({
+                    units: this.config.outputSize,
+                    activation: 'sigmoid'
+                })
+            ]
+        });
+
+        this.compileModel();
+    }
+
+    /**
+     * Compile model with optimizer and loss function
+     */
+    compileModel() {
+        if (!this.model) return;
+        
+        this.model.compile({
+            optimizer: tf.train.adam(this.config.learningRate),
+            loss: 'binaryCrossentropy',
+            metrics: ['accuracy', 'precision']
+        });
     }
 
     /**
@@ -501,7 +518,12 @@ export class SmartAchievementPredictor {
     async loadModel() {
         try {
             this.model = await tf.loadLayersModel('localstorage://smart-achievement-predictor');
-            console.log('[SmartPredictor] Model loaded from storage');
+            
+            // IMPORTANT: Recompile the loaded model
+            // TensorFlow.js doesn't save the optimizer state, only weights
+            this.compileModel();
+            
+            console.log('[SmartPredictor] Model loaded from storage and compiled');
             return true;
         } catch (error) {
             console.log('[SmartPredictor] No saved model found');
