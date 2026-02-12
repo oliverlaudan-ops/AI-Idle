@@ -3,8 +3,10 @@
 import { initializeTabs } from './ui-tabs.js';
 import { showToast } from './ui-render.js';
 import { ComboUI } from './combo-ui.js';
+import { DeploymentUI } from './deployment-ui.js';
 
 let comboUI = null;
+let deploymentUI = null;
 
 export function initializeUI(game) {
     // Initialize tabs
@@ -29,6 +31,13 @@ export function initializeUI(game) {
         // Show floating text with combo info
         comboUI.showFloatingText(result.amount, result.multiplier);
     });
+    
+    // Initialize Deployment UI
+    deploymentUI = new DeploymentUI(game);
+    deploymentUI.init();
+    
+    // Make it globally accessible for updates
+    window.deploymentUI = deploymentUI;
     
     // Update combo timer with throttling (10 FPS instead of 60 FPS)
     let lastComboUpdate = 0;
@@ -114,14 +123,6 @@ export function initializeUI(game) {
             }
         }
     });
-    
-    // Deployment button
-    const deployBtn = document.getElementById('btn-deploy');
-    if (deployBtn) {
-        deployBtn.addEventListener('click', () => {
-            showToast('Deployment system coming soon!', 'warning');
-        });
-    }
     
     // Modal close handlers
     setupModalHandlers();
