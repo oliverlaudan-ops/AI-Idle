@@ -1,25 +1,26 @@
-// Central Game State Management
+// Central Game State Management - REFACTORED
+// Now delegates to specialized core modules
 
 import { initializeResources } from './resources.js';
 import { initializeBuildings, getBuildingCost } from './buildings.js';
 import { initializeModels } from './models.js';
 import { initializeResearch } from './research.js';
 import { initializeAchievements } from './achievements.js';
-import { initializeDeployment, calculateDeploymentTokens, getDeploymentInfo } from './deployment.js';
-import { checkAndUnlockAchievements, getAchievementBonus } from './achievement-checker.js';
+import { initializeDeployment, getDeploymentInfo } from './deployment.js';
+import { checkAndUnlockAchievements } from './achievement-checker.js';
 import { ComboSystem } from './combo-system.js';
 import { TrainingQueue } from './training-queue.js';
 import { BulkPurchase } from './bulk-purchase.js';
 import { Settings } from './settings.js';
 
+// Core system imports
+import { ResourceManager } from '../core/resource-manager.js';
+import { recalculateProduction } from '../core/production-calculator.js';
+import { saveGame, loadGame, exportSave, importSave } from '../core/save-system.js';
+import { processOfflineProgress } from '../core/offline-progress.js';
+
 // Game constants
-const GAME_CONSTANTS = {
-    MAX_OFFLINE_TIME_MS: 24 * 60 * 60 * 1000, // 24 hours
-    OFFLINE_TICK_INTERVAL: 60, // Process offline progress in 60 second chunks
-    MIN_OFFLINE_TIME_MS: 5000, // Minimum 5 seconds to trigger offline progress
-    ACHIEVEMENT_CHECK_INTERVAL: 5.0, // Check achievements every 5 seconds (not every tick!)
-    SAVE_VERSION: '0.4' // Updated for deployment system
-};
+const ACHIEVEMENT_CHECK_INTERVAL = 5.0; // Check achievements every 5 seconds
 
 export class GameState {
     constructor() {
@@ -28,31 +29,27 @@ export class GameState {
         this.models = initializeModels();
         this.research = initializeResearch();
         this.achievements = initializeAchievements();
-        this.deployment = initializeDeployment(); // Changed from prestige to deployment
+        this.deployment = initializeDeployment();
         
-        // NEW: Settings system
+        // Core systems
+        this.resourceManager = new ResourceManager(this);
         this.settings = new Settings();
-        this.settings.load(); // Load saved settings
+        this.settings.load();
         
-        // Combo system for manual collection
+        // Game systems
         this.comboSystem = new ComboSystem();
-        
-        // Training queue system
         this.trainingQueue = new TrainingQueue(this);
-        
-        // Bulk purchase system
         this.bulkPurchase = new BulkPurchase(this);
         
+        // Training state
         this.currentTraining = null;
         this.trainingProgress = 0;
+        this.training = null;
         
-        // Enhanced training state for UI animations
-        this.training = null; // Will be set when training starts
-        
-        // Performance: Track time since last achievement check
+        // Performance tracking
         this.timeSinceAchievementCheck = 0;
         
-        // Achievement bonuses storage
+        // Achievement bonuses
         this.achievementBonuses = {
             dataGeneration: 1,
             allProduction: 1,
@@ -68,12 +65,13 @@ export class GameState {
             manualCollection: 1
         };
         
-        // Multipliers object for UI
+        // Multipliers for UI
         this.multipliers = {
             trainingSpeed: 1.0,
             global: 1.0
         };
         
+        // Statistics
         this.stats = {
             totalDataGenerated: 0,
             totalAccuracy: 0,
@@ -91,7 +89,7 @@ export class GameState {
             manualClicks: 0
         };
         
-        // Legacy settings for backwards compatibility (now handled by Settings module)
+        // Legacy settings for backwards compatibility
         this.legacySettings = {
             autoSave: true,
             autoSaveInterval: 30000,
@@ -99,88 +97,55 @@ export class GameState {
         };
         
         this.lastSaveTime = Date.now();
-        
-        // Queue for newly unlocked achievements (for notifications)
         this.newlyUnlockedAchievements = [];
     }
     
-    // Resource Management
+    // ========== Resource Management (delegated to ResourceManager) ==========
+    
     addResource(resourceId, amount) {
-        if (!this.resources[resourceId]) return;
-        
-        this.resources[resourceId].amount += amount;
-        
-        // Update stats (including lifetime stats for deployment)
-        if (resourceId === 'data') {
-            this.stats.totalDataGenerated += amount;
-            this.deployment.lifetimeStats.totalData += amount;
-        } else if (resourceId === 'accuracy') {
-            this.stats.totalAccuracy += amount;
-            this.deployment.lifetimeStats.totalAccuracy += amount;
-            this.stats.maxAccuracy = Math.max(this.stats.maxAccuracy, this.resources.accuracy.amount);
-        } else if (resourceId === 'compute') {
-            this.deployment.lifetimeStats.totalCompute += amount;
-        }
+        this.resourceManager.addResource(resourceId, amount);
+    }
+    
+    canAfford(costs) {
+        return this.resourceManager.canAfford(costs);
+    }
+    
+    spendResources(costs) {
+        return this.resourceManager.spendResources(costs);
     }
     
     // Manual collect with combo system
     manualCollect() {
-        // Get combo multiplier
         const multiplier = this.comboSystem.click();
-        
-        // Base amount is 1, modified by combo and achievement bonuses
         const baseAmount = 1;
         const amount = baseAmount * multiplier * this.achievementBonuses.manualCollection;
         
-        // Add the resource
         this.addResource('data', amount);
-        
-        // Update stats
         this.stats.manualClicks++;
-        
-        // Check achievements immediately on important events
         this.checkAchievements();
         
         return { amount, multiplier };
     }
     
-    canAfford(costs) {
-        for (const [resourceId, amount] of Object.entries(costs)) {
-            if (!this.resources[resourceId] || this.resources[resourceId].amount < amount) {
-                return false;
-            }
-        }
-        return true;
-    }
+    // ========== Building Management ==========
     
-    spendResources(costs) {
-        if (!this.canAfford(costs)) return false;
-        
-        for (const [resourceId, amount] of Object.entries(costs)) {
-            this.resources[resourceId].amount -= amount;
-        }
-        return true;
-    }
-    
-    // Building Management
     purchaseBuilding(buildingId, amount = 1) {
-        // Use bulk purchase system if amount > 1 or using bulk mode
+        // Use bulk purchase system
         if (amount !== 1 || this.bulkPurchase.getMode() !== 1) {
             const result = this.bulkPurchase.purchase(buildingId, amount === 1 ? 'mode' : amount);
-            // Check achievements after purchase
             if (result && result.success) {
                 this.checkAchievements();
             }
             return result;
         }
         
-        // Legacy single purchase for backwards compatibility
+        // Legacy single purchase
         const building = this.buildings[buildingId];
         if (!building || !building.unlocked) return false;
         
         let cost = getBuildingCost(building);
         
-        // Apply achievement cost reduction
+        // Apply cost reduction
         if (this.achievementBonuses.buildingCostReduction > 0) {
             const reduction = this.achievementBonuses.buildingCostReduction;
             const adjustedCost = {};
@@ -195,11 +160,7 @@ export class GameState {
         building.count++;
         this.stats.totalBuildings++;
         this.recalculateProduction();
-        
-        // Check for building unlocks
         this.checkBuildingUnlocks();
-        
-        // Check achievements after purchase
         this.checkAchievements();
         
         return { success: true, amount: 1, cost };
@@ -222,89 +183,18 @@ export class GameState {
         }
     }
     
-    // Production Calculation
+    // ========== Production (delegated to ProductionCalculator) ==========
+    
     recalculateProduction() {
-        // Reset all production
-        for (const resource of Object.values(this.resources)) {
-            resource.perSecond = 0;
-        }
-        
-        // Calculate base production from buildings
-        for (const building of Object.values(this.buildings)) {
-            if (building.count > 0 && building.production) {
-                for (const [resourceId, amount] of Object.entries(building.production)) {
-                    if (this.resources[resourceId]) {
-                        this.resources[resourceId].perSecond += amount * building.count;
-                    }
-                }
-            }
-        }
-        
-        // Apply specific resource bonuses FIRST (before global multipliers)
-        if (this.resources.data) {
-            this.resources.data.perSecond *= this.achievementBonuses.dataGeneration;
-        }
-        if (this.resources.compute) {
-            this.resources.compute.perSecond *= this.achievementBonuses.computePower;
-        }
-        if (this.resources.research) {
-            this.resources.research.perSecond *= this.achievementBonuses.researchPoints;
-        }
-        
-        // Calculate building bonuses (e.g. Cooling System)
-        let buildingBonusMultiplier = 1;
-        for (const building of Object.values(this.buildings)) {
-            if (building.count > 0 && building.bonus && building.bonus.globalProduction) {
-                buildingBonusMultiplier += building.bonus.globalProduction * building.count;
-            }
-        }
-        
-        // Apply global multipliers from research
-        let globalMultiplier = 1;
-        for (const researchId of this.stats.completedResearch) {
-            const research = this.research[researchId];
-            if (research && research.effect && research.effect.type === 'globalMultiplier') {
-                globalMultiplier *= research.effect.multiplier;
-            }
-        }
-        
-        // Apply achievement bonuses
-        globalMultiplier *= this.achievementBonuses.globalMultiplier;
-        globalMultiplier *= this.achievementBonuses.allProduction;
-        globalMultiplier *= this.achievementBonuses.allResources;
-        
-        // Apply building bonuses (e.g. Cooling System +15%)
-        globalMultiplier *= buildingBonusMultiplier;
-        
-        // Store multipliers for UI
-        this.multipliers.global = globalMultiplier;
-        this.multipliers.trainingSpeed = this.achievementBonuses.trainingSpeed;
-        
-        // Apply global multiplier to all resources
-        for (const resource of Object.values(this.resources)) {
-            resource.perSecond *= globalMultiplier;
-        }
-        
-        // Add production from current training
-        if (this.currentTraining) {
-            const model = this.models[this.currentTraining];
-            if (model && model.production) {
-                for (const [resourceId, amount] of Object.entries(model.production)) {
-                    if (this.resources[resourceId]) {
-                        let modifiedAmount = amount * this.achievementBonuses.modelPerformance * globalMultiplier;
-                        this.resources[resourceId].perSecond += modifiedAmount;
-                    }
-                }
-            }
-        }
+        recalculateProduction(this);
     }
     
-    // Get training speed multiplier
     getTrainingSpeedMultiplier() {
         return this.achievementBonuses.trainingSpeed;
     }
     
-    // Training Management
+    // ========== Training Management ==========
+    
     startTraining(modelId) {
         const model = this.models[modelId];
         if (!model || !model.unlocked) return false;
@@ -319,7 +209,7 @@ export class GameState {
         this.currentTraining = modelId;
         this.trainingProgress = 0;
         
-        // Initialize training state for UI
+        // Initialize training state
         this.training = {
             modelId: modelId,
             elapsedTime: 0,
@@ -329,7 +219,6 @@ export class GameState {
         };
         
         this.recalculateProduction();
-        
         return true;
     }
     
@@ -353,15 +242,12 @@ export class GameState {
         }
         
         this.stopTraining();
-        
-        // Check achievements after training completion
         this.checkAchievements();
-        
-        // Notify queue that training completed
         this.trainingQueue.onTrainingComplete();
     }
     
-    // Research Management
+    // ========== Research Management ==========
+    
     performResearch(researchId) {
         const research = this.research[researchId];
         if (!research || !research.unlocked || research.researched) return false;
@@ -385,17 +271,15 @@ export class GameState {
             }
         }
         
-        // Check for research unlocks
         this.checkResearchUnlocks();
         this.recalculateProduction();
-        
-        // Check achievements after research
         this.checkAchievements();
         
         return true;
     }
     
     checkResearchUnlocks() {
+        // Research unlocks
         for (const research of Object.values(this.research)) {
             if (!research.unlocked && research.unlockRequirement) {
                 if (research.unlockRequirement.research) {
@@ -407,7 +291,7 @@ export class GameState {
             }
         }
         
-        // Check model unlocks based on accuracy
+        // Model unlocks based on accuracy
         for (const model of Object.values(this.models)) {
             if (!model.unlocked && model.unlockRequirement) {
                 let canUnlock = true;
@@ -424,7 +308,8 @@ export class GameState {
         }
     }
     
-    // Achievement Management
+    // ========== Achievement Management ==========
+    
     checkAchievements() {
         const newUnlocks = checkAndUnlockAchievements(this);
         if (newUnlocks.length > 0) {
@@ -440,14 +325,14 @@ export class GameState {
         return newUnlocks;
     }
     
-    // Get and clear newly unlocked achievements
     popNewlyUnlockedAchievements() {
         const achievements = this.newlyUnlockedAchievements;
         this.newlyUnlockedAchievements = [];
         return achievements;
     }
     
-    // Deployment (Prestige) Management
+    // ========== Deployment Management ==========
+    
     getDeploymentInfo() {
         return getDeploymentInfo(
             this.deployment.lifetimeStats.totalAccuracy,
@@ -462,10 +347,9 @@ export class GameState {
             return { success: false, reason: 'Not enough progress for deployment' };
         }
         
-        // Calculate tokens earned
         const tokensEarned = deployInfo.tokensOnDeploy;
         
-        // Record deployment in history
+        // Record deployment
         const deploymentRecord = {
             timestamp: Date.now(),
             tokensEarned: tokensEarned,
@@ -479,20 +363,17 @@ export class GameState {
         this.deployment.deployments++;
         this.stats.deployments++;
         
-        // Reset game state (keep deployment data and achievements)
+        // Reset game state
         this.resources = initializeResources();
         this.buildings = initializeBuildings();
         this.models = initializeModels();
         this.research = initializeResearch();
         
-        // Keep achievements but reset current progress
-        // Achievements stay unlocked in this.achievements
-        
         this.currentTraining = null;
         this.trainingProgress = 0;
         this.training = null;
         
-        // Reset current run stats (but keep lifetime stats in deployment)
+        // Reset stats
         this.stats.totalDataGenerated = 0;
         this.stats.totalAccuracy = 0;
         this.stats.maxAccuracy = 0;
@@ -504,13 +385,10 @@ export class GameState {
         this.stats.completedResearch = [];
         this.stats.manualClicks = 0;
         
-        // Reset combo
+        // Reset systems
         this.comboSystem = new ComboSystem();
-        
-        // Reset training queue
         this.trainingQueue = new TrainingQueue(this);
         
-        // Recalculate everything
         this.recalculateProduction();
         
         console.log(`🚀 Deployment #${this.deployment.deployments} complete! Earned ${tokensEarned} tokens.`);
@@ -523,7 +401,8 @@ export class GameState {
         };
     }
     
-    // Game Loop Update - OPTIMIZED
+    // ========== Game Loop ==========
+    
     update(deltaTime) {
         // Update playtime
         const now = Date.now();
@@ -531,7 +410,7 @@ export class GameState {
         this.stats.totalPlaytime += playtimeDelta;
         this.stats.lastPlaytimeUpdate = now;
         
-        // Update combo system
+        // Update systems
         this.comboSystem.update(deltaTime);
         
         // Add resources from production
@@ -541,7 +420,7 @@ export class GameState {
             }
         }
         
-        // Update training progress
+        // Update training
         if (this.currentTraining && this.training) {
             const model = this.models[this.currentTraining];
             if (model) {
@@ -556,208 +435,39 @@ export class GameState {
             }
         }
         
-        // Check unlocks (cheap operations)
+        // Check unlocks
         this.checkBuildingUnlocks();
         this.checkResearchUnlocks();
         
-        // PERFORMANCE FIX: Only check achievements every 5 seconds, not every tick!
-        // This reduces operations from 600/minute to 12/minute (50x improvement)
+        // Periodic achievement checks (performance optimization)
         this.timeSinceAchievementCheck += deltaTime;
-        if (this.timeSinceAchievementCheck >= GAME_CONSTANTS.ACHIEVEMENT_CHECK_INTERVAL) {
+        if (this.timeSinceAchievementCheck >= ACHIEVEMENT_CHECK_INTERVAL) {
             this.checkAchievements();
             this.timeSinceAchievementCheck = 0;
         }
-        // Note: Manual actions (clicks, purchases, research, training) trigger immediate achievement checks
         
-        // Update total compute for stats
+        // Update stats
         this.stats.totalCompute = this.resources.compute.amount;
     }
     
-    // Enhanced offline progression
+    // ========== Offline Progress (delegated to OfflineProgress) ==========
+    
     processOfflineProgress(offlineTime) {
-        const offlineEnabled = this.settings.get('gameplay', 'offlineProgress');
-        if (!offlineEnabled) return;
-        
-        if (offlineTime < GAME_CONSTANTS.MIN_OFFLINE_TIME_MS) return;
-        
-        const maxTime = GAME_CONSTANTS.MAX_OFFLINE_TIME_MS;
-        const actualTime = Math.min(offlineTime, maxTime);
-        const timeInSeconds = actualTime / 1000;
-        
-        // Update playtime
-        this.stats.totalPlaytime += actualTime;
-        
-        // Process in chunks
-        const tickInterval = GAME_CONSTANTS.OFFLINE_TICK_INTERVAL;
-        const numTicks = Math.floor(timeInSeconds / tickInterval);
-        const remainingTime = timeInSeconds % tickInterval;
-        
-        for (let i = 0; i < numTicks; i++) {
-            this._processOfflineTick(tickInterval);
-        }
-        
-        if (remainingTime > 0) {
-            this._processOfflineTick(remainingTime);
-        }
-        
-        console.log(`✅ Processed ${timeInSeconds.toFixed(0)}s of offline time (${numTicks} ticks)`);
+        processOfflineProgress(this, offlineTime);
     }
     
-    _processOfflineTick(deltaTime) {
-        // Add resources
-        for (const [resourceId, resource] of Object.entries(this.resources)) {
-            if (resource.perSecond > 0) {
-                this.addResource(resourceId, resource.perSecond * deltaTime);
-            }
-        }
-        
-        // Check unlocks
-        const hadUnlocks = this._checkOfflineUnlocks();
-        if (hadUnlocks) {
-            this.recalculateProduction();
-        }
-        
-        // Check achievements
-        const newAchievements = this.checkAchievements();
-        if (newAchievements.length > 0) {
-            this.recalculateProduction();
-        }
-    }
+    // ========== Save/Load (delegated to SaveSystem) ==========
     
-    _checkOfflineUnlocks() {
-        let hadUnlocks = false;
-        
-        for (const building of Object.values(this.buildings)) {
-            if (!building.unlocked && building.unlockRequirement) {
-                let canUnlock = true;
-                for (const [resourceId, amount] of Object.entries(building.unlockRequirement)) {
-                    if (this.resources[resourceId].amount < amount) {
-                        canUnlock = false;
-                        break;
-                    }
-                }
-                if (canUnlock) {
-                    building.unlocked = true;
-                    hadUnlocks = true;
-                }
-            }
-        }
-        
-        for (const model of Object.values(this.models)) {
-            if (!model.unlocked && model.unlockRequirement) {
-                let canUnlock = true;
-                for (const [resourceId, amount] of Object.entries(model.unlockRequirement)) {
-                    if (this.resources[resourceId].amount < amount) {
-                        canUnlock = false;
-                        break;
-                    }
-                }
-                if (canUnlock) {
-                    model.unlocked = true;
-                    hadUnlocks = true;
-                }
-            }
-        }
-        
-        return hadUnlocks;
-    }
-    
-    // Save/Load
     save() {
-        const saveData = {
-            version: GAME_CONSTANTS.SAVE_VERSION,
-            timestamp: Date.now(),
-            resources: this.resources,
-            buildings: this.buildings,
-            models: this.models,
-            research: this.research,
-            achievements: this.achievements,
-            achievementBonuses: this.achievementBonuses,
-            deployment: this.deployment, // Changed from prestige
-            currentTraining: this.currentTraining,
-            trainingProgress: this.trainingProgress,
-            training: this.training,
-            stats: this.stats,
-            legacySettings: this.legacySettings,
-            comboSystem: this.comboSystem.save(),
-            trainingQueue: this.trainingQueue.save(),
-            bulkPurchase: this.bulkPurchase.save()
-        };
-        
-        this.lastSaveTime = Date.now();
-        return saveData;
+        return saveGame(this);
     }
     
     load(saveData) {
-        try {
-            if (saveData.version && saveData.version !== GAME_CONSTANTS.SAVE_VERSION) {
-                console.warn(`Loading save from version ${saveData.version}, current version is ${GAME_CONSTANTS.SAVE_VERSION}`);
-            }
-            
-            this.resources = saveData.resources;
-            this.buildings = saveData.buildings;
-            this.models = saveData.models;
-            this.research = saveData.research;
-            this.achievements = saveData.achievements;
-            
-            // Handle migration from prestige to deployment
-            if (saveData.deployment) {
-                this.deployment = saveData.deployment;
-            } else if (saveData.prestige) {
-                // Migrate old prestige data
-                this.deployment = initializeDeployment();
-                this.deployment.tokens = saveData.prestige.tokens || 0;
-                this.deployment.lifetimeTokens = saveData.prestige.lifetimeTokens || 0;
-                this.deployment.deployments = saveData.prestige.deployments || 0;
-                console.log('✅ Migrated prestige data to deployment system');
-            } else {
-                this.deployment = initializeDeployment();
-            }
-            
-            this.currentTraining = saveData.currentTraining;
-            this.trainingProgress = saveData.trainingProgress;
-            this.training = saveData.training || null;
-            this.stats = saveData.stats;
-            this.legacySettings = saveData.legacySettings || saveData.settings || this.legacySettings;
-            
-            if (saveData.achievementBonuses) {
-                this.achievementBonuses = {
-                    ...this.achievementBonuses,
-                    ...saveData.achievementBonuses
-                };
-            }
-            
-            if (saveData.comboSystem) {
-                this.comboSystem.load(saveData.comboSystem);
-            }
-            
-            if (saveData.trainingQueue) {
-                this.trainingQueue.load(saveData.trainingQueue);
-            }
-            
-            if (saveData.bulkPurchase) {
-                this.bulkPurchase.load(saveData.bulkPurchase);
-            }
-            
-            if (!this.stats.lastPlaytimeUpdate) {
-                this.stats.lastPlaytimeUpdate = Date.now();
-            }
-            
-            if (this.stats.manualClicks === undefined) {
-                this.stats.manualClicks = 0;
-            }
-            
-            // Initialize achievement check timer
-            this.timeSinceAchievementCheck = 0;
-            
-            this.recalculateProduction();
-            this.lastSaveTime = saveData.timestamp || Date.now();
-            
-            return true;
-        } catch (e) {
-            console.error('Failed to load save:', e);
-            return false;
-        }
+        // Preserve the resource manager instance
+        const resourceManager = this.resourceManager;
+        const result = loadGame(this);
+        this.resourceManager = resourceManager;
+        return result;
     }
     
     reset() {
@@ -765,29 +475,13 @@ export class GameState {
     }
     
     export() {
-        try {
-            const saveData = this.save();
-            const jsonString = JSON.stringify(saveData);
-            return btoa(encodeURIComponent(jsonString).replace(/%([0-9A-F]{2})/g, (match, p1) => {
-                return String.fromCharCode('0x' + p1);
-            }));
-        } catch (e) {
-            console.error('Failed to export save:', e);
-            return null;
-        }
+        return exportSave(this);
     }
     
     import(saveString) {
-        try {
-            const jsonString = decodeURIComponent(atob(saveString).split('').map((c) => {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-            
-            const saveData = JSON.parse(jsonString);
-            return this.load(saveData);
-        } catch (e) {
-            console.error('Failed to import save:', e);
-            return false;
-        }
+        const resourceManager = this.resourceManager;
+        const result = importSave(this, saveString);
+        this.resourceManager = resourceManager;
+        return result;
     }
 }
