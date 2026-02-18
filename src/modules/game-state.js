@@ -104,6 +104,11 @@ export class GameState {
         
         this.lastSaveTime = Date.now();
         this.newlyUnlockedAchievements = [];
+
+        // Performance cache: research global multiplier.
+        // Invalidated (set to null) whenever research is completed or the game
+        // is reset (deployment). Recomputed lazily in production-calculator.js.
+        this._cachedResearchMultiplier = null;
     }
     
     // ========== Resource Management (delegated to ResourceManager) ==========
@@ -277,6 +282,10 @@ export class GameState {
             }
         }
         
+        // Invalidate the research multiplier cache so the next
+        // recalculateProduction() call picks up the new research effect.
+        this._cachedResearchMultiplier = null;
+
         this.checkResearchUnlocks();
         this.recalculateProduction();
         this.checkAchievements();
@@ -391,6 +400,9 @@ export class GameState {
         this.stats.completedResearch = [];
         this.stats.manualClicks = 0;
         
+        // Invalidate research multiplier cache — completedResearch was reset above.
+        this._cachedResearchMultiplier = null;
+
         // Reset systems
         this.comboSystem = new ComboSystem();
         this.trainingQueue = new TrainingQueue(this);
