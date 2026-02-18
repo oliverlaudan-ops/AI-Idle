@@ -1,123 +1,102 @@
-// Tutorial System - Interactive 7-step guide for new players
+/**
+ * Tutorial System - Interactive guide for new players
+ * Provides step-by-step tutorial with spotlight and tooltip UI
+ */
 
 export class TutorialSystem {
     constructor(game) {
         this.game = game;
-        this.currentStep = 0;
         this.isActive = false;
         this.isCompleted = false;
-        
-        // Tutorial steps configuration
-        this.steps = [
-            {
-                id: 'welcome',
-                title: 'Welcome to AI-Idle! 🤖',
-                description: 'Train AI models and build your machine learning empire! This quick tutorial will guide you through the basics.',
-                target: null, // No specific target, full screen modal
-                position: 'center',
-                showSkip: true,
-                showNext: true,
-                waitForAction: false,
-                highlightCombo: false
-            },
-            {
-                id: 'manual-collect',
-                title: 'Collect Training Data 📊',
-                description: 'Click this button to manually gather training data. Try clicking multiple times quickly to build a combo multiplier!',
-                target: '#btn-collect',
-                position: 'bottom',
-                showSkip: true,
-                showNext: false,
-                waitForAction: true,
-                actionType: 'click',
-                actionTarget: '#btn-collect',
-                actionCount: 3,
-                highlightCombo: true
-            },
-            {
-                id: 'resources',
-                title: 'Your Resources 💎',
-                description: 'These are your resources. Data is used to build infrastructure and train models. Watch them grow!',
-                target: '.stats-bar',
-                position: 'bottom',
-                showSkip: true,
-                showNext: true,
-                waitForAction: false,
-                highlightCombo: false,
-                additionalInfo: [
-                    '📊 Data: Used for building and training',
-                    '⚡ Compute: Unlocked by buildings, speeds up training',
-                    '🎯 Accuracy: Earned from training, goal is 100%',
-                    '🔬 Research: Unlocks new technologies'
-                ]
-            },
-            {
-                id: 'first-building',
-                title: 'Build Infrastructure 🏗️',
-                description: 'Buildings generate resources automatically. Purchase your first CPU Core to start passive data generation!',
-                target: '#buildings-tier1',
-                position: 'top',
-                showSkip: true,
-                showNext: false,
-                waitForAction: true,
-                actionType: 'purchase',
-                actionTarget: 'cpucore',
-                highlightCombo: false
-            },
-            {
-                id: 'first-training',
-                title: 'Train Your First Model 🧠',
-                description: 'Switch to the Training tab and start training your first neural network! Models generate accuracy and unlock new features.',
-                target: '[data-tab="training"]',
-                position: 'bottom',
-                showSkip: true,
-                showNext: false,
-                waitForAction: true,
-                actionType: 'training',
-                highlightCombo: false,
-                additionalInfo: [
-                    '🧠 Each model has unique requirements',
-                    '⏱️ Training takes time (watch the progress bar)',
-                    '🎯 Earn accuracy to unlock advanced models'
-                ]
-            },
-            {
-                id: 'research',
-                title: 'Research & Development 🔬',
-                description: 'The Research tab unlocks powerful upgrades and new technologies. Explore it to boost your progress!',
-                target: '[data-tab="research"]',
-                position: 'bottom',
-                showSkip: true,
-                showNext: true,
-                waitForAction: false,
-                highlightCombo: false
-            },
-            {
-                id: 'achievements',
-                title: 'Track Your Progress 🏆',
-                description: 'Achievements provide permanent bonuses and track your milestones. Check them regularly for rewards!',
-                target: '[data-tab="achievements"]',
-                position: 'bottom',
-                showSkip: false,
-                showNext: true,
-                waitForAction: false,
-                highlightCombo: false,
-                finalStep: true
-            }
-        ];
-        
-        // Track action progress
-        this.actionProgress = 0;
-        this.actionRequired = 0;
-        
-        // DOM elements (initialized in init())
+        this.currentStep = 0;
         this.overlay = null;
         this.spotlight = null;
         this.tooltipContainer = null;
-        this.tooltip = null;
+        this.actionProgress = 0;
+        this.actionRequired = 1;
+        this.activeListeners = [];
+        
+        this.steps = [
+            {
+                title: '🤖 Welcome to AI-Idle!',
+                description: 'Train AI models to generate Data Points, then use them to unlock research and more powerful models.',
+                position: 'center',
+                showNext: true,
+                showSkip: true,
+                additionalInfo: [
+                    '💡 Data Points are your main currency',
+                    '🔬 Research unlocks multipliers and new features',
+                    '🚀 More models = faster progress'
+                ]
+            },
+            {
+                title: '🧠 Your First Model',
+                description: 'Click the "Train" button on the Perceptron to start generating Data Points.',
+                target: '.model-card:first-child .train-btn',
+                position: 'right',
+                waitForAction: true,
+                actionType: 'click',
+                actionCount: 1,
+                showSkip: true
+            },
+            {
+                title: '📊 Data Points',
+                description: 'Great! Your model is now training. Data Points accumulate automatically while models train.',
+                target: '#data-points-display',
+                position: 'bottom',
+                showNext: true,
+                showSkip: true
+            },
+            {
+                title: '🔬 Research Tab',
+                description: 'Visit the Research tab to spend Data Points on upgrades that multiply your production.',
+                target: '[data-tab="research"]',
+                position: 'bottom',
+                waitForAction: true,
+                actionType: 'click',
+                actionCount: 1,
+                showSkip: true
+            },
+            {
+                title: '🧪 Buy Research',
+                description: 'Purchase a research item to boost your Data Point production. Research compounds over time!',
+                target: '.research-item:first-child .research-btn',
+                position: 'right',
+                waitForAction: true,
+                actionType: 'purchase',
+                actionCount: 1,
+                showSkip: true
+            },
+            {
+                title: '⚡ Training Queue',
+                description: 'Use the Training tab to queue multiple training runs. Combos give bonus multipliers!',
+                target: '[data-tab="training"]',
+                position: 'bottom',
+                waitForAction: true,
+                actionType: 'training',
+                actionCount: 1,
+                showSkip: true,
+                highlightCombo: false
+            },
+            {
+                title: '🎉 You\'re Ready!',
+                description: 'You\'ve learned the basics! Keep training models, researching upgrades, and unlocking new AI architectures.',
+                position: 'center',
+                showNext: true,
+                showSkip: false,
+                finalStep: true,
+                additionalInfo: [
+                    '🏆 Unlock Prestige for massive multipliers',
+                    '📈 Check the Stats tab to track progress',
+                    '💾 Your game saves automatically'
+                ]
+            }
+        ];
     }
-    
-    // Initialize tutorial system
+
+    /**
+     * Initialize tutorial system - creates DOM elements and auto-starts if needed
+     */
     init() {
         // Check if tutorial was already completed
         const completed = localStorage.getItem('ai-idle-tutorial-completed');
@@ -126,8 +105,8 @@ export class TutorialSystem {
             return;
         }
         
-        // Create DOM elements
-        this.createTutorialElements();
+        // Create DOM elements (always safe to call)
+        this._ensureElements();
         
         // Check if we should auto-start
         const autoStart = !localStorage.getItem('ai-idle-tutorial-skipped');
@@ -136,8 +115,48 @@ export class TutorialSystem {
             setTimeout(() => this.start(), 500);
         }
     }
-    
-    // Create tutorial DOM elements
+
+    /**
+     * Ensure tutorial DOM elements exist, creating them if necessary.
+     * Safe to call multiple times.
+     */
+    _ensureElements() {
+        if (!this.overlay) {
+            this.createTutorialElements();
+        }
+    }
+
+    /**
+     * Start the tutorial
+     */
+    start() {
+        if (this.isCompleted) return;
+        
+        // Ensure DOM elements exist even if init() returned early
+        this._ensureElements();
+        
+        if (!this.overlay) {
+            console.error('TutorialSystem: overlay element could not be created');
+            return;
+        }
+        
+        this.isActive = true;
+        this.currentStep = 0;
+        this.overlay.style.display = 'block';
+        
+        // Add active class for animations
+        setTimeout(() => {
+            if (this.overlay) {
+                this.overlay.classList.add('active');
+            }
+        }, 10);
+        
+        this.showStep(0);
+    }
+
+    /**
+     * Create tutorial DOM elements and append to body
+     */
     createTutorialElements() {
         // Main overlay
         this.overlay = document.createElement('div');
@@ -159,22 +178,10 @@ export class TutorialSystem {
         this.overlay.appendChild(this.tooltipContainer);
         document.body.appendChild(this.overlay);
     }
-    
-    // Start tutorial
-    start() {
-        if (this.isCompleted) return;
-        
-        this.isActive = true;
-        this.currentStep = 0;
-        this.overlay.style.display = 'block';
-        
-        // Add active class for animations
-        setTimeout(() => this.overlay.classList.add('active'), 10);
-        
-        this.showStep(0);
-    }
-    
-    // Show specific tutorial step
+
+    /**
+     * Show a specific tutorial step
+     */
     showStep(stepIndex) {
         if (stepIndex < 0 || stepIndex >= this.steps.length) return;
         
@@ -201,9 +208,13 @@ export class TutorialSystem {
             this.highlightComboSystem();
         }
     }
-    
-    // Update spotlight to highlight target element
+
+    /**
+     * Update the spotlight element to highlight the target
+     */
     updateSpotlight(step) {
+        if (!this.spotlight) return;
+        
         if (!step.target) {
             // No target = center modal
             this.spotlight.classList.remove('active');
@@ -233,13 +244,19 @@ export class TutorialSystem {
         target.style.position = 'relative';
         target.style.zIndex = '10002';
     }
-    
-    // Update tooltip content and position
+
+    /**
+     * Update the tooltip with current step content
+     */
     updateTooltip(step) {
+        if (!this.tooltipContainer) {
+            console.error('TutorialSystem: tooltipContainer is not initialized');
+            return;
+        }
+        
         const tooltip = document.createElement('div');
         tooltip.className = 'tutorial-tooltip';
         
-        // Header with progress
         const header = document.createElement('div');
         header.className = 'tutorial-header';
         
@@ -249,25 +266,23 @@ export class TutorialSystem {
         
         const progressBar = document.createElement('div');
         progressBar.className = 'tutorial-progress-bar';
+        
         const progressFill = document.createElement('div');
         progressFill.className = 'tutorial-progress-fill';
         progressFill.style.width = ((this.currentStep + 1) / this.steps.length * 100) + '%';
-        progressBar.appendChild(progressFill);
         
+        progressBar.appendChild(progressFill);
         header.appendChild(progress);
         header.appendChild(progressBar);
         
-        // Title
         const title = document.createElement('h3');
         title.className = 'tutorial-title';
         title.textContent = step.title;
         
-        // Description
         const description = document.createElement('p');
         description.className = 'tutorial-description';
         description.textContent = step.description;
         
-        // Additional info (if any)
         if (step.additionalInfo && step.additionalInfo.length > 0) {
             const infoList = document.createElement('ul');
             infoList.className = 'tutorial-info-list';
@@ -279,7 +294,6 @@ export class TutorialSystem {
             description.appendChild(infoList);
         }
         
-        // Action progress (if waiting for action)
         let actionProgress = null;
         if (step.waitForAction && step.actionCount > 1) {
             actionProgress = document.createElement('div');
@@ -292,7 +306,6 @@ export class TutorialSystem {
             `;
         }
         
-        // Buttons
         const buttons = document.createElement('div');
         buttons.className = 'tutorial-buttons';
         
@@ -320,25 +333,26 @@ export class TutorialSystem {
             buttons.appendChild(actionBtn);
         }
         
-        // Assemble tooltip
         tooltip.appendChild(header);
         tooltip.appendChild(title);
         tooltip.appendChild(description);
         if (actionProgress) tooltip.appendChild(actionProgress);
         tooltip.appendChild(buttons);
         
-        // Clear and add tooltip
         this.tooltipContainer.innerHTML = '';
         this.tooltipContainer.appendChild(tooltip);
         
-        // Position tooltip
+        // Position after appending so getBoundingClientRect() works
         this.positionTooltip(step, tooltip);
     }
-    
-    // Position tooltip relative to target
+
+    /**
+     * Position the tooltip relative to the target element
+     */
     positionTooltip(step, tooltip) {
+        if (!tooltip) return;
+        
         if (!step.target) {
-            // Center on screen
             tooltip.style.position = 'fixed';
             tooltip.style.top = '50%';
             tooltip.style.left = '50%';
@@ -376,7 +390,7 @@ export class TutorialSystem {
                 left = targetRect.left;
         }
         
-        // Keep tooltip on screen
+        // Clamp to viewport
         top = Math.max(10, Math.min(top, window.innerHeight - tooltipRect.height - 10));
         left = Math.max(10, Math.min(left, window.innerWidth - tooltipRect.width - 10));
         
@@ -385,8 +399,24 @@ export class TutorialSystem {
         tooltip.style.left = left + 'px';
         tooltip.style.transform = 'none';
     }
-    
-    // Setup action listener for interactive steps
+
+    /**
+     * Advance to the next tutorial step
+     */
+    nextStep() {
+        this.cleanupListeners();
+        
+        if (this.currentStep + 1 >= this.steps.length) {
+            this.complete();
+            return;
+        }
+        
+        this.showStep(this.currentStep + 1);
+    }
+
+    /**
+     * Setup action listener based on step type
+     */
     setupActionListener(step) {
         switch (step.actionType) {
             case 'click':
@@ -400,39 +430,52 @@ export class TutorialSystem {
                 break;
         }
     }
-    
-    // Setup click listener
+
+    /**
+     * Setup click listener for a target element
+     */
     setupClickListener(step) {
-        const target = document.querySelector(step.actionTarget);
-        if (!target) return;
+        if (!step.target) return;
+        
+        const target = document.querySelector(step.target);
+        if (!target) {
+            console.warn(`Tutorial click target not found: ${step.target}`);
+            return;
+        }
         
         const handler = () => {
             this.actionProgress++;
             this.updateActionProgress();
             
             if (this.actionProgress >= this.actionRequired) {
-                target.removeEventListener('click', handler);
-                setTimeout(() => this.nextStep(), 800);
+                setTimeout(() => this.nextStep(), 500);
             }
         };
         
         target.addEventListener('click', handler);
+        this.activeListeners.push({ element: target, event: 'click', handler });
     }
-    
-    // Setup purchase listener
+
+    /**
+     * Setup purchase listener - watches for research purchases
+     */
     setupPurchaseListener(step) {
         const checkPurchase = setInterval(() => {
-            const building = this.game.buildings[step.actionTarget];
-            if (building && building.count > 0) {
+            const completedCount = this.game.gameState?.completedResearch?.length || 0;
+            if (completedCount > 0) {
                 clearInterval(checkPurchase);
                 this.actionProgress = this.actionRequired;
                 this.updateActionProgress();
                 setTimeout(() => this.nextStep(), 1000);
             }
-        }, 100);
+        }, 200);
+        
+        this.activeListeners.push({ interval: checkPurchase });
     }
-    
-    // Setup training listener
+
+    /**
+     * Setup training listener - watches for active training
+     */
     setupTrainingListener(step) {
         // First, ensure we're on the training tab
         const trainingTab = document.querySelector('[data-tab="training"]');
@@ -448,128 +491,78 @@ export class TutorialSystem {
                 setTimeout(() => this.nextStep(), 1000);
             }
         }, 100);
+        
+        this.activeListeners.push({ interval: checkTraining });
     }
-    
-    // Update action progress UI
+
+    /**
+     * Update the action progress display
+     */
     updateActionProgress() {
         const countEl = document.getElementById('action-count');
         const fillEl = document.getElementById('action-progress-fill');
         
-        if (countEl) {
-            countEl.textContent = this.actionProgress;
-        }
-        
-        if (fillEl) {
-            const percent = (this.actionProgress / this.actionRequired) * 100;
-            fillEl.style.width = percent + '%';
-        }
+        if (countEl) countEl.textContent = this.actionProgress;
+        if (fillEl) fillEl.style.width = (this.actionProgress / this.actionRequired * 100) + '%';
     }
-    
-    // Highlight combo system
+
+    /**
+     * Highlight the combo system UI
+     */
     highlightComboSystem() {
-        const comboDisplay = document.querySelector('.combo-display');
-        if (comboDisplay) {
-            comboDisplay.classList.add('tutorial-highlight-pulse');
+        const comboEl = document.querySelector('.combo-display');
+        if (comboEl) {
+            comboEl.classList.add('tutorial-highlight');
+            setTimeout(() => comboEl.classList.remove('tutorial-highlight'), 3000);
         }
     }
-    
-    // Go to next step
-    nextStep() {
-        // Remove any temporary highlights
-        const highlighted = document.querySelectorAll('.tutorial-highlight-pulse');
-        highlighted.forEach(el => el.classList.remove('tutorial-highlight-pulse'));
-        
-        // Reset z-index of previous target
-        const prevStep = this.steps[this.currentStep];
-        if (prevStep && prevStep.target) {
-            const prevTarget = document.querySelector(prevStep.target);
-            if (prevTarget) {
-                prevTarget.style.zIndex = '';
+
+    /**
+     * Clean up all active event listeners and intervals
+     */
+    cleanupListeners() {
+        this.activeListeners.forEach(listener => {
+            if (listener.interval) {
+                clearInterval(listener.interval);
+            } else if (listener.element && listener.handler) {
+                listener.element.removeEventListener(listener.event, listener.handler);
             }
-        }
-        
-        if (this.currentStep < this.steps.length - 1) {
-            this.showStep(this.currentStep + 1);
-        } else {
-            this.complete();
-        }
+        });
+        this.activeListeners = [];
     }
-    
-    // Skip tutorial
+
+    /**
+     * Skip the tutorial
+     */
     skip() {
-        if (confirm('Are you sure you want to skip the tutorial? You can restart it later from the settings.')) {
-            localStorage.setItem('ai-idle-tutorial-skipped', 'true');
-            this.close();
-        }
-    }
-    
-    // Complete tutorial
-    complete() {
-        localStorage.setItem('ai-idle-tutorial-completed', 'true');
-        this.isCompleted = true;
-        
-        // Show completion message
-        this.showCompletionMessage();
-        
-        // Close after delay
-        setTimeout(() => this.close(), 3000);
-    }
-    
-    // Show completion message
-    showCompletionMessage() {
-        const tooltip = document.createElement('div');
-        tooltip.className = 'tutorial-tooltip tutorial-completion';
-        tooltip.innerHTML = `
-            <div class="tutorial-completion-content">
-                <div class="completion-icon">🎉</div>
-                <h2>Tutorial Complete!</h2>
-                <p>You're ready to build your AI empire!</p>
-                <p class="completion-hint">💡 Tip: Check the Achievements tab for goals and bonuses!</p>
-            </div>
-        `;
-        
-        this.tooltipContainer.innerHTML = '';
-        this.tooltipContainer.appendChild(tooltip);
-        
-        // Center tooltip
-        tooltip.style.position = 'fixed';
-        tooltip.style.top = '50%';
-        tooltip.style.left = '50%';
-        tooltip.style.transform = 'translate(-50%, -50%)';
-        
-        // Hide spotlight
-        this.spotlight.classList.remove('active');
-    }
-    
-    // Close tutorial
-    close() {
+        this.cleanupListeners();
         this.isActive = false;
+        localStorage.setItem('ai-idle-tutorial-skipped', 'true');
+        this._hideOverlay();
+    }
+
+    /**
+     * Complete the tutorial
+     */
+    complete() {
+        this.cleanupListeners();
+        this.isActive = false;
+        this.isCompleted = true;
+        localStorage.setItem('ai-idle-tutorial-completed', 'true');
+        this._hideOverlay();
+    }
+
+    /**
+     * Hide the tutorial overlay safely
+     */
+    _hideOverlay() {
+        if (!this.overlay) return;
+        
         this.overlay.classList.remove('active');
-        
-        // Remove any z-index overrides
-        const currentStep = this.steps[this.currentStep];
-        if (currentStep && currentStep.target) {
-            const target = document.querySelector(currentStep.target);
-            if (target) {
-                target.style.zIndex = '';
-            }
-        }
-        
         setTimeout(() => {
-            this.overlay.style.display = 'none';
+            if (this.overlay) {
+                this.overlay.style.display = 'none';
+            }
         }, 300);
-    }
-    
-    // Restart tutorial (for settings)
-    restart() {
-        localStorage.removeItem('ai-idle-tutorial-completed');
-        localStorage.removeItem('ai-idle-tutorial-skipped');
-        this.isCompleted = false;
-        this.start();
-    }
-    
-    // Check if tutorial is completed
-    isComplete() {
-        return this.isCompleted;
     }
 }
