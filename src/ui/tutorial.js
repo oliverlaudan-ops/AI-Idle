@@ -565,4 +565,13 @@ export class TutorialSystem {
             }
         }, 300);
     }
+
+    /**
+     * Public method alias for isCompleted property.
+     * Called by main.js as window.tutorial.isComplete().
+     * @returns {boolean} Whether the tutorial has been completed.
+     */
+    isComplete() {
+        return this.isCompleted;
+    }
 }
