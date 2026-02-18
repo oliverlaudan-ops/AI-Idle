@@ -4,6 +4,32 @@
  */
 
 /**
+ * Get (or recompute) the cached research global multiplier.
+ * The cache lives on gameState._cachedResearchMultiplier and is invalidated
+ * by setting it to null whenever research is completed (see GameState.performResearch).
+ *
+ * @param {object} gameState
+ * @returns {number}
+ */
+function getResearchMultiplier(gameState) {
+    if (gameState._cachedResearchMultiplier !== null &&
+        gameState._cachedResearchMultiplier !== undefined) {
+        return gameState._cachedResearchMultiplier;
+    }
+
+    let multiplier = 1;
+    for (const researchId of gameState.stats.completedResearch) {
+        const research = gameState.research[researchId];
+        if (research && research.effect && research.effect.type === 'globalMultiplier') {
+            multiplier *= research.effect.multiplier;
+        }
+    }
+
+    gameState._cachedResearchMultiplier = multiplier;
+    return multiplier;
+}
+
+/**
  * Recalculate all resource production rates
  */
 export function recalculateProduction(gameState) {
@@ -42,14 +68,8 @@ export function recalculateProduction(gameState) {
         }
     }
     
-    // Apply global multipliers from research
-    let globalMultiplier = 1;
-    for (const researchId of gameState.stats.completedResearch) {
-        const research = gameState.research[researchId];
-        if (research && research.effect && research.effect.type === 'globalMultiplier') {
-            globalMultiplier *= research.effect.multiplier;
-        }
-    }
+    // Apply global multipliers from research — O(1) via cache
+    let globalMultiplier = getResearchMultiplier(gameState);
     
     // Apply achievement bonuses
     globalMultiplier *= gameState.achievementBonuses.globalMultiplier;
