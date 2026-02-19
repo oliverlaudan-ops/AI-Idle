@@ -7,8 +7,15 @@
  *                          pointer-events: none (clicks pass through to the real element beneath)
  *   - .tutorial-tooltip  : the instruction card, pointer-events: auto (buttons must be clickable)
  *
- * All critical layout properties (display, position, z-index, pointer-events) are set via
- * inline styles in JS so they can never be overridden by CSS specificity or stacking contexts.
+ * All critical layout properties are set via inline styles so they can never be overridden
+ * by CSS specificity or stacking contexts.
+ *
+ * Verified selectors (from index.html, Feb 2026):
+ *   Resources panel  → #stats-display
+ *   First model card → #models-classification .model-card:first-child
+ *   Model points     → #stat-research
+ *   Research tab btn → button.tab-btn[data-tab="research"]
+ *   Upgrades tab btn → button.tab-btn[data-tab="deployment"]
  */
 
 class TutorialSystem {
@@ -37,48 +44,48 @@ class TutorialSystem {
             {
                 id: 'resources',
                 title: 'Your Resources',
-                content: 'These are your core resources: Data, Compute, and Model Points. You\'ll need them to train models and unlock research.',
-                target: '#resource-panel',
+                content: 'These are your core resources: Data, Compute, Accuracy, and Research. You\'ll need them to train models and unlock research.',
+                target: '#stats-display',
                 position: 'bottom',
                 action: null
             },
             {
                 id: 'first-model',
                 title: 'Train Your First Model',
-                content: 'Click the Train button on a model card to start training. Each training run costs resources but earns Model Points.',
-                target: '.model-card:first-child',
+                content: 'Click the Train button on a model card to start training. Each training run costs resources but earns Research points.',
+                target: '#models-classification .model-card:first-child',
                 position: 'right',
                 action: {
                     type: 'click',
-                    selector: '.model-card:first-child .btn-train',
+                    selector: '#models-classification .model-card:first-child .btn-train',
                     count: 1
                 }
             },
             {
                 id: 'model-points',
-                title: 'Model Points',
-                content: 'Model Points are your main currency for unlocking upgrades and research. Keep training to earn more!',
-                target: '#model-points-display',
+                title: 'Research Points',
+                content: 'Research points are your main currency for unlocking upgrades and research. Keep training to earn more!',
+                target: '#stat-research',
                 position: 'bottom',
                 action: null
             },
             {
                 id: 'research',
                 title: 'Research Tree',
-                content: 'Unlock powerful improvements by spending Model Points in the Research tab. Click the Research tab to explore!',
-                target: '#research-tab',
+                content: 'Unlock powerful improvements by spending Research points in the Research tab. Click the Research tab to explore!',
+                target: 'button.tab-btn[data-tab="research"]',
                 position: 'above',
                 action: {
                     type: 'click',
-                    selector: '#research-tab',
+                    selector: 'button.tab-btn[data-tab="research"]',
                     count: 1
                 }
             },
             {
                 id: 'upgrades',
-                title: 'Upgrades',
-                content: 'The Upgrades tab lets you permanently boost your production. Check back often as new upgrades unlock.',
-                target: '#upgrades-tab',
+                title: 'Deployment',
+                content: 'The Deployment tab lets you permanently boost your production. Check back often as new upgrades unlock.',
+                target: 'button.tab-btn[data-tab="deployment"]',
                 position: 'above',
                 action: null
             },
@@ -113,13 +120,14 @@ class TutorialSystem {
             this.overlay.className = 'tutorial-overlay';
             document.body.appendChild(this.overlay);
         }
+        // pointer-events: none — clicks pass through to the game beneath
         Object.assign(this.overlay.style, {
             position: 'fixed',
             top: '0',
             left: '0',
             width: '100%',
             height: '100%',
-            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backgroundColor: 'rgba(0, 0, 0, 0.0)', // colour handled by spotlight box-shadow
             zIndex: '3000',
             pointerEvents: 'none',
             display: 'none'
@@ -139,7 +147,8 @@ class TutorialSystem {
             position: 'fixed',
             zIndex: '3100',
             pointerEvents: 'none',
-            borderRadius: '4px',
+            borderRadius: '6px',
+            // The giant box-shadow IS the dim overlay — no separate overlay needed
             boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.75)',
             display: 'none'
         });
@@ -158,7 +167,9 @@ class TutorialSystem {
             position: 'fixed',
             zIndex: '3200',
             pointerEvents: 'auto',
-            display: 'none'
+            display: 'none',
+            width: '320px',
+            maxWidth: 'calc(100vw - 16px)'
         });
     }
 
@@ -174,11 +185,10 @@ class TutorialSystem {
 
         this.isActive = true;
         this.currentStep = 0;
-        this.overlay.style.display = 'block';
 
-        setTimeout(() => {
-            if (this.overlay) this.overlay.classList.add('active');
-        }, 10);
+        // Overlay is transparent — the spotlight box-shadow does the dimming.
+        // We still show it so z-index stacking is correct.
+        this.overlay.style.display = 'block';
 
         this.showStep(0);
     }
@@ -209,14 +219,14 @@ class TutorialSystem {
             </div>
         `;
 
-        // Highlight target first (with rAF sizing), then position tooltip relative to final rect
         if (step.target) {
-            this._highlightTarget(step.target, () => {
-                this._positionTooltip(step);
+            // Highlight target first; position tooltip once we have the final rect
+            this._highlightTarget(step.target, (rect) => {
+                this._positionTooltip(step, rect);
             });
         } else {
             this._clearSpotlight();
-            this._positionTooltip(step);
+            this._positionTooltip(step, null);
         }
 
         const nextBtn = document.getElementById('tutorial-next-btn');
@@ -251,21 +261,21 @@ class TutorialSystem {
 
     /**
      * Highlight the target element with the spotlight.
+     *
      * Uses a requestAnimationFrame retry loop to wait until the element has
      * a non-zero rendered size (avoids the 11×11px bug when called before layout).
-     * Calls onReady() once the spotlight is correctly positioned.
+     * Calls onReady(rect) once the spotlight is correctly positioned.
      */
     _highlightTarget(selector, onReady) {
-        // Cancel any pending rAF from a previous step
         if (this._spotlightRafId !== null) {
             cancelAnimationFrame(this._spotlightRafId);
             this._spotlightRafId = null;
         }
 
         const padding = 8;
-        const minSize = 20; // px — anything smaller means the element isn't rendered yet
+        const minSize = 10; // px — anything smaller means the element isn't rendered yet
         let attempts = 0;
-        const maxAttempts = 60; // ~1 second at 60fps
+        const maxAttempts = 60; // ~1 second at 60 fps
 
         const tryPosition = () => {
             attempts++;
@@ -284,12 +294,11 @@ class TutorialSystem {
 
             const rect = target.getBoundingClientRect();
 
-            // Retry if element has no rendered size yet
             if (rect.width < minSize || rect.height < minSize) {
                 if (attempts < maxAttempts) {
                     this._spotlightRafId = requestAnimationFrame(tryPosition);
                 } else {
-                    console.warn(`TutorialSystem: target "${selector}" still too small (${rect.width}×${rect.height}) after ${maxAttempts} frames — using as-is`);
+                    console.warn(`TutorialSystem: target "${selector}" still too small (${rect.width}×${rect.height}) — using as-is`);
                     applySpotlight(rect);
                 }
                 return;
@@ -326,20 +335,18 @@ class TutorialSystem {
     /**
      * Position the tooltip so it never overlaps the spotlighted target.
      *
-     * Supported positions (from step definition):
-     *   'center'  — centred on screen (no target)
-     *   'bottom'  — below the target; falls back to above if no room
-     *   'above'   — above the target; falls back to below if no room  (use for tab bars)
-     *   'top'     — alias for 'above'
-     *   'right'   — right of the target; falls back to left if no room
-     *   'left'    — left of the target; falls back to right if no room
-     *
-     * The tooltip is always kept within the viewport with an 8px margin.
+     * Positions:
+     *   'center' — centred on screen (no target)
+     *   'bottom' — below the target; falls back to above if no room
+     *   'above'  — above the target; falls back to below if no room (use for tab bars)
+     *   'top'    — alias for 'above'
+     *   'right'  — right of the target; falls back to left if no room
+     *   'left'   — left of the target; falls back to right if no room
      */
     _positionTooltip(step, targetRect) {
         this.tooltipContainer.style.display = 'block';
 
-        // Reset transforms/positions before measuring
+        // Reset any previous positioning
         Object.assign(this.tooltipContainer.style, {
             top: '', left: '', right: '', bottom: '', transform: ''
         });
@@ -353,7 +360,6 @@ class TutorialSystem {
             return;
         }
 
-        // If we weren't given a rect (called before rAF completes), look it up now
         const rect = targetRect || (() => {
             const el = document.querySelector(step.target);
             return el ? el.getBoundingClientRect() : null;
@@ -370,12 +376,11 @@ class TutorialSystem {
 
         const tooltipW = 320;
         const tooltipH = this.tooltipContainer.offsetHeight || 220;
-        const margin   = 12;
-        const edge     = 8;
+        const margin   = 14; // gap between spotlight edge and tooltip
+        const edge     = 8;  // min distance from viewport edge
         const vw = window.innerWidth;
         const vh = window.innerHeight;
 
-        // Clamp helper — keeps tooltip inside viewport
         const clampX = (x) => Math.max(edge, Math.min(x, vw - tooltipW - edge));
         const clampY = (y) => Math.max(edge, Math.min(y, vh - tooltipH - edge));
 
@@ -383,7 +388,6 @@ class TutorialSystem {
         const pos = step.position;
 
         if (pos === 'bottom') {
-            // Prefer below; fall back to above
             if (rect.bottom + margin + tooltipH <= vh - edge) {
                 top  = rect.bottom + margin;
                 left = clampX(rect.left);
@@ -392,7 +396,6 @@ class TutorialSystem {
                 left = clampX(rect.left);
             }
         } else if (pos === 'above' || pos === 'top') {
-            // Prefer above; fall back to below
             if (rect.top - margin - tooltipH >= edge) {
                 top  = rect.top - tooltipH - margin;
                 left = clampX(rect.left);
@@ -401,7 +404,6 @@ class TutorialSystem {
                 left = clampX(rect.left);
             }
         } else if (pos === 'right') {
-            // Prefer right; fall back to left
             if (rect.right + margin + tooltipW <= vw - edge) {
                 top  = clampY(rect.top);
                 left = rect.right + margin;
@@ -410,7 +412,6 @@ class TutorialSystem {
                 left = clampX(rect.left - tooltipW - margin);
             }
         } else if (pos === 'left') {
-            // Prefer left; fall back to right
             if (rect.left - margin - tooltipW >= edge) {
                 top  = clampY(rect.top);
                 left = rect.left - tooltipW - margin;
@@ -419,7 +420,6 @@ class TutorialSystem {
                 left = rect.right + margin;
             }
         } else {
-            // Unknown position — centre
             Object.assign(this.tooltipContainer.style, {
                 top: '50%',
                 left: '50%',
@@ -442,7 +442,10 @@ class TutorialSystem {
         this.actionProgress = 0;
 
         const targets = document.querySelectorAll(step.action.selector);
-        if (!targets.length) return;
+        if (!targets.length) {
+            console.warn(`TutorialSystem: action selector "${step.action.selector}" matched no elements`);
+            return;
+        }
 
         const handler = () => {
             this.actionProgress++;
