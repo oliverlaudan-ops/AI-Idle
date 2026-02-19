@@ -3,6 +3,8 @@
  * Calculates resource production rates from buildings, models, bonuses, and multipliers
  */
 
+import { getUpgradeMultiplier } from '../modules/deployment-upgrades.js';
+
 /**
  * Compute all research-derived multipliers in a single pass over completedResearch.
  * Results are cached on gameState._cachedResearchMultipliers and invalidated by
@@ -47,14 +49,14 @@ function getResearchMultipliers(gameState) {
         if (!multiplier) continue;
 
         switch (type) {
-            case 'globalMultiplier':  m.global           *= multiplier; break;
-            case 'trainingSpeed':     m.trainingSpeed    *= multiplier; break;
-            case 'modelPerformance':  m.modelPerformance *= multiplier; break;
-            case 'efficiency':        m.efficiency       *= multiplier; break;
-            case 'dataProduction':    m.dataProduction   *= multiplier; break;
-            case 'computeEfficiency': m.computeEfficiency *= multiplier; break;
-            case 'researchSpeed':     m.researchSpeed    *= multiplier; break;
-            case 'safetyBonus':       m.safetyBonus      *= multiplier; break;
+            case 'globalMultiplier':   m.global            *= multiplier; break;
+            case 'trainingSpeed':      m.trainingSpeed     *= multiplier; break;
+            case 'modelPerformance':   m.modelPerformance  *= multiplier; break;
+            case 'efficiency':         m.efficiency        *= multiplier; break;
+            case 'dataProduction':     m.dataProduction    *= multiplier; break;
+            case 'computeEfficiency':  m.computeEfficiency *= multiplier; break;
+            case 'researchSpeed':      m.researchSpeed     *= multiplier; break;
+            case 'safetyBonus':        m.safetyBonus       *= multiplier; break;
             // 'unlockModels' has no numeric multiplier — skip
         }
     }
@@ -75,13 +77,27 @@ export function recalculateProduction(gameState) {
     // Gather all research multipliers (single pass, cached)
     const rm = getResearchMultipliers(gameState);
 
+    // ── Prestige upgrade multipliers ────────────────────────────────────────
+    // getUpgradeMultiplier is safe to call even when deployment.upgradesPurchased
+    // is empty — it returns 1 for any unknown category.
+    const purchasedUpgrades = gameState.deployment?.upgradesPurchased ?? {};
+    const um = {
+        training:   getUpgradeMultiplier(purchasedUpgrades, 'training'),
+        efficiency: getUpgradeMultiplier(purchasedUpgrades, 'efficiency'),
+        research:   getUpgradeMultiplier(purchasedUpgrades, 'research'),
+        prestige:   getUpgradeMultiplier(purchasedUpgrades, 'prestige'),
+    };
+    // ────────────────────────────────────────────────────────────────────────
+
     // Calculate base production from buildings, applying efficiency multiplier
+    // (research efficiency × prestige efficiency upgrade)
+    const efficiencyMultiplier = rm.efficiency * um.efficiency;
     for (const building of Object.values(gameState.buildings)) {
         if (building.count > 0 && building.production) {
             for (const [resourceId, amount] of Object.entries(building.production)) {
                 if (gameState.resources[resourceId]) {
                     gameState.resources[resourceId].perSecond +=
-                        amount * building.count * rm.efficiency;
+                        amount * building.count * efficiencyMultiplier;
                 }
             }
         }
@@ -97,8 +113,10 @@ export function recalculateProduction(gameState) {
             gameState.achievementBonuses.computePower * rm.computeEfficiency;
     }
     if (gameState.resources.research) {
+        // Research resource benefits from both research-speed research AND
+        // the prestige research upgrade.
         gameState.resources.research.perSecond *=
-            gameState.achievementBonuses.researchPoints * rm.researchSpeed;
+            gameState.achievementBonuses.researchPoints * rm.researchSpeed * um.research;
     }
 
     // Calculate building bonuses (e.g. Cooling System)
@@ -111,21 +129,24 @@ export function recalculateProduction(gameState) {
 
     // Compose global multiplier:
     //   research global × research safetyBonus × achievement bonuses × building bonuses
-    let globalMultiplier = rm.global * rm.safetyBonus;
+    //   × prestige global (um.prestige)
+    let globalMultiplier = rm.global * rm.safetyBonus * um.prestige;
     globalMultiplier *= gameState.achievementBonuses.globalMultiplier;
     globalMultiplier *= gameState.achievementBonuses.allProduction;
     globalMultiplier *= gameState.achievementBonuses.allResources;
     globalMultiplier *= buildingBonusMultiplier;
 
     // Store multipliers for UI display
-    gameState.multipliers.global          = globalMultiplier;
-    gameState.multipliers.trainingSpeed   = gameState.achievementBonuses.trainingSpeed * rm.trainingSpeed;
-    gameState.multipliers.modelPerformance = rm.modelPerformance;
-    gameState.multipliers.efficiency      = rm.efficiency;
-    gameState.multipliers.dataProduction  = rm.dataProduction;
-    gameState.multipliers.computeEfficiency = rm.computeEfficiency;
-    gameState.multipliers.researchSpeed   = rm.researchSpeed;
-    gameState.multipliers.safetyBonus     = rm.safetyBonus;
+    gameState.multipliers.global             = globalMultiplier;
+    gameState.multipliers.trainingSpeed      = gameState.achievementBonuses.trainingSpeed * rm.trainingSpeed * um.training;
+    gameState.multipliers.modelPerformance   = rm.modelPerformance;
+    gameState.multipliers.efficiency         = efficiencyMultiplier;
+    gameState.multipliers.dataProduction     = rm.dataProduction;
+    gameState.multipliers.computeEfficiency  = rm.computeEfficiency;
+    gameState.multipliers.researchSpeed      = rm.researchSpeed * um.research;
+    gameState.multipliers.safetyBonus        = rm.safetyBonus;
+    // Expose prestige upgrade multipliers for the stats/debug UI
+    gameState.multipliers.prestigeUpgrade    = um.prestige;
 
     // Apply global multiplier to all resources
     for (const resource of Object.values(gameState.resources)) {
@@ -133,6 +154,8 @@ export function recalculateProduction(gameState) {
     }
 
     // Add production from current training, applying modelPerformance multiplier
+    // Training speed upgrade (um.training) is applied to the training *progress rate*
+    // in the training system, not here — production output uses modelPerformance only.
     if (gameState.currentTraining) {
         const model = gameState.models[gameState.currentTraining];
         if (model && model.production) {
