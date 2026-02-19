@@ -7,11 +7,16 @@ import { saveToStorage, loadFromStorage } from '../utils/storage.js';
 import { recalculateProduction } from './production-calculator.js';
 import { initializeDeployment } from '../modules/deployment.js';
 
-const SAVE_VERSION = '0.4';
+// Bump to 0.5: multipliers object shape expanded to 8 effect types;
+// _cachedResearchMultiplier renamed to _cachedResearchMultipliers.
+const SAVE_VERSION = '0.5';
 const SAVE_KEY = 'ai_idle_save';
 
 /**
- * Save game state
+ * Save game state.
+ * NOTE: `multipliers` is intentionally NOT persisted — it is a derived value
+ * that is always recomputed from research/achievements on load via
+ * recalculateProduction().  Persisting it would only create stale-data bugs.
  */
 export function saveGame(gameState) {
     const saveData = {
@@ -36,7 +41,6 @@ export function saveGame(gameState) {
     
     gameState.lastSaveTime = Date.now();
     
-    // Save to localStorage
     const success = saveToStorage(SAVE_KEY, saveData);
     if (!success) {
         console.error('❌ Failed to save game to localStorage');
@@ -46,7 +50,10 @@ export function saveGame(gameState) {
 }
 
 /**
- * Load game state
+ * Load game state.
+ * recalculateProduction() is called by GameState.load() after this returns,
+ * with the research-multiplier cache already invalidated.  We do NOT call it
+ * here to avoid a redundant double-pass.
  */
 export function loadGame(gameState) {
     const saveData = loadFromStorage(SAVE_KEY);
@@ -71,7 +78,6 @@ export function loadGame(gameState) {
         if (saveData.deployment) {
             gameState.deployment = saveData.deployment;
         } else if (saveData.prestige) {
-            // Migrate old prestige data
             gameState.deployment = initializeDeployment();
             gameState.deployment.tokens = saveData.prestige.tokens || 0;
             gameState.deployment.lifetimeTokens = saveData.prestige.lifetimeTokens || 0;
@@ -97,11 +103,9 @@ export function loadGame(gameState) {
         if (saveData.comboSystem) {
             gameState.comboSystem.load(saveData.comboSystem);
         }
-        
         if (saveData.trainingQueue) {
             gameState.trainingQueue.load(saveData.trainingQueue);
         }
-        
         if (saveData.bulkPurchase) {
             gameState.bulkPurchase.load(saveData.bulkPurchase);
         }
@@ -109,16 +113,16 @@ export function loadGame(gameState) {
         if (!gameState.stats.lastPlaytimeUpdate) {
             gameState.stats.lastPlaytimeUpdate = Date.now();
         }
-        
         if (gameState.stats.manualClicks === undefined) {
             gameState.stats.manualClicks = 0;
         }
         
-        // Initialize achievement check timer
         gameState.timeSinceAchievementCheck = 0;
-        
-        recalculateProduction(gameState);
         gameState.lastSaveTime = saveData.timestamp || Date.now();
+        
+        // recalculateProduction() is intentionally NOT called here.
+        // GameState.load() invalidates _cachedResearchMultipliers and then
+        // calls recalculateProduction() itself, so one clean pass is enough.
         
         return true;
     } catch (e) {
@@ -128,7 +132,7 @@ export function loadGame(gameState) {
 }
 
 /**
- * Export save as base64 string
+ * Export save as base64 string.
  */
 export function exportSave(gameState) {
     try {
@@ -144,7 +148,9 @@ export function exportSave(gameState) {
 }
 
 /**
- * Import save from base64 string
+ * Import save from base64 string.
+ * recalculateProduction() is called by GameState.import() after this returns,
+ * with the cache already invalidated — same pattern as loadGame().
  */
 export function importSave(gameState, saveString) {
     try {
@@ -154,7 +160,6 @@ export function importSave(gameState, saveString) {
         
         const saveData = JSON.parse(jsonString);
         
-        // Manually load the imported data
         gameState.resources = saveData.resources;
         gameState.buildings = saveData.buildings;
         gameState.models = saveData.models;
@@ -177,7 +182,9 @@ export function importSave(gameState, saveString) {
             gameState.bulkPurchase.load(saveData.bulkPurchase);
         }
         
-        recalculateProduction(gameState);
+        // recalculateProduction() is intentionally NOT called here.
+        // GameState.import() invalidates _cachedResearchMultipliers and then
+        // calls recalculateProduction() itself.
         
         return true;
     } catch (e) {
