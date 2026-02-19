@@ -23,6 +23,7 @@ class TutorialSystem {
         this.actionProgress = 0;
         this.actionRequired = 0;
         this.activeListeners = [];
+        this._spotlightRafId = null;
 
         this.steps = [
             {
@@ -66,7 +67,7 @@ class TutorialSystem {
                 title: 'Research Tree',
                 content: 'Unlock powerful improvements by spending Model Points in the Research tab. Click the Research tab to explore!',
                 target: '#research-tab',
-                position: 'bottom',
+                position: 'above',
                 action: {
                     type: 'click',
                     selector: '#research-tab',
@@ -78,7 +79,7 @@ class TutorialSystem {
                 title: 'Upgrades',
                 content: 'The Upgrades tab lets you permanently boost your production. Check back often as new upgrades unlock.',
                 target: '#upgrades-tab',
-                position: 'bottom',
+                position: 'above',
                 action: null
             },
             {
@@ -103,7 +104,6 @@ class TutorialSystem {
 
     _ensureElements() {
         // ── Overlay ──────────────────────────────────────────────────────────
-        // Full-screen dim layer. pointer-events: none so all clicks pass through.
         if (!this.overlay) {
             this.overlay = document.getElementById('tutorial-overlay');
         }
@@ -113,7 +113,6 @@ class TutorialSystem {
             this.overlay.className = 'tutorial-overlay';
             document.body.appendChild(this.overlay);
         }
-        // Force critical properties inline — immune to CSS specificity issues
         Object.assign(this.overlay.style, {
             position: 'fixed',
             top: '0',
@@ -122,14 +121,11 @@ class TutorialSystem {
             height: '100%',
             backgroundColor: 'rgba(0, 0, 0, 0.75)',
             zIndex: '3000',
-            pointerEvents: 'none',   // ← clicks pass through to the game UI
+            pointerEvents: 'none',
             display: 'none'
         });
 
         // ── Spotlight ────────────────────────────────────────────────────────
-        // Positioned over the target element. The massive box-shadow creates the
-        // dimming effect around it. pointer-events: none so the real element
-        // underneath is still clickable.
         if (!this.spotlight) {
             this.spotlight = document.getElementById('tutorial-spotlight');
         }
@@ -142,14 +138,13 @@ class TutorialSystem {
         Object.assign(this.spotlight.style, {
             position: 'fixed',
             zIndex: '3100',
-            pointerEvents: 'none',   // ← clicks pass through to the real element
+            pointerEvents: 'none',
             borderRadius: '4px',
             boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.75)',
             display: 'none'
         });
 
         // ── Tooltip ──────────────────────────────────────────────────────────
-        // The instruction card. pointer-events: auto so Next/Skip buttons work.
         if (!this.tooltipContainer) {
             this.tooltipContainer = document.getElementById('tutorial-tooltip');
         }
@@ -162,7 +157,7 @@ class TutorialSystem {
         Object.assign(this.tooltipContainer.style, {
             position: 'fixed',
             zIndex: '3200',
-            pointerEvents: 'auto',   // ← buttons inside must be clickable
+            pointerEvents: 'auto',
             display: 'none'
         });
     }
@@ -170,7 +165,6 @@ class TutorialSystem {
     start() {
         if (this.isCompleted) return;
 
-        // Ensure DOM elements exist even if init() returned early
         this._ensureElements();
 
         if (!this.overlay) {
@@ -180,15 +174,10 @@ class TutorialSystem {
 
         this.isActive = true;
         this.currentStep = 0;
-
-        // Show overlay
         this.overlay.style.display = 'block';
 
-        // Add active class for CSS transitions
         setTimeout(() => {
-            if (this.overlay) {
-                this.overlay.classList.add('active');
-            }
+            if (this.overlay) this.overlay.classList.add('active');
         }, 10);
 
         this.showStep(0);
@@ -204,7 +193,6 @@ class TutorialSystem {
         this.actionProgress = 0;
         const step = this.steps[stepIndex];
 
-        // Build tooltip HTML
         const progress = `${stepIndex + 1} / ${this.steps.length}`;
         const isLast = stepIndex === this.steps.length - 1;
 
@@ -221,17 +209,16 @@ class TutorialSystem {
             </div>
         `;
 
-        // Position tooltip (also sets display: block)
-        this._positionTooltip(step);
-
-        // Highlight target element
+        // Highlight target first (with rAF sizing), then position tooltip relative to final rect
         if (step.target) {
-            this._highlightTarget(step.target);
+            this._highlightTarget(step.target, () => {
+                this._positionTooltip(step);
+            });
         } else {
             this._clearSpotlight();
+            this._positionTooltip(step);
         }
 
-        // Attach button listeners
         const nextBtn = document.getElementById('tutorial-next-btn');
         if (nextBtn) {
             const nextHandler = () => this.nextStep();
@@ -246,7 +233,6 @@ class TutorialSystem {
             this.activeListeners.push({ el: skipBtn, event: 'click', handler: skipHandler });
         }
 
-        // Set up action listener if step requires one
         if (step.action) {
             this.setupActionListener(step);
         }
@@ -263,9 +249,100 @@ class TutorialSystem {
         }
     }
 
-    _positionTooltip(step) {
-        // Make visible
+    /**
+     * Highlight the target element with the spotlight.
+     * Uses a requestAnimationFrame retry loop to wait until the element has
+     * a non-zero rendered size (avoids the 11×11px bug when called before layout).
+     * Calls onReady() once the spotlight is correctly positioned.
+     */
+    _highlightTarget(selector, onReady) {
+        // Cancel any pending rAF from a previous step
+        if (this._spotlightRafId !== null) {
+            cancelAnimationFrame(this._spotlightRafId);
+            this._spotlightRafId = null;
+        }
+
+        const padding = 8;
+        const minSize = 20; // px — anything smaller means the element isn't rendered yet
+        let attempts = 0;
+        const maxAttempts = 60; // ~1 second at 60fps
+
+        const tryPosition = () => {
+            attempts++;
+            const target = document.querySelector(selector);
+
+            if (!target) {
+                if (attempts < maxAttempts) {
+                    this._spotlightRafId = requestAnimationFrame(tryPosition);
+                } else {
+                    console.warn(`TutorialSystem: target "${selector}" not found after ${maxAttempts} frames`);
+                    this._clearSpotlight();
+                    if (onReady) onReady(null);
+                }
+                return;
+            }
+
+            const rect = target.getBoundingClientRect();
+
+            // Retry if element has no rendered size yet
+            if (rect.width < minSize || rect.height < minSize) {
+                if (attempts < maxAttempts) {
+                    this._spotlightRafId = requestAnimationFrame(tryPosition);
+                } else {
+                    console.warn(`TutorialSystem: target "${selector}" still too small (${rect.width}×${rect.height}) after ${maxAttempts} frames — using as-is`);
+                    applySpotlight(rect);
+                }
+                return;
+            }
+
+            applySpotlight(rect);
+        };
+
+        const applySpotlight = (rect) => {
+            this._spotlightRafId = null;
+            Object.assign(this.spotlight.style, {
+                display: 'block',
+                top:    `${rect.top    - padding}px`,
+                left:   `${rect.left   - padding}px`,
+                width:  `${rect.width  + padding * 2}px`,
+                height: `${rect.height + padding * 2}px`
+            });
+            if (onReady) onReady(rect);
+        };
+
+        this._spotlightRafId = requestAnimationFrame(tryPosition);
+    }
+
+    _clearSpotlight() {
+        if (this._spotlightRafId !== null) {
+            cancelAnimationFrame(this._spotlightRafId);
+            this._spotlightRafId = null;
+        }
+        if (this.spotlight) {
+            this.spotlight.style.display = 'none';
+        }
+    }
+
+    /**
+     * Position the tooltip so it never overlaps the spotlighted target.
+     *
+     * Supported positions (from step definition):
+     *   'center'  — centred on screen (no target)
+     *   'bottom'  — below the target; falls back to above if no room
+     *   'above'   — above the target; falls back to below if no room  (use for tab bars)
+     *   'top'     — alias for 'above'
+     *   'right'   — right of the target; falls back to left if no room
+     *   'left'    — left of the target; falls back to right if no room
+     *
+     * The tooltip is always kept within the viewport with an 8px margin.
+     */
+    _positionTooltip(step, targetRect) {
         this.tooltipContainer.style.display = 'block';
+
+        // Reset transforms/positions before measuring
+        Object.assign(this.tooltipContainer.style, {
+            top: '', left: '', right: '', bottom: '', transform: ''
+        });
 
         if (!step.target || step.position === 'center') {
             Object.assign(this.tooltipContainer.style, {
@@ -276,8 +353,13 @@ class TutorialSystem {
             return;
         }
 
-        const target = document.querySelector(step.target);
-        if (!target) {
+        // If we weren't given a rect (called before rAF completes), look it up now
+        const rect = targetRect || (() => {
+            const el = document.querySelector(step.target);
+            return el ? el.getBoundingClientRect() : null;
+        })();
+
+        if (!rect) {
             Object.assign(this.tooltipContainer.style, {
                 top: '50%',
                 left: '50%',
@@ -286,60 +368,71 @@ class TutorialSystem {
             return;
         }
 
-        const rect = target.getBoundingClientRect();
-        const tooltipWidth = 320;
-        const tooltipHeight = 200;
-        const margin = 12;
+        const tooltipW = 320;
+        const tooltipH = this.tooltipContainer.offsetHeight || 220;
+        const margin   = 12;
+        const edge     = 8;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
 
-        this.tooltipContainer.style.transform = '';
+        // Clamp helper — keeps tooltip inside viewport
+        const clampX = (x) => Math.max(edge, Math.min(x, vw - tooltipW - edge));
+        const clampY = (y) => Math.max(edge, Math.min(y, vh - tooltipH - edge));
 
-        switch (step.position) {
-            case 'bottom':
-                this.tooltipContainer.style.top = `${rect.bottom + margin}px`;
-                this.tooltipContainer.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - tooltipWidth - 8))}px`;
-                break;
-            case 'top':
-                this.tooltipContainer.style.top = `${rect.top - tooltipHeight - margin}px`;
-                this.tooltipContainer.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - tooltipWidth - 8))}px`;
-                break;
-            case 'right':
-                this.tooltipContainer.style.top = `${Math.max(8, rect.top)}px`;
-                this.tooltipContainer.style.left = `${rect.right + margin}px`;
-                break;
-            case 'left':
-                this.tooltipContainer.style.top = `${Math.max(8, rect.top)}px`;
-                this.tooltipContainer.style.left = `${rect.left - tooltipWidth - margin}px`;
-                break;
-            default:
-                this.tooltipContainer.style.top = '50%';
-                this.tooltipContainer.style.left = '50%';
-                this.tooltipContainer.style.transform = 'translate(-50%, -50%)';
-        }
-    }
+        let top, left;
+        const pos = step.position;
 
-    _highlightTarget(selector) {
-        const target = document.querySelector(selector);
-        if (!target) {
-            this._clearSpotlight();
+        if (pos === 'bottom') {
+            // Prefer below; fall back to above
+            if (rect.bottom + margin + tooltipH <= vh - edge) {
+                top  = rect.bottom + margin;
+                left = clampX(rect.left);
+            } else {
+                top  = clampY(rect.top - tooltipH - margin);
+                left = clampX(rect.left);
+            }
+        } else if (pos === 'above' || pos === 'top') {
+            // Prefer above; fall back to below
+            if (rect.top - margin - tooltipH >= edge) {
+                top  = rect.top - tooltipH - margin;
+                left = clampX(rect.left);
+            } else {
+                top  = rect.bottom + margin;
+                left = clampX(rect.left);
+            }
+        } else if (pos === 'right') {
+            // Prefer right; fall back to left
+            if (rect.right + margin + tooltipW <= vw - edge) {
+                top  = clampY(rect.top);
+                left = rect.right + margin;
+            } else {
+                top  = clampY(rect.top);
+                left = clampX(rect.left - tooltipW - margin);
+            }
+        } else if (pos === 'left') {
+            // Prefer left; fall back to right
+            if (rect.left - margin - tooltipW >= edge) {
+                top  = clampY(rect.top);
+                left = rect.left - tooltipW - margin;
+            } else {
+                top  = clampY(rect.top);
+                left = rect.right + margin;
+            }
+        } else {
+            // Unknown position — centre
+            Object.assign(this.tooltipContainer.style, {
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)'
+            });
             return;
         }
 
-        const rect = target.getBoundingClientRect();
-        const padding = 6;
-
-        Object.assign(this.spotlight.style, {
-            display: 'block',
-            top: `${rect.top - padding}px`,
-            left: `${rect.left - padding}px`,
-            width: `${rect.width + padding * 2}px`,
-            height: `${rect.height + padding * 2}px`
+        Object.assign(this.tooltipContainer.style, {
+            top:  `${top}px`,
+            left: `${left}px`,
+            transform: ''
         });
-    }
-
-    _clearSpotlight() {
-        if (this.spotlight) {
-            this.spotlight.style.display = 'none';
-        }
     }
 
     setupActionListener(step) {
@@ -385,13 +478,9 @@ class TutorialSystem {
         if (!this.overlay) return;
         this.overlay.classList.remove('active');
         setTimeout(() => {
-            if (this.overlay) {
-                this.overlay.style.display = 'none';
-            }
+            if (this.overlay) this.overlay.style.display = 'none';
             this._clearSpotlight();
-            if (this.tooltipContainer) {
-                this.tooltipContainer.style.display = 'none';
-            }
+            if (this.tooltipContainer) this.tooltipContainer.style.display = 'none';
         }, 300);
     }
 
