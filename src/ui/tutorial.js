@@ -10,9 +10,10 @@
  * All critical layout properties are set via inline styles so they can never be overridden
  * by CSS specificity or stacking contexts.
  *
- * Verified selectors (from index.html, Feb 2026):
+ * Verified selectors (from index.html + ui-render.js, Feb 2026):
  *   Resources panel  → #stats-display
- *   First model card → #models-classification .model-card:first-child
+ *   First model card → #model-digitrecognition
+ *   Train button     → #btn-model-digitrecognition
  *   Model points     → #stat-research
  *   Research tab btn → button.tab-btn[data-tab="research"]
  *   Upgrades tab btn → button.tab-btn[data-tab="deployment"]
@@ -52,12 +53,12 @@ class TutorialSystem {
             {
                 id: 'first-model',
                 title: 'Train Your First Model',
-                content: 'Click the Train button on a model card to start training. Each training run costs resources but earns Research points.',
-                target: '#models-classification .model-card:first-child',
+                content: 'Click the Train button on the Digit Recognition card to start training. Each run costs resources but earns Research points.',
+                target: '#model-digitrecognition',
                 position: 'right',
                 action: {
                     type: 'click',
-                    selector: '#models-classification .model-card:first-child .btn-train',
+                    selector: '#btn-model-digitrecognition',
                     count: 1
                 }
             },
