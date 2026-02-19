@@ -3,7 +3,7 @@
 import { getBuildingCost } from '../modules/buildings.js';
 import { buildings } from '../modules/buildings.js';
 import { models } from '../modules/models.js';
-import { research } from '../modules/research.js';
+import { research } from '../systems/research/definitions.js';
 import { TrainingAnimations } from './training-animations.js';
 import { formatNumber, formatTime, formatTrainingTime } from '../utils/format.js';
 
@@ -346,7 +346,11 @@ export function renderResearch(gameState) {
         'optimizers': document.getElementById('research-optimizers'),
         'activations': document.getElementById('research-activations'),
         'architectures': document.getElementById('research-architectures'),
-        'regularization': document.getElementById('research-regularization')
+        'regularization': document.getElementById('research-regularization'),
+        'hardware': document.getElementById('research-hardware'),
+        'data': document.getElementById('research-data'),
+        'meta': document.getElementById('research-meta'),
+        'safety': document.getElementById('research-safety')
     };
     
     for (const [id, researchItem] of Object.entries(gameState.research)) {
