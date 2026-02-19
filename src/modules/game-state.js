@@ -71,10 +71,17 @@ export class GameState {
             manualCollection: 1
         };
         
-        // Multipliers for UI
+        // Multipliers for UI display and game-loop consumption.
+        // These are written by recalculateProduction() on every tick.
         this.multipliers = {
+            global: 1.0,
             trainingSpeed: 1.0,
-            global: 1.0
+            modelPerformance: 1.0,
+            efficiency: 1.0,
+            dataProduction: 1.0,
+            computeEfficiency: 1.0,
+            researchSpeed: 1.0,
+            safetyBonus: 1.0,
         };
         
         // Statistics
@@ -105,10 +112,9 @@ export class GameState {
         this.lastSaveTime = Date.now();
         this.newlyUnlockedAchievements = [];
 
-        // Performance cache: research global multiplier.
-        // Invalidated (set to null) whenever research is completed or the game
-        // is reset (deployment). Recomputed lazily in production-calculator.js.
-        this._cachedResearchMultiplier = null;
+        // Performance cache for research multipliers.
+        // Set to null to invalidate; lazily recomputed in production-calculator.js.
+        this._cachedResearchMultipliers = null;
     }
     
     // ========== Resource Management (delegated to ResourceManager) ==========
@@ -199,9 +205,13 @@ export class GameState {
     recalculateProduction() {
         recalculateProduction(this);
     }
-    
+
+    /**
+     * Returns the combined training-speed multiplier (achievements × research).
+     * Used by the training UI to display the effective speed.
+     */
     getTrainingSpeedMultiplier() {
-        return this.achievementBonuses.trainingSpeed;
+        return this.multipliers.trainingSpeed;
     }
     
     // ========== Training Management ==========
@@ -274,17 +284,25 @@ export class GameState {
         }
         
         // Apply research effects
-        if (research.effect.type === 'unlockModels') {
-            for (const modelId of research.effect.models) {
-                if (this.models[modelId]) {
-                    this.models[modelId].unlocked = true;
+        if (research.effect) {
+            if (research.effect.type === 'unlockModels') {
+                // Unlock specified models directly
+                for (const modelId of research.effect.models) {
+                    if (this.models[modelId]) {
+                        this.models[modelId].unlocked = true;
+                    }
                 }
             }
+            // All numeric multiplier effects (trainingSpeed, modelPerformance,
+            // efficiency, globalMultiplier, dataProduction, computeEfficiency,
+            // researchSpeed, safetyBonus) are applied lazily via
+            // getResearchMultipliers() in production-calculator.js — no
+            // explicit handling needed here beyond cache invalidation below.
         }
         
         // Invalidate the research multiplier cache so the next
         // recalculateProduction() call picks up the new research effect.
-        this._cachedResearchMultiplier = null;
+        this._cachedResearchMultipliers = null;
 
         this.checkResearchUnlocks();
         this.recalculateProduction();
@@ -294,19 +312,26 @@ export class GameState {
     }
     
     checkResearchUnlocks() {
-        // Research unlocks
         for (const research of Object.values(this.research)) {
             if (!research.unlocked && research.unlockRequirement) {
-                if (research.unlockRequirement.research) {
-                    const reqResearch = this.research[research.unlockRequirement.research];
-                    if (reqResearch && reqResearch.researched) {
-                        research.unlocked = true;
-                    }
+                const req = research.unlockRequirement.research;
+                if (!req) continue;
+
+                // Support both a single prerequisite (string) and multiple
+                // prerequisites (array of strings) — all must be researched.
+                const prerequisites = Array.isArray(req) ? req : [req];
+                const allMet = prerequisites.every(id => {
+                    const r = this.research[id];
+                    return r && r.researched;
+                });
+
+                if (allMet) {
+                    research.unlocked = true;
                 }
             }
         }
         
-        // Model unlocks based on accuracy
+        // Model unlocks based on resource thresholds
         for (const model of Object.values(this.models)) {
             if (!model.unlocked && model.unlockRequirement) {
                 let canUnlock = true;
@@ -401,7 +426,7 @@ export class GameState {
         this.stats.manualClicks = 0;
         
         // Invalidate research multiplier cache — completedResearch was reset above.
-        this._cachedResearchMultiplier = null;
+        this._cachedResearchMultipliers = null;
 
         // Reset systems
         this.comboSystem = new ComboSystem();
@@ -438,11 +463,13 @@ export class GameState {
             }
         }
         
-        // Update training
+        // Update training.
+        // multipliers.trainingSpeed is written by recalculateProduction() and
+        // already combines achievementBonuses.trainingSpeed × research trainingSpeed.
         if (this.currentTraining && this.training) {
             const model = this.models[this.currentTraining];
             if (model) {
-                const trainingSpeedBonus = this.achievementBonuses.trainingSpeed;
+                const trainingSpeedBonus = this.multipliers.trainingSpeed;
                 
                 this.trainingProgress += deltaTime * trainingSpeedBonus;
                 this.training.elapsedTime += deltaTime * trainingSpeedBonus;
@@ -485,6 +512,14 @@ export class GameState {
         const resourceManager = this.resourceManager;
         const result = loadGame(this);
         this.resourceManager = resourceManager;
+
+        // After loading, the research multiplier cache is stale (it was built
+        // for a fresh GameState, not the restored one).  Invalidate it so the
+        // first recalculateProduction() call after load recomputes everything
+        // from stats.completedResearch.
+        this._cachedResearchMultipliers = null;
+        this.recalculateProduction();
+
         return result;
     }
     
@@ -500,6 +535,11 @@ export class GameState {
         const resourceManager = this.resourceManager;
         const result = importSave(this, saveString);
         this.resourceManager = resourceManager;
+
+        // Same as load() — invalidate cache and replay all research effects.
+        this._cachedResearchMultipliers = null;
+        this.recalculateProduction();
+
         return result;
     }
 }
