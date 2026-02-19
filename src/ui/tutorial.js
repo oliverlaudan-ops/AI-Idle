@@ -10,6 +10,10 @@
  * All critical layout properties are set via inline styles so they can never be overridden
  * by CSS specificity or stacking contexts.
  *
+ * Initialization timing:
+ *   init() is called BEFORE the first renderAll(), so model cards don't exist yet.
+ *   We defer start() with two nested rAFs to guarantee we run after the first paint.
+ *
  * Verified selectors (from index.html + ui-render.js, Feb 2026):
  *   Resources panel  → #stats-display
  *   First model card → #model-digitrecognition
@@ -106,8 +110,17 @@ class TutorialSystem {
             this.isCompleted = true;
             return;
         }
+
         this._ensureElements();
-        this.start();
+
+        // init() is called before the first renderAll(), so model cards don't exist yet.
+        // Two nested rAFs guarantee we run after the browser has painted the first frame
+        // (and therefore after renderAll has inserted the model cards into the DOM).
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                this.start();
+            });
+        });
     }
 
     _ensureElements() {
@@ -128,7 +141,7 @@ class TutorialSystem {
             left: '0',
             width: '100%',
             height: '100%',
-            backgroundColor: 'rgba(0, 0, 0, 0.0)', // colour handled by spotlight box-shadow
+            backgroundColor: 'rgba(0, 0, 0, 0.0)',
             zIndex: '3000',
             pointerEvents: 'none',
             display: 'none'
@@ -149,7 +162,6 @@ class TutorialSystem {
             zIndex: '3100',
             pointerEvents: 'none',
             borderRadius: '6px',
-            // The giant box-shadow IS the dim overlay — no separate overlay needed
             boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.75)',
             display: 'none'
         });
@@ -187,8 +199,6 @@ class TutorialSystem {
         this.isActive = true;
         this.currentStep = 0;
 
-        // Overlay is transparent — the spotlight box-shadow does the dimming.
-        // We still show it so z-index stacking is correct.
         this.overlay.style.display = 'block';
 
         this.showStep(0);
@@ -221,7 +231,6 @@ class TutorialSystem {
         `;
 
         if (step.target) {
-            // Highlight target first; position tooltip once we have the final rect
             this._highlightTarget(step.target, (rect) => {
                 this._positionTooltip(step, rect);
             });
@@ -264,7 +273,7 @@ class TutorialSystem {
      * Highlight the target element with the spotlight.
      *
      * Uses a requestAnimationFrame retry loop to wait until the element has
-     * a non-zero rendered size (avoids the 11×11px bug when called before layout).
+     * a non-zero rendered size (avoids the 0×0 bug when called before layout).
      * Calls onReady(rect) once the spotlight is correctly positioned.
      */
     _highlightTarget(selector, onReady) {
@@ -276,7 +285,7 @@ class TutorialSystem {
         const padding = 8;
         const minSize = 10; // px — anything smaller means the element isn't rendered yet
         let attempts = 0;
-        const maxAttempts = 60; // ~1 second at 60 fps
+        const maxAttempts = 120; // ~2 seconds at 60 fps
 
         const tryPosition = () => {
             attempts++;
@@ -299,7 +308,7 @@ class TutorialSystem {
                 if (attempts < maxAttempts) {
                     this._spotlightRafId = requestAnimationFrame(tryPosition);
                 } else {
-                    console.warn(`TutorialSystem: target "${selector}" still too small (${rect.width}×${rect.height}) — using as-is`);
+                    console.warn(`TutorialSystem: target "${selector}" still too small (${rect.width}×${rect.height}) after ${maxAttempts} frames — using as-is`);
                     applySpotlight(rect);
                 }
                 return;
@@ -347,7 +356,6 @@ class TutorialSystem {
     _positionTooltip(step, targetRect) {
         this.tooltipContainer.style.display = 'block';
 
-        // Reset any previous positioning
         Object.assign(this.tooltipContainer.style, {
             top: '', left: '', right: '', bottom: '', transform: ''
         });
@@ -377,8 +385,8 @@ class TutorialSystem {
 
         const tooltipW = 320;
         const tooltipH = this.tooltipContainer.offsetHeight || 220;
-        const margin   = 14; // gap between spotlight edge and tooltip
-        const edge     = 8;  // min distance from viewport edge
+        const margin   = 14;
+        const edge     = 8;
         const vw = window.innerWidth;
         const vh = window.innerHeight;
 
@@ -506,7 +514,12 @@ class TutorialSystem {
         this.isActive = false;
         this.currentStep = 0;
         this._ensureElements();
-        this.start();
+        // Same deferred start as init() — model cards may not exist yet
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                this.start();
+            });
+        });
     }
 }
 
