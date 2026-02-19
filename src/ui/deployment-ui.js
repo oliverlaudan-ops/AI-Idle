@@ -68,9 +68,24 @@ export class DeploymentUI {
         btn.textContent = '🚀 Deploy Model';
         btn.addEventListener('click', () => this._openModal());
 
-        // Insert after the main game container or append to body
-        const container = document.getElementById('game-container') ?? document.body;
-        container.appendChild(btn);
+        // Insert into the footer-controls so it sits alongside Save/Export/etc.
+        const footerControls = document.querySelector('.footer-controls');
+        if (footerControls) {
+            footerControls.appendChild(btn);
+        } else {
+            // Fallback: prepend inside #game so it stays above the footer
+            const game = document.getElementById('game');
+            if (game) {
+                const footer = game.querySelector('.game-footer');
+                if (footer) {
+                    game.insertBefore(btn, footer);
+                } else {
+                    game.appendChild(btn);
+                }
+            } else {
+                document.body.appendChild(btn);
+            }
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -436,12 +451,12 @@ export class DeploymentUI {
                 display: flex; align-items: center; gap: 6px;
             }
 
-            /* ── Deploy button ── */
+            /* ── Deploy button (inside footer-controls) ── */
             .deployment-btn {
-                margin: 8px; padding: 10px 18px;
+                padding: 6px 14px;
                 background: linear-gradient(135deg, #6c63ff, #48cfad);
-                color: #fff; border: none; border-radius: 8px;
-                font-size: 15px; font-weight: 600; cursor: pointer;
+                color: #fff; border: none; border-radius: 6px;
+                font-size: 13px; font-weight: 600; cursor: pointer;
                 transition: opacity .2s;
             }
             .deployment-btn:hover { opacity: .88; }
