@@ -1147,3 +1147,139 @@ body {
         width: 100%;
     }
 }
+
+/* ============================================================
+   Tutorial System
+   ============================================================ */
+
+/* Dark overlay that dims the whole page */
+.tutorial-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 3000;
+    /* Clicks pass through so the spotlight target stays clickable */
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.tutorial-overlay.active {
+    opacity: 1;
+}
+
+/* Spotlight — punches a "hole" in the overlay by sitting above it
+   but below the tooltip, with no background of its own */
+.tutorial-spotlight {
+    display: none;
+    position: fixed;
+    z-index: 3100;
+    border-radius: 8px;
+    box-shadow:
+        0 0 0 4px var(--accent-primary),
+        0 0 0 9999px rgba(0, 0, 0, 0.75);
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+/* Tooltip card */
+.tutorial-tooltip {
+    display: none;
+    position: fixed;
+    z-index: 3200;
+    width: 320px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--accent-primary);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        0 0 20px rgba(0, 255, 245, 0.2);
+    /* Tooltip itself must be clickable */
+    pointer-events: auto;
+    animation: tutorialFadeIn 0.25s ease;
+}
+
+@keyframes tutorialFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Header row: progress + skip */
+.tutorial-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.tutorial-progress {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.tutorial-skip {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    transition: color 0.2s;
+}
+
+.tutorial-skip:hover {
+    color: var(--accent-error);
+}
+
+/* Title & body */
+.tutorial-title {
+    font-size: 1.15rem;
+    font-weight: bold;
+    color: var(--accent-primary);
+    margin-bottom: 0.5rem;
+}
+
+.tutorial-content {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+}
+
+/* Action hint */
+.tutorial-action-hint {
+    font-size: 0.88rem;
+    color: var(--accent-warning);
+    background: rgba(255, 170, 0, 0.1);
+    border: 1px solid rgba(255, 170, 0, 0.3);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+/* Footer: Next / Finish button */
+.tutorial-footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.tutorial-next {
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 1.25rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+.tutorial-next:hover {
+    background: var(--accent-success);
+    box-shadow: 0 0 12px rgba(0, 255, 136, 0.5);
+}
