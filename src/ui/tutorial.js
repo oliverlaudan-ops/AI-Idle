@@ -413,5 +413,6 @@ class TutorialSystem {
         this.currentStep = 0;
         this.start();
     }
-
 }
+
+export { TutorialSystem };
