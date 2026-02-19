@@ -162,7 +162,7 @@ export const UPGRADE_DEFINITIONS = {
 
 /**
  * Get all upgrades the player has purchased.
- * @param {object} purchasedMap  gameState.deployment.upgrades  { upgradeId: true }
+ * @param {object} purchasedMap  gameState.deployment.upgradesPurchased  { upgradeId: true }
  * @returns {object[]}
  */
 export function getPurchasedUpgrades(purchasedMap) {
@@ -189,6 +189,27 @@ export function canPurchaseUpgrade(upgradeId, purchasedMap, availableTokens) {
         return { canBuy: false, reason: `Need ${def.cost - availableTokens} more token${def.cost - availableTokens !== 1 ? 's' : ''}` };
     }
     return { canBuy: true, reason: null };
+}
+
+/**
+ * Purchase an upgrade, returning the updated state.
+ * @param {string}  upgradeId
+ * @param {object}  purchasedMap   gameState.deployment.upgradesPurchased
+ * @param {number}  availableTokens
+ * @returns {{ success: boolean, reason: string|null, upgrades: object, remainingTokens: number }}
+ */
+export function purchaseUpgrade(upgradeId, purchasedMap, availableTokens) {
+    const { canBuy, reason } = canPurchaseUpgrade(upgradeId, purchasedMap, availableTokens);
+    if (!canBuy) {
+        return { success: false, reason, upgrades: purchasedMap, remainingTokens: availableTokens };
+    }
+    const def = UPGRADE_DEFINITIONS[upgradeId];
+    return {
+        success: true,
+        reason: null,
+        upgrades: { ...purchasedMap, [upgradeId]: true },
+        remainingTokens: availableTokens - def.cost,
+    };
 }
 
 /**
