@@ -1,1268 +1,222 @@
-# 🗺️ AI-Idle Development Roadmap
+# AI-Idle Development Roadmap
 
-**Last Updated:** February 10, 2026  
-**Current Version:** 0.3.0-dev  
-**Next Release:** 0.3.0 (Polish & Experience)
+## Release Timeline
 
----
-
-## 📊 Release Timeline
-
-```
-v0.1.0 ✅ (Jan 30, 2026) - MVP Release
-v0.2.0 ✅ (Feb 9, 2026)  - Balance & Animations
-v0.2.1 ✅ (Feb 9, 2026)  - Hotfix: Training Animations
-│
-├─ v0.3.0 🚧 (In Progress) - Polish & Experience
-│  ├─ PR #2 ✅ (Feb 10) - Combo System
-│  ├─ PR #3 ✅ (Feb 10) - Tutorial System
-│  ├─ PR #4 ✅ (Feb 10) - Auto-Training Queue
-│  └─ PR #5 🔜 - QoL Improvements
-│
-└─ v1.0.0 🎯 (Target: Late March 2026) - Complete Release
-```
+| Version | Target Date | Status |
+|---------|-------------|--------|
+| v0.1.0 | Jan 30, 2026 | ✅ Released |
+| v0.2.0 | Feb 9, 2026 | ✅ Released |
+| v0.3.0 | Feb 12, 2026 | ✅ Released |
+| v1.0.0 | Late March 2026 | 🎯 In Progress |
 
 ---
 
-## 🎯 Version 0.3.0 - "Polish & Experience"
+## Version 0.3.x — Polish & Stability
 
-**Release Target:** Mid February 2026  
-**Development Time:** 1 week  
-**Focus:** Enhance player experience without major new systems
+### ✅ v0.3.0 — Core QoL (Released Feb 12, 2026)
+- ✅ Manual Collect Combo System (PR #2)
+- ✅ Tutorial System (PR #3)
+- ✅ Auto-Training Queue (PR #4)
+- ✅ QoL Improvements — Bulk Building Purchase, Enhanced Resource Notifications, Progress Indicators (PR #5)
 
-### Core Philosophy
-- Make the game more intuitive for new players
-- Add quality-of-life features for experienced players
-- Improve visual feedback and polish
-- Enhance engagement without adding complexity
+### ✅ v0.3.2 — CI/CD & Tests (Released Feb 12, 2026)
+- ✅ GitHub Actions CI/CD pipeline (Node 18/20/22)
+- ✅ 26 tests for ResourceManager and ProductionCalculator
+- ✅ Vitest test runner with coverage support
 
----
+### ✅ v0.3.3 — Bug Fixes & Performance (Released Feb 18, 2026)
+- ✅ **Tutorial button crash fixed** — null-guards added to `TutorialSystem.start()` / `updateTooltip()` / `positionTooltip()`
+- ✅ **Research multiplier cache** — lazy-loaded `_cachedResearchMultipliers` in `GameState`; O(1) per tick instead of O(n)
 
-## ✨ Version 0.3.0 Features
-
-### 1. 🔥 **Manual Collect Combo System** ✅ **COMPLETED** (PR #2)
-
-**Status:** Merged Feb 10, 2026  
-**Implementation:** [Pull Request #2](https://github.com/oliverlaudan-ops/AI-Idle/pull/2)
-
-**Problem:** Manual data collection is boring and unrewarding  
-**Solution:** Engaging combo mechanic that rewards active clicking
-
-#### ✅ Implemented Mechanics
-- **Combo Multipliers:**
-  - Click 1: +1 Data (x1)
-  - Click 2 (within 5s): +2 Data (x2)
-  - Click 3 (within 5s): +4 Data (x4)
-  - Click 4+ (within 5s): +8 Data (x8 MAX)
-- **Combo Timer:** 5-second window to maintain combo
-- **Combo Decay:** Resets to x1 after timer expires
-- **Max Combo:** x8 (upgradeable via research later)
-
-#### ✅ Implemented Visual Feedback
-- **Combo Counter:** Large animated number above button
-- **Multiplier Badge:** "x2", "x4", "x8" with color progression
-  - x1: Gray (default)
-  - x2: Blue (good)
-  - x4: Purple (great)
-  - x8: Gold (excellent)
-- **Timer Bar:** Visual countdown around button
-  - Green → Yellow → Red as time runs out
-- **Particle Effects:** Burst animation on combo level-up
-- **Screen Shake:** Subtle shake at x4 and x8
-- **Combo Break:** Red flash when combo expires
-
-#### ✅ Technical Implementation
-- New `ComboSystem` class in `src/modules/combo-system.js`
-- New `ComboUI` class in `src/ui/combo-ui.js`
-- Combo state tracked in game state
-- Timer using `requestAnimationFrame` for smooth countdown
-- CSS animations in `src/ui/combo-styles.css`
-- Statistics tracking for combo stats
-
-#### 🔮 Future Enhancements (Post-v0.3.0)
-- Sound Design: Click sounds with pitch changes
-- Achievements:
-  - **Combo Starter:** Reach x2 combo (Reward: +1 base click value)
-  - **Combo Expert:** Reach x4 combo 10 times (Reward: +5% manual collection)
-  - **Combo Master:** Reach x8 combo 100 times (Reward: +10% manual collection)
-  - **Speed Clicker:** Maintain x8 combo for 60 seconds (Reward: +1 second combo timer)
+### ✅ v0.3.4 — Research Tree Expansion (Released Feb 19, 2026)
+- ✅ **40+ research items** across 8 categories (expanded from 17)
+- ✅ **4 new categories:** Hardware Innovations, Data Engineering, Meta-Learning, Safety & Ethics
+- ✅ **8 effect types** fully wired into the game loop: `trainingSpeed`, `modelPerformance`, `efficiency`, `globalMultiplier`, `dataProduction`, `computeEfficiency`, `researchSpeed`, `safetyBonus`
+- ✅ **Array-based multi-prerequisites** — research items can require multiple completed prerequisites
+- ✅ **Research definitions extracted** to `src/systems/research/definitions.js` — single source of truth
+- ✅ **Save version bumped to 0.5** — expanded multipliers shape, renamed cache key
 
 ---
 
-### 2. 🎓 **Tutorial System** ✅ **COMPLETED** (PR #3)
+## Version 1.0.0 — Complete Experience (Target: Late March 2026)
 
-**Status:** Merged Feb 10, 2026  
-**Implementation:** [Pull Request #3](https://github.com/oliverlaudan-ops/AI-Idle/pull/3)
+### 1. Expanded Prestige / Deployment System 🔄
 
-**Problem:** New players don't know where to start  
-**Solution:** Interactive step-by-step tutorial
+**Deployment Strategies**
+- Fast Deployment — lower accuracy bonus, quick turnaround
+- Standard Deployment — balanced (current behaviour)
+- Complete Deployment — maximum accuracy bonus, longer cooldown
 
-#### ✅ Implemented Tutorial Flow (7 Steps)
+**Token Shop Expansion (20+ upgrades)**
+- Training Speed Tiers (I–V)
+- Building Efficiency Tiers (I–V)
+- Research Speed Tiers (I–III)
+- Prestige Multiplier Tiers (I–III)
+- Special unlocks: Auto-Deploy, Research Automation, Building Synergies
 
-**Step 1: Welcome**
-- Modal overlay with game introduction
-- "Train AI models and build your ML empire!"
-- "Start Tutorial" / "Skip" buttons
+**Deployment Milestones**
+- 5 deployments — unlock Hardware category
+- 10 deployments — unlock Data Engineering category
+- 25 deployments — unlock Meta-Learning category
+- 50 deployments — unlock Safety & Ethics category
+- 100 deployments — unlock Quantum Computing research
 
-**Step 2: Manual Collection**
-- Highlight "Collect Data" button
-- "Click here to gather your first training data!"
-- Wait for 3 clicks to proceed
-- Shows combo system explanation
+**Model Portfolio System**
+- Track all deployed models with accuracy and timestamp
+- Portfolio score = sum of all deployed model accuracies
+- Portfolio bonuses at 500 / 1000 / 2500 / 5000 portfolio score
 
-**Step 3: Resources**
-- Highlight stats bar
-- "These are your resources. Data is used to build and train!"
-- Explain each resource icon
-
-**Step 4: First Building**
-- Highlight Tier 1 buildings section
-- "Build your first infrastructure to generate data automatically!"
-- Wait for CPU Core purchase
-- Shows passive income benefits
-
-**Step 5: First Model Training**
-- Switches to Training tab automatically
-- Highlight training tab button
-- "Now train your first neural network!"
-- Wait for training start
-- Shows training progress visualization
-
-**Step 6: Research**
-- Highlight research tab
-- "Unlock new technologies to improve your AI!"
-- Shows upgrade system
-
-**Step 7: Achievements & Goals**
-- Highlight achievements tab
-- "Track your progress and earn permanent bonuses!"
-- Shows completion celebration with confetti animation
-- Tutorial complete! 🎉
-
-#### ✅ Implemented Features
-- **Spotlight System:** Dim rest of screen, highlight current element
-- **Step Indicator:** "Step 2/7" progress bar
-- **Skip Anytime:** "Skip Tutorial" button always visible
-- **Persist State:** Tutorial progress saved in LocalStorage
-- **Replay Option:** "🎓 Tutorial" button in footer
-- **Animations:** Smooth transitions, pulse effects, confetti celebration
-- **Mobile Optimized:** Touch-friendly, responsive design
-- **Accessibility:** Reduced motion support, keyboard navigation (ESC to skip)
-
-#### ✅ Technical Implementation
-- New `TutorialSystem` class in `src/ui/tutorial.js`
-- Modal overlay with z-index management
-- Event listeners for action-based progression
-- LocalStorage flag for completion status: `ai-idle-tutorial-completed`
-- Integrated with offline progress modal (only shown after tutorial)
-- CSS animations in `src/ui/tutorial-styles.css`
+**Transfer Learning**
+- Each deployment leaves a "knowledge residue"
+- Residue reduces training time for the next model of the same type
+- Stacks up to 5× per model type
 
 ---
 
-### 3A. ✨ **Auto-Training Queue** ✅ **COMPLETED** (PR #4)
+### 2. Research Tree — Specialisation Paths 🔬
 
-**Status:** Merged Feb 10, 2026  
-**Implementation:** [Pull Request #4](https://github.com/oliverlaudan-ops/AI-Idle/pull/4)
+> **Core expansion (40 items, 8 categories) is complete as of v0.3.4.**
+> v1.0.0 adds specialisation paths and late-game research.
 
-**Feature:** Automatically train next model when current training completes
+**Specialisation Paths (choose one per prestige)**
+- 🖼️ Vision Specialist — bonus to CNN/Vision Transformer training speed and accuracy
+- 💬 Language Specialist — bonus to Transformer/LLM training speed and accuracy
+- 🌐 Generalist — smaller bonuses across all model types, higher global multiplier
+- ⚙️ Hardware Path — extreme compute efficiency, reduced building costs
 
-#### ✅ Implemented Features
+**Late-Game Research (post-50 deployments)**
+- Quantum Computing — +50% compute efficiency, unlocks Quantum Neural Networks
+- Neuromorphic Integration — buildings produce 2× compute passively
+- AGI Foundations — global multiplier ×2, requires all Safety & Ethics research
 
-**Queue Management:**
-- "📋 Add to Queue" button on each model card
-- Queue display showing all queued models (up to 10)
-- Reorder queue: Move up/down buttons
-- Remove from queue: Individual remove buttons
-- "Clear Queue" button to remove all
-- Queue counter: "3 / 10 models"
-
-**Smart Queue:**
-- Only queues models when resources are sufficient
-- Skips models if resources unavailable during execution
-- Shows estimated queue completion time
-- Visual resource warnings (red indicator) for unaffordable models
-
-**Settings:**
-- Toggle "Auto-queue enabled"
-- Toggle "Repeat last model" option
-- Queue state persists in save file
-
-**User Interface:**
-- Dedicated queue section below training status
-- Empty state message when queue is empty
-- Model icons and names in queue list
-- Button state management ("Add to Queue" ↔ "✓ In Queue")
-- Smooth animations and transitions
-- Responsive design for mobile
-
-#### ✅ Technical Implementation
-- New `TrainingQueue` class in `src/modules/training-queue.js`
-- New `TrainingQueueUI` class in `src/ui/training-queue-ui.js`
-- Queue integrated into `GameState` with save/load support
-- Auto-detection of newly unlocked models
-- Optimized rendering (state tracking prevents flickering)
-- Toast notifications for queue actions
-- CSS styling in `src/ui/training-queue-styles.css`
-
-**Files Added:**
-- `src/modules/training-queue.js` (253 lines)
-- `src/ui/training-queue-ui.js` (419 lines)
-- `src/ui/training-queue-styles.css` (344 lines)
-- `docs/TRAINING_QUEUE.md` (545 lines documentation)
+**Research Automation**
+- Token Shop upgrade: "Research Automation" — auto-spends research points on the cheapest available item
+- Configurable priority queue (drag-and-drop, planned post-1.0)
 
 ---
 
-### 3B-D. ✨ **Additional Quality of Life Improvements** 🚧 **IN PROGRESS** (PR #5)
+### 3. New Model Categories (15–20 total) 🤖
 
-**Status:** Development in progress  
-**Target:** Feb 10-11, 2026
+**Current models (v0.3.x):** Linear Regression, Logistic Regression, Decision Tree, Random Forest, SVM, K-Means, Neural Network, CNN, RNN, LSTM, Transformer
 
-#### B. Bulk Building Purchase 🔜
-**Feature:** Buy multiple buildings at once
+**New models for v1.0.0:**
+- Vision Transformer (ViT)
+- Diffusion Model
+- Graph Neural Network (GNN)
+- Mixture of Experts (MoE)
+- Large Language Model (LLM)
+- Multimodal Model
+- Reinforcement Learning Agent
+- World Model
 
-- **Buy Amounts:**
-  - Buy x1 (default)
-  - Buy x10 (button toggle)
-  - Buy x100 (button toggle)
-  - Buy Max (button toggle)
-- **Visual Feedback:**
-  - Show total cost for bulk purchase
-  - "Max: 47" indicator showing affordable amount
-  - Cost preview updates in real-time
-- **Keyboard Shortcuts:**
-  - Shift + Click: Buy x10
-  - Ctrl + Click: Buy x100
-  - Ctrl + Shift + Click: Buy max affordable
-
-#### C. Enhanced Resource Notifications 🔜
-**Feature:** Smart notifications for important events
-
-- **Unlock Notifications:**
-  - "🖥️ New Building Unlocked: GPU Cluster!"
-  - "🧠 New Model Available: Image Classification!"
-  - "🔬 New Research: Adam Optimizer!"
-- **Milestone Notifications:**
-  - "🎉 1,000 data collected!"
-  - "⚡ 100 TFLOPS reached!"
-  - "🏆 First achievement unlocked!"
-- **Settings:**
-  - Toggle notification types in settings panel
-  - Notification duration slider
-  - Sound on/off toggle (when sound system implemented)
-
-#### D. Progress Indicators 🔜
-**Feature:** Show progress to next unlocks and goals
-
-- **"Next Unlock" Widget:**
-  - Shows closest locked building/model/research
-  - Progress bar: "67% to GPU Cluster"
-  - Estimated time to unlock based on current production
-  - Updates in real-time
-- **Achievement Progress:**
-  - "Train 7/10 models for Generalist AI"
-  - Progress bars on achievement cards
-  - "Closest Achievement" highlighted
-- **Resource Projections:**
-  - "At current rate: 2 hours to next unlock"
-  - Hourly production breakdown
-  - Production per building type
+**Model Tiers**
+- Tier 1 (Beginner) — Linear Regression → SVM
+- Tier 2 (Intermediate) — Neural Network → LSTM
+- Tier 3 (Advanced) — Transformer → GNN
+- Tier 4 (Expert) — MoE → World Model
 
 ---
 
-### 4. 🎨 **Visual Polish** (Medium Priority) ⏸️ **DEFERRED**
+### 4. Model Zoo & Collection System 🦁
 
-**Status:** Partially implemented in v0.2.0, additional polish deferred to post-v0.3.0
+**Model Gallery**
+- Visual grid of all deployed models
+- Each model card shows: type, accuracy, training time, deployment date
+- Training history sparkline graph per model
 
-**Existing Visual Features (v0.2.0):**
-- ✅ Canvas-based training animations
-- ✅ Real-time training curve visualization
-- ✅ Particle celebration on training completion
-- ✅ Progress bars with dynamic effects
-- ✅ Training phase indicators
+**Collection Bonuses**
+- Complete a tier → +10% training speed for that tier
+- Complete all Tier 1 → unlock "Classic ML" achievement (+5% global)
+- Complete all Tier 2 → unlock "Deep Learning" achievement (+10% global)
+- Complete all Tier 3 → unlock "Modern AI" achievement (+15% global)
+- Complete all Tier 4 → unlock "State of the Art" achievement (+25% global)
 
-**Existing Visual Features (v0.3.0):**
-- ✅ Combo system particles and animations
-- ✅ Tutorial spotlight and transitions
-- ✅ Screen shake effects
-- ✅ Confetti celebration animations
-
-#### Future Enhancements (Post-v0.3.0)
-
-**Achievement Unlocks:**
-- Golden particle burst from center
-- Achievement icon floats up with glow
-- Screen flash (subtle)
-- Confetti rain for major achievements
-
-**Building Purchase:**
-- Sparkle effect on building card
-- Resource icons fly from stats bar to building
-- Building "construction" animation
-- Glow pulse on newly built items
-
-**Resource Milestones:**
-- Celebration at 1K, 10K, 100K, 1M, etc.
-- Unique effects per resource type
-  - Data: Blue sparkles
-  - Compute: Yellow lightning
-  - Accuracy: Green stars
-  - Research: Purple wisps
-
-**Sound System (Optional):**
-- Click/Button press sounds
-- Building purchase sounds
-- Training start/complete sounds
-- Achievement unlock fanfares
-- Volume controls and settings
-- Web Audio API implementation
-
-**Animation Enhancements:**
-- Tab switching slide animations
-- Card fade-in on unlock
-- Counter odometer effects
-- Enhanced hover effects
-- Loading state animations
+**Achievements for Collection**
+- "First Steps" — deploy your first model
+- "Diverse Portfolio" — deploy 5 different model types
+- "Completionist" — deploy every model type at least once
+- "Accuracy Chaser" — deploy a model with 99%+ accuracy
+- "Speed Runner" — deploy a model in under 60 seconds
 
 ---
 
-### 5. 📊 **Statistics Dashboard Expansion** 🚧 **IN PROGRESS** (PR #5)
+### 5. Events & Challenges ⚡
 
-**Status:** Development in progress  
-**Target:** Feb 10-11, 2026
+**Weekly Challenges (rotating)**
+- Speed Run — deploy 3 models in 10 minutes
+- Efficiency Expert — reach 1000 compute/s using only 5 buildings
+- Research Focus — unlock 10 research items in one session
+- Building Spree — purchase 50 buildings in 5 minutes
 
-**Existing Stats (v0.2.0):**
-- ✅ Playtime tracking
-- ✅ Total resources generated
-- ✅ Building counts
-- ✅ Models trained statistics
-- ✅ Research completion tracking
-- ✅ Deployment count
-
-#### Planned Enhancements
-
-**Production Breakdown:**
-- Visual breakdown of resource sources
-- "Data from Buildings: 85%"
-- "Data from Manual Clicks: 15%"
-- "Top Producer: GPU Cluster (45%)"
-- Bar charts or progress indicators
-
-**Resources Per Hour:**
-- Current production rates (already exists)
-- **NEW:** Projected gains in 1h, 8h, 24h
-- **NEW:** Comparison to previous sessions
-- **NEW:** Session performance indicators
-
-**Most Trained Models:**
-- Leaderboard of most-trained models
-- "Digit Recognition: 47 times"
-- Total time spent training each model
-- Favorite model indicator
-
-**Session Stats:**
-- **NEW:** This Session vs All Time comparison
-- **NEW:** Session start time and duration
-- **NEW:** Resources gained this session
-- **NEW:** Buildings built this session
-- **NEW:** Models trained this session
-
-**Training History:**
-- Timeline of training sessions
-- Accuracy gained per model
-- Average training time per model
-- Success rate tracking
+**Random Events (probability-based)**
+- 🟢 Hardware Sale — buildings cost 50% less for 60 seconds
+- 🟢 Research Breakthrough — research speed ×3 for 30 seconds
+- 🟡 Data Leak — data production halved for 45 seconds
+- 🟡 Bug in Production — one random building stops producing for 30 seconds
+- 🔴 Power Outage — all production stops for 15 seconds
+- 🔴 Security Audit — must complete a Safety & Ethics research item to resume
 
 ---
 
-### 6. ♿ **Accessibility Features** (Medium Priority) ⏸️ **DEFERRED**
-
-**Status:** Deferred to post-v0.3.0 or v1.0
-
-**Existing Accessibility:**
-- ✅ Reduced motion support in combo and tutorial animations
-- ✅ Keyboard navigation (ESC to close modals)
-- ✅ Screen reader friendly structure
-
-#### Future Enhancements (Post-v0.3.0)
-
-**Settings Panel:**
-- Animation speed slider (0.5x - 2.0x)
-- Particle effects toggle
-- Screen shake toggle
-- Font size options (Small / Medium / Large)
-- High contrast mode
-- Color blind modes (Deuteranopia, Protanopia, Tritanopia)
-- Dark/Light theme toggle
-
-**Gameplay Settings:**
-- Auto-save interval options
-- Offline progress toggle
-- Confirmation dialogs toggle
-- Hotkey customization
-
-**Keyboard Navigation:**
-- Tab shortcuts (1-6 for different tabs)
-- Action shortcuts (Space, S, E, M, ?)
-- Full keyboard navigation support
-- Visual focus indicators
-
----
-
-## 📋 Version 0.3.0 Implementation Status
-
-### ✅ Completed (Feb 10, 2026)
-- [x] Create `ROADMAP.md`
-- [x] Set up feature branches
-- [x] Implement `ComboSystem` class (PR #2)
-- [x] Add combo UI with visuals (PR #2)
-- [x] Implement all 7 tutorial steps (PR #3)
-- [x] Add tutorial system with spotlight (PR #3)
-- [x] Implement TrainingQueue system (PR #4)
-- [x] Add TrainingQueueUI with queue management (PR #4)
-- [x] Auto-training queue integration (PR #4)
-
-### 🚧 In Progress (Feb 10-11, 2026)
-- [ ] Bulk building purchase (PR #5)
-- [ ] Enhanced resource notifications (PR #5)
-- [ ] Progress indicators widget (PR #5)
-- [ ] Statistics dashboard refresh (PR #5)
-
-### 📅 Planned (Post-v0.3.0)
-- [ ] Enhanced particle effects
-- [ ] Sound system implementation
-- [ ] Animation improvements
-- [ ] Accessibility settings panel
-- [ ] Keyboard shortcuts system
-
-### 🎯 Release Preparation
-- [ ] Bug testing
-- [ ] Balance adjustments (if needed)
-- [ ] Documentation updates (CHANGELOG.md, README.md)
-- [ ] Create release notes
-- [ ] Deploy v0.3.0
-
----
-
-## 🚀 Version 1.0.0 - "Complete Experience"
-
-**Release Target:** Late March 2026  
-**Development Time:** 3-4 weeks  
-**Focus:** Complete game with all major systems
-
----
-
-## 🎯 Version 1.0.0 Features
-
-### 1. 🔄 **Expanded Prestige/Deployment System** (Critical)
-
-#### Current State
-- Basic deployment system exists
-- Simple token shop with few upgrades
-- Linear progression
-
-#### Expansion Goals
-
-**A. Deployment Strategies**
-
-Three deployment options with different trade-offs:
-
-**Fast Deploy** (Quick Return)
-- Keep 25% of current resources
-- Gain 0.8x tokens (20% penalty)
-- 50% of achievements remain unlocked
-- Best for: Frequent, smaller runs
-
-**Standard Deploy** (Balanced)
-- Reset all resources to 0
-- Gain 1.0x tokens (normal rate)
-- All achievements remain unlocked
-- Best for: Normal progression
-
-**Complete Deploy** (Maximum Tokens)
-- Reset everything (resources + achievements)
-- Gain 1.5x tokens (50% bonus)
-- Start completely fresh
-- Best for: Major prestige runs
-
-**B. Token Shop Expansion**
-
-**Current:** ~5 basic upgrades  
-**Target:** 20+ diverse upgrades
-
-**Production Category** (Permanent multipliers)
-- Data Generation +10% (1 token) [repeatable]
-- Compute Boost +15% (2 tokens) [repeatable]
-- Accuracy Multiplier +20% (3 tokens) [repeatable]
-- Research Speed +25% (2 tokens) [max 5 levels]
-- All Resources +5% (5 tokens) [repeatable]
-
-**Training Category** (Training improvements)
-- Training Speed +20% (2 tokens) [repeatable]
-- Start with Digit Recognition unlocked (1 token)
-- Unlock all Tier 1 models at start (3 tokens)
-- Training Auto-Complete (5 tokens)
-- Instant Training (1 per day) (10 tokens)
-
-**Research Category** (Research bonuses)
-- Start with SGD unlocked (1 token)
-- Research cost -10% (2 tokens) [max 5 levels]
-- Unlock Research tab at start (1 token)
-- Research auto-buy (5 tokens)
-
-**Special Category** (Unique bonuses)
-- Start with 100 data (1 token)
-- Start with 10 compute (2 tokens)
-- Offline progress 2x speed (3 tokens)
-- Achievement progress carries over (5 tokens)
-- Unlock "Prestige Buildings" (10 tokens)
-- Unlock "Meta-Research" (15 tokens)
-
-**Meta-Progression Category** (Long-term)
-- Deployment token gain +10% (5 tokens) [repeatable]
-- Unlock deployment milestones (10 tokens)
-- Unlock Model Portfolio system (20 tokens)
-- Unlock Transfer Learning (25 tokens)
-- Unlock AutoML (50 tokens)
-
-**C. Deployment Milestones**
-
-Special rewards at deployment count thresholds:
-
-**5 Deployments:** "Experienced Deployer"
-- Unlock Fast Deploy option
-- +10% base deployment token gain
-- New token shop category unlocked
-
-**10 Deployments:** "Veteran Deployer"
-- Start each run with 1 free building
-- +25% offline progress speed
-- Unlock Prestige Buildings
-
-**25 Deployments:** "Master Deployer"
-- Unlock Complete Deploy option
-- Start with all Tier 1 research unlocked
-- +50% achievement bonus effects
-
-**50 Deployments:** "Deployment Legend"
-- Unlock Transfer Learning system
-- Start with 1000 data, 100 compute
-- All deployments gain 2x tokens
-
-**100 Deployments:** "Infinite Deployer"
-- Unlock AutoML system
-- All resources +100% permanently
-- Access to secret "Singularity" ending
-
-**D. Model Portfolio System**
-
-*Unlocked after 10 deployments via token shop*
-
-**Concept:** Deployed models passively train in background
-
-**Mechanics:**
-- Each deployed model adds to portfolio
-- Portfolio models train at 1% speed
-- Gain passive accuracy and research points
-- Portfolio grows with each deployment
-- Special bonuses for complete model sets
-
-**Portfolio Bonuses:**
-- 5 Models: +5% all resources
-- 10 Models: +10% training speed
-- 15 Models: Unlock portfolio specialization
-- All Models: +50% everything, special achievement
-
-**E. Transfer Learning**
-
-*Unlocked at 50 deployments*
-
-**Concept:** Previous training improves future training
-
-**Mechanics:**
-- Each model training adds to "experience pool"
-- Experience reduces training time for future models
-- Specialization bonuses for model families
-- Cross-model synergies
-
-**Experience Bonuses:**
-- Same model: -10% time (stacking)
-- Same category: -5% time
-- Related models: Special synergies
-  - Image Classification ↔ Object Detection
-  - NLP ↔ LLM
-  - etc.
-
----
-
-### 2. 🔬 **Expanded Research Tree** (High Priority)
-
-#### Current State
-- 17 research items across 4 categories
-- Linear progression
-- Some items feel mandatory
-
-#### Expansion Goals
-- **Target:** 40+ research items
-- **New Categories:** 4 additional branches
-- **Specialization Paths:** Choose your focus
-- **Late-Game Research:** Post-deployment content
-
-#### New Categories
-
-**E. Hardware Innovations** (Tier 3+ Focus)
-
-*Unlock requirement: Own 10+ buildings*
-
-- **Neuromorphic Chips** (Cost: 5K research)
-  - Buildings use 20% less compute
-  - Unlock specialized hardware buildings
-- **Photonic Computing** (Cost: 50K research)
-  - +25% all compute generation
-  - Unlock Photonic Processor building
-- **Biological Processors** (Cost: 500K research)
-  - Extremely efficient, low cost buildings
-  - Unlock DNA Compute building
-- **Quantum Neural Networks** (Cost: 5M research)
-  - Quantum processors 3x more powerful
-  - Unlock Quantum AI models
-
-**F. Data Engineering** (Early-Mid Game Focus)
-
-*Unlock requirement: Collect 10K data*
-
-- **Synthetic Data Generation** (Cost: 1K research)
-  - Buildings generate 15% more data
-  - Unlock Synthetic Data Generator building
-- **Data Augmentation** (Cost: 10K research)
-  - Training costs 10% less data
-  - Data multipliers apply to training
-- **Active Learning** (Cost: 100K research)
-  - Training generates research points
-  - Unlock Active Learning models
-- **Few-Shot Learning** (Cost: 1M research)
-  - Drastically reduce training data requirements
-  - Unlock Few-Shot models
-
-**G. Meta-Learning** (Late-Game Focus)
-
-*Unlock requirement: Deploy once*
-
-- **Learning to Learn** (Cost: 10K research, 5 tokens)
-  - Each training improves all future training
-  - +1% training speed per model trained (stacking)
-- **Zero-Shot Transfer** (Cost: 100K research, 10 tokens)
-  - New models start at 10% accuracy
-  - Unlock Zero-Shot models
-- **AutoML** (Cost: 1M research, 25 tokens)
-  - Models automatically optimize themselves
-  - Training speed +100%, costs -50%
-- **Neural Architecture Search** (Cost: 10M research, 50 tokens)
-  - Unlock custom model creation
-  - Design your own models with unique bonuses
-
-**H. Safety & Ethics** (Optional Specialization)
-
-*Unlock requirement: Reach 1000 accuracy*
-
-- **Interpretability** (Cost: 5K research)
-  - See detailed model stats and breakdowns
-  - +10% research generation
-- **Adversarial Robustness** (Cost: 50K research)
-  - Models train more reliably
-  - Training time variance -50%
-- **AI Alignment** (Cost: 500K research)
-  - Accuracy gains are more consistent
-  - Unlock Aligned AI models
-- **Constitutional AI** (Cost: 5M research)
-  - Special bonus: Unlock "Safe AGI" path
-  - All resources +20%
-
-#### Research Paths & Specializations
-
-**Vision Specialist Path:**
-- Focus on CNN → ResNet → Vision Transformer
-- Special models: Video Understanding, 3D Vision
-- Bonus: +50% accuracy for vision models
-
-**Language Specialist Path:**
-- Focus on RNN → Transformer → GPT
-- Special models: Code Generation, Translation
-- Bonus: +50% accuracy for NLP models
-
-**Generalist Path:**
-- Balanced research across all categories
-- Special models: Foundation Models, Multimodal
-- Bonus: +25% accuracy for all models
-
-**Hardware Path:**
-- Focus on efficiency and scale
-- Special buildings: Custom ASICs, Neuromorphic
-- Bonus: Buildings cost -30%
-
----
-
-### 3. 🤖 **New Model Categories** (High Priority)
-
-#### Current Models (8 total)
-- Classification: Digit Recognition
-- Vision: Image Classification, Object Detection
-- NLP: NLP Model, LLM
-- Advanced: RL Agent, Multimodal AI
-
-#### New Models (Target: 15-20 total)
-
-**Generative Models Category** (New)
-
-*Unlock requirement: 5K accuracy*
-
-**Text-to-Image Generator** (Stable Diffusion style)
-- Cost: 1M data, 5K compute
-- Training time: 3 minutes
-- Reward: +500 accuracy/s
-- Special: Generates "synthetic data" resource
-
-**Text Generator** (GPT style)
-- Cost: 5M data, 25K compute
-- Training time: 5 minutes
-- Reward: +2500 accuracy/s
-- Special: Writes research papers (bonus research points)
-
-**Music Generator**
-- Cost: 500K data, 2K compute
-- Training time: 2 minutes
-- Reward: +250 accuracy/s
-- Special: Unique audio feedback on training
-
-**Video Generator**
-- Cost: 50M data, 100K compute
-- Training time: 10 minutes
-- Reward: +10000 accuracy/s
-- Special: Most expensive generative model
-
-**Specialized Tasks Category** (New)
-
-*Unlock requirement: Research "Domain Specialization"*
-
-**Code Generation Model**
-- Cost: 10M data, 50K compute
-- Training time: 5 minutes
-- Reward: +5000 accuracy/s, +100 research/s
-- Special: Occasionally "optimizes game code" for temp bonuses
-
-**Protein Folding Model** (AlphaFold style)
-- Cost: 25M data, 100K compute
-- Training time: 8 minutes
-- Reward: +12500 accuracy/s
-- Special: Unlock bio-computing research
-
-**Drug Discovery Model**
-- Cost: 100M data, 500K compute
-- Training time: 12 minutes
-- Reward: +50000 accuracy/s
-- Special: Very high value, medical theme
-
-**Climate Modeling AI**
-- Cost: 500M data, 2.5M compute
-- Training time: 15 minutes
-- Reward: +250000 accuracy/s
-- Special: Highest-tier specialized model
-
-**Frontier Models Category** (New)
-
-*Unlock requirement: 1M accuracy, deployed 5+ times*
-
-**Multimodal Foundation Model**
-- Cost: 1B data, 10M compute
-- Training time: 20 minutes
-- Reward: +1M accuracy/s
-- Special: Understands text, images, audio, video
-
-**Embodied AI** (Robotics)
-- Cost: 5B data, 50M compute
-- Training time: 30 minutes
-- Reward: +5M accuracy/s
-- Special: Unlock "Robotics Lab" building
-
-**AGI Prototype**
-- Cost: 100B data, 1B compute, 1M research
-- Training time: 60 minutes
-- Reward: +100M accuracy/s
-- Special: Unlock secret ending, "Singularity Achievement"
-- Note: Training this triggers prestige automatically
-
----
-
-### 4. 🏛️ **Model Zoo & Collection System** (High Priority)
-
-#### Model Gallery
-
-**Deployed Models Display:**
-- Visual gallery of all trained models
-- Cards show model icon, name, stats
-- Hover for detailed information
-- Click to see full "Model Card"
-
-**Model Stats Tracked:**
-- Times trained
-- Total training time
-- Accuracy contributed (total)
-- Best single training run
-- First trained date
-- Last trained date
-- Average training speed
-
-**Favorite System:**
-- Mark up to 5 models as "favorites"
-- Favorites appear in quick-train menu
-- Special bonus for training favorites
-
-#### Model Cards
-
-**Detailed Model Information:**
-
-*Example: Digit Recognition Model Card*
-
-```
-🧮 Digit Recognition
-━━━━━━━━━━━━━━━━━━━━━━
-Category: Classification
-First Trained: Jan 30, 2026
-
-STATISTICS
-├─ Times Trained: 47
-├─ Total Time: 2h 15m
-├─ Total Accuracy: 11.75
-└─ Best Run: 0.28 accuracy
-
-TRAINING HISTORY
-[Graph showing accuracy over time]
-
-DEPLOYMENT IMPACT
-├─ Active in Portfolio: Yes
-├─ Portfolio Contribution: +0.5 accuracy/s
-└─ Transfer Learning: Lvl 3 (+15% speed)
-
-ACHIEVEMENTS
-✅ Trained 10 times
-✅ Reached max training speed
-❌ Complete 100 training runs
-```
-
-**Training History Graph:**
-- Line chart of accuracy over time
-- Marks for each training session
-- Deployment points highlighted
-- Best/worst runs highlighted
-
-**Deployment Impact:**
-- Shows model's contribution to portfolio
-- Transfer learning level and bonuses
-- Synergies with other models
-
-#### Collection Bonuses
-
-**Complete Sets:**
-
-**Classification Master**
-- Train all classification models
-- Reward: +20% accuracy for classification tasks
-
-**Vision Expert**
-- Train all vision models
-- Reward: +20% accuracy for vision tasks
-
-**NLP Specialist**
-- Train all NLP models
-- Reward: +20% accuracy for NLP tasks
-
-**Generative Guru**
-- Train all generative models
-- Reward: Unlock "Super Generative Model"
-
-**Master Collector**
-- Train every single model at least once
-- Reward: +50% all production, special achievement
-
-**Achievements:**
-- **Collector**: Train 5 unique models
-- **Completionist**: Train 10 unique models
-- **Master Collector**: Train all models
-- **Specialist**: Train one model 100 times
-- **Diversity Champion**: Train 20 different models in one run
-
----
-
-### 5. 🎪 **Events & Challenges** (Medium Priority)
-
-#### Weekly Challenges
-
-*Reset every Monday at midnight*
-
-**Example Challenges:**
-
-**Week 1: Speed Run**
-- "Train 5 models in under 30 minutes"
-- Reward: 5 deployment tokens, +10% training speed for 24h
-
-**Week 2: Efficiency Expert**
-- "Reach 100 accuracy without building any Tier 3 buildings"
-- Reward: 3 tokens, unlock "Efficient AI" achievement
-
-**Week 3: Research Focus**
-- "Complete 10 research items in one run"
-- Reward: 2 tokens, permanent +5% research generation
-
-**Week 4: Building Spree**
-- "Own 50 total buildings"
-- Reward: 4 tokens, buildings cost -5% for 48h
-
-**Challenge UI:**
-- Challenge panel on main screen
-- Progress bar showing completion
-- Time remaining countdown
-- "Claim Reward" button on completion
-- Challenge history and stats
-
-#### Random Events
-
-*Low chance to trigger every 10-30 minutes of active play*
-
-**Positive Events:**
-
-**Hardware Sale** (Duration: 5 minutes)
-- "A vendor is selling hardware at a discount!"
-- Buildings cost 25% less
-- Notification: "Hurry, sale ends soon!"
-
-**Data Leak** (Duration: 10 minutes)
-- "A massive dataset has been leaked online!"
-- Data generation +100%
-- Free data collected every second
-
-**Research Breakthrough** (Instant)
-- "Scientists made an unexpected discovery!"
-- One random locked research unlocked for free
-- If all researched: 50% research cost refund
-
-**Bonus Compute** (Duration: 15 minutes)
-- "Cloud provider gave you free compute credits!"
-- Compute generation +50%
-- Training speed +25%
-
-**Negative Events:**
-
-**Bug in Production** (Duration: 5 minutes)
-- "A critical bug is draining resources!"
-- All resources drain 10% faster
-- Click "Debug" button 10 times to fix early
-- Reward for fixing: +50% research for 10 min
-
-**Power Outage** (Duration: 2 minutes)
-- "Power outage in the data center!"
-- All buildings stop producing
-- Training paused
-- No permanent loss
-
-**Security Audit** (Instant)
-- "Regulators are auditing your AI systems!"
-- Pay 10% of current resources OR
-- Stop all production for 5 minutes
-- Choice matters!
-
-**Event Settings:**
-- Toggle random events on/off
-- Event frequency slider
-- Notification preferences
-
----
-
-### 6. 📱 **Mobile Optimization** (High Priority)
-
-#### Responsive Design Improvements
-
-**Current Issues:**
-- Small buttons hard to tap
-- Stats bar cramped on small screens
-- Tabs hard to navigate
-- Cards too wide
-
-**Solutions:**
-
-**Touch-Optimized Buttons:**
-- Minimum 44x44px touch targets
-- Increased padding and margins
-- Larger fonts on mobile
-- Swipe gestures for tabs
-
-**Collapsible Sections:**
-- Accordion-style building categories
-- "Show More" for long lists
-- Minimize inactive tabs
-- Compact mode toggle
-
-**Portrait/Landscape Modes:**
-- Portrait: Vertical scrolling layout
-- Landscape: Side-by-side panels
-- Auto-adjust on orientation change
-- Optimized for both
-
-**Mobile-Specific Features:**
-- Pull-to-refresh
-- Haptic feedback on actions (vibration)
-- Double-tap to zoom cards
-- Long-press for bulk actions
-
-#### Progressive Web App (PWA)
-
-**Installation:**
+### 6. Mobile Optimisation & PWA 📱
+
+**Responsive Design**
+- Touch-optimised buttons (min 44×44px tap targets)
+- Collapsible sidebar sections
+- Portrait and landscape layout modes
+- Swipe gestures for tab navigation
+
+**Progressive Web App**
+- `manifest.json` with icons (192×192, 512×512)
+- Service worker for offline capability
 - "Add to Home Screen" prompt
-- Custom app icon and splash screen
-- Standalone mode (no browser UI)
-- Looks like native app
+- Push notifications for: research complete, deployment ready, weekly challenge available
 
-**Offline Capability:**
-- Service worker for offline play
-- Cache game assets
-- Sync save data when online
-- "Offline Mode" indicator
+---
 
-**Push Notifications (Optional):**
-- Training complete notification
-- Achievement unlocked
-- Challenge available
-- Event started
-- Settings: Enable/disable per type
+## Implementation Plan (v1.0.0)
 
-**PWA Manifest:**
-```json
-{
-  "name": "AI-Idle",
-  "short_name": "AI-Idle",
-  "description": "Incremental ML Game",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#0f0f1e",
-  "theme_color": "#00d4ff",
-  "icons": [...]
-}
+| Phase | Focus | Target |
+|-------|-------|--------|
+| Phase 1 | Prestige / Deployment expansion | Week 1 |
+| Phase 2 | New models + Model Zoo | Week 2 |
+| Phase 3 | Events & Challenges | Week 3 |
+| Phase 4 | Mobile / PWA + final balance pass | Week 4 |
+
+---
+
+## Post-1.0 Ideas (Backlog)
+
+- Drag-and-drop queue reordering
+- Queue presets (save/load training queues)
+- Smart training recommendations (AI suggests next model)
+- Priority system for training queue
+- Multiplayer leaderboard (portfolio score ranking)
+- Mod support / plugin API
+- Dark/light theme toggle
+- Localisation (i18n)
+
+---
+
+## Development Workflow
+
+```
+feature/fix branch → PR → review → merge to main → tag release
 ```
 
----
-
-### 7. 🎮 **Mini-Games** (Low Priority / Post-1.0)
-
-*Optional content for variety and engagement*
-
-#### A. GAN Training Mini-Game
-
-**Concept:** Rhythm game representing Generator vs Discriminator
-
-**Gameplay:**
-- Two bars moving towards center
-- Press spacebar when bars align
-- Perfect timing: Generator improves
-- Miss: Discriminator wins
-- Goal: 10 perfect hits to complete
-
-**Rewards:**
-- Completion: 2x data for 10 minutes
-- Perfect run: 5x data for 5 minutes
-- Unlock "GAN Master" achievement
-
-**Frequency:**
-- Available once every hour
-- Optional, skip if not interested
-
-#### B. Hyperparameter Tuning
-
-**Concept:** Slider puzzle to find optimal settings
-
-**Gameplay:**
-- 5 sliders (learning rate, batch size, etc.)
-- Adjust to maximize "validation accuracy"
-- Real-time feedback graph
-- Goal: Reach 95% accuracy
-
-**Rewards:**
-- Completion: +10% training speed (permanent)
-- Perfect tuning: +25% training speed
-- Unlock "Tuning Expert" achievement
-
-**Frequency:**
-- One-time per model
-- Unlocks after training model 5 times
-
-#### C. Data Labeling Game
-
-**Concept:** Quick image classification for manual collect boost
-
-**Gameplay:**
-- Image appears
-- Choose correct label from 4 options
-- 10 images in sequence
-- Faster = better reward
-
-**Rewards:**
-- 10/10 correct: +100 data
-- Under 30 seconds: +200 data
-- Combo with manual collect
-
-**Frequency:**
-- Optional during manual collection
-- Toggle in settings
+- All features developed on named branches
+- PRs required for main branch merges
+- Semantic versioning: MAJOR.MINOR.PATCH
+- CHANGELOG.md updated with every release
 
 ---
 
-## 📋 Version 1.0.0 Implementation Plan
+## Success Metrics for v1.0.0
 
-### Phase 1: Prestige Expansion (Week 1)
-- [ ] Implement deployment strategies
-- [ ] Expand token shop to 20+ items
-- [ ] Add deployment milestones
-- [ ] Create Model Portfolio system
-- [ ] Implement Transfer Learning
-
-### Phase 2: Content Expansion (Week 2)
-- [ ] Add 10+ new models
-- [ ] Expand research tree to 40+ items
-- [ ] Implement research specializations
-- [ ] Add new model categories
-- [ ] Create model card system
-
-### Phase 3: Collections & Events (Week 3)
-- [ ] Build Model Zoo UI
-- [ ] Add collection bonuses
-- [ ] Implement weekly challenges
-- [ ] Create random events system
-- [ ] Add event notifications
-
-### Phase 4: Mobile & Polish (Week 4)
-- [ ] Mobile responsive redesign
-- [ ] PWA implementation
-- [ ] Touch optimizations
-- [ ] Final balance pass
-- [ ] Documentation and release
-
----
-
-## 🎯 Post-1.0 Roadmap
-
-### Version 1.1 - Community Features
-- Leaderboards (global and friends)
-- Daily challenges
-- Community events
-- Share achievements
-
-### Version 1.2 - Advanced Features
-- Mini-games integration
-- Custom model designer
-- Mod support
-- Theme customization
-
-### Version 1.3 - Multiplayer (Maybe)
-- Co-op research
-- Competitive training
-- Trade resources
-- Guild system
-
----
-
-## 📊 Feature Priority Matrix
-
-### Critical (Must-Have for v1.0)
-1. ✅ Expanded Prestige System
-2. ✅ Model Zoo & Collections
-3. ✅ Mobile Optimization
-4. ✅ New Models (10+)
-5. ✅ Expanded Research (40+)
-
-### High Priority (Should-Have)
-6. ✅ Tutorial System (v0.3.0 - PR #3)
-7. ✅ Combo System (v0.3.0 - PR #2)
-8. ✅ Auto-Training Queue (v0.3.0 - PR #4)
-9. 🚧 Statistics Dashboard (v0.3.0 - PR #5)
-10. ✅ Events & Challenges
-
-### Medium Priority (Nice-to-Have)
-11. ⏸️ Sound System (deferred)
-12. ⏸️ Visual Polish (partially done)
-13. ⏸️ Accessibility Features (deferred)
-14. ✅ PWA Features
-15. ✅ Challenge System
-
-### Low Priority (Post-1.0)
-16. ⏸️ Mini-Games
-17. ⏸️ Leaderboards
-18. ⏸️ Multiplayer
-19. ⏸️ Mod Support
-20. ⏸️ Mobile App
-
----
-
-## 🔄 Development Workflow
-
-### Feature Development Process
-1. **Design:** Write detailed feature spec
-2. **Branch:** Create feature branch
-3. **Implement:** Code the feature
-4. **Test:** Thorough testing
-5. **Review:** Self-review and cleanup
-6. **PR:** Create pull request
-7. **Merge:** Merge to main
-8. **Deploy:** Test on live site
-
-### Release Process
-1. **Code Freeze:** Stop new features
-2. **Testing:** Comprehensive bug testing
-3. **Balance:** Final balance adjustments
-4. **Documentation:** Update README, CHANGELOG
-5. **Version Bump:** Update version numbers
-6. **Release Notes:** Write release announcement
-7. **Deploy:** Push to production
-8. **Announce:** Share with community
-
----
-
-## 📈 Success Metrics
-
-### v0.3.0 Goals
-- 90%+ tutorial completion rate
-- Average session length: 15+ minutes
-- Combo system used by 80%+ players
-- Training queue used by 70%+ players
-
-### v1.0 Goals
-- 10+ deployments per player average
-- 80%+ model collection rate
-- 5+ weekly challenge completions
-- 95%+ mobile usability score
-- 4.5+ star rating (if published)
-
----
-
-## 🎉 Summary
-
-This roadmap outlines a clear path from v0.2.1 to v1.0 and beyond:
-
-- **v0.3.0:** Polish and improve player experience (1 week) - **75% COMPLETE**
-  - ✅ Combo System (PR #2)
-  - ✅ Tutorial System (PR #3)
-  - ✅ Auto-Training Queue (PR #4)
-  - 🚧 QoL Improvements (PR #5 in progress)
-- **v1.0.0:** Complete game with all major systems (4 weeks)
-- **Post-1.0:** Community features and advanced content
-
-Total estimated time to v1.0: **5 weeks from now** (Mid-March 2026)
-
-**Next Steps:**
-1. ✅ Review and approve roadmap
-2. ✅ Create GitHub milestones and issues
-3. 🚧 Complete v0.3.0 development (PR #5)
-4. 🔜 Release v0.3.0
-5. 🎯 Begin v1.0.0 planning
-
----
-
-**Document Status:** ✅ Complete  
-**Last Updated:** February 10, 2026  
-**Maintained By:** AI-Idle Development Team
+- [ ] 40+ research items implemented and balanced ✅ (done in v0.3.4)
+- [ ] 15+ model types available
+- [ ] Prestige system with 3 deployment strategies
+- [ ] Mobile-playable on iOS Safari and Android Chrome
+- [ ] PWA installable
+- [ ] 0 known crash bugs at release
+- [ ] Test coverage ≥ 80% on core modules
