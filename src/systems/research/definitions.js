@@ -4,7 +4,7 @@
  */
 
 export const research = {
-    // Optimization Algorithms
+    // ─── Optimization Algorithms ───────────────────────────────────────────────
     momentum: {
         id: 'momentum',
         name: 'Momentum Optimizer',
@@ -43,8 +43,34 @@ export const research = {
         researched: false,
         realConcept: 'Improved weight decay regularization for better generalization'
     },
+    lion: {
+        id: 'lion',
+        name: 'Lion Optimizer',
+        category: 'optimizers',
+        icon: '🦁',
+        description: 'EvoLved Sign Momentum — discovered by AutoML',
+        cost: { research: 1200 },
+        effect: { type: 'trainingSpeed', multiplier: 1.6 },
+        unlocked: false,
+        unlockRequirement: { research: 'adamw' },
+        researched: false,
+        realConcept: 'Uses sign of gradient update, more memory-efficient than Adam'
+    },
+    sophia: {
+        id: 'sophia',
+        name: 'Sophia Optimizer',
+        category: 'optimizers',
+        icon: '🧠',
+        description: 'Second-order optimizer using Hessian curvature',
+        cost: { research: 5000 },
+        effect: { type: 'trainingSpeed', multiplier: 2.0 },
+        unlocked: false,
+        unlockRequirement: { research: 'lion' },
+        researched: false,
+        realConcept: '2x faster than Adam on LLM pre-training via curvature-aware steps'
+    },
 
-    // Activation Functions
+    // ─── Activation Functions ──────────────────────────────────────────────────
     relu: {
         id: 'relu',
         name: 'ReLU Activation',
@@ -96,8 +122,21 @@ export const research = {
         researched: false,
         realConcept: 'f(x) = x * sigmoid(x) - discovered by AutoML'
     },
+    mish: {
+        id: 'mish',
+        name: 'Mish Activation',
+        category: 'activations',
+        icon: '✨',
+        description: 'Smooth, non-monotonic activation with strong regularization',
+        cost: { research: 4000 },
+        effect: { type: 'modelPerformance', multiplier: 1.65 },
+        unlocked: false,
+        unlockRequirement: { research: 'swish' },
+        researched: false,
+        realConcept: 'f(x) = x * tanh(softplus(x)) — outperforms Swish on many benchmarks'
+    },
 
-    // Architectures
+    // ─── Architectures ─────────────────────────────────────────────────────────
     cnn: {
         id: 'cnn',
         name: 'Convolutional Networks',
@@ -149,8 +188,21 @@ export const research = {
         researched: false,
         realConcept: 'Used in DALL-E 2, Stable Diffusion, Midjourney'
     },
+    moe: {
+        id: 'moe',
+        name: 'Mixture of Experts',
+        category: 'architectures',
+        icon: '🧩',
+        description: 'Route inputs to specialized sub-networks for massive scale',
+        cost: { research: 35000 },
+        effect: { type: 'globalMultiplier', multiplier: 3.0 },
+        unlocked: false,
+        unlockRequirement: { research: 'diffusion' },
+        researched: false,
+        realConcept: 'Used in GPT-4 and Gemini — sparse activation enables trillion-param models'
+    },
 
-    // Regularization Techniques
+    // ─── Regularization Techniques ─────────────────────────────────────────────
     dropout: {
         id: 'dropout',
         name: 'Dropout',
@@ -201,6 +253,283 @@ export const research = {
         unlockRequirement: { research: 'dropout' },
         researched: false,
         realConcept: 'Prevents overfitting by constraining model complexity'
+    },
+    gradclip: {
+        id: 'gradclip',
+        name: 'Gradient Clipping',
+        category: 'regularization',
+        icon: '✂️',
+        description: 'Cap gradient norms to prevent exploding gradients',
+        cost: { research: 1800 },
+        effect: { type: 'trainingSpeed', multiplier: 1.35 },
+        unlocked: false,
+        unlockRequirement: { research: 'layernorm' },
+        researched: false,
+        realConcept: 'Essential for training RNNs and very deep networks stably'
+    },
+
+    // ─── Hardware Innovations ──────────────────────────────────────────────────
+    gpu_acceleration: {
+        id: 'gpu_acceleration',
+        name: 'GPU Acceleration',
+        category: 'hardware',
+        icon: '🖥️',
+        description: 'Parallelize matrix ops across thousands of CUDA cores',
+        cost: { research: 500 },
+        effect: { type: 'trainingSpeed', multiplier: 1.5 },
+        unlocked: true,
+        researched: false,
+        realConcept: 'NVIDIA CUDA enabled the deep learning revolution in 2012'
+    },
+    mixed_precision: {
+        id: 'mixed_precision',
+        name: 'Mixed Precision Training',
+        category: 'hardware',
+        icon: '⚗️',
+        description: 'Train in FP16 with FP32 master weights for 2x speedup',
+        cost: { research: 2000 },
+        effect: { type: 'trainingSpeed', multiplier: 1.8 },
+        unlocked: false,
+        unlockRequirement: { research: 'gpu_acceleration' },
+        researched: false,
+        realConcept: 'Halves memory usage and doubles throughput on modern GPUs'
+    },
+    tensor_cores: {
+        id: 'tensor_cores',
+        name: 'Tensor Core Ops',
+        category: 'hardware',
+        icon: '🔷',
+        description: 'Dedicated matrix multiply units for transformer workloads',
+        cost: { research: 8000 },
+        effect: { type: 'trainingSpeed', multiplier: 2.2 },
+        unlocked: false,
+        unlockRequirement: { research: 'mixed_precision' },
+        researched: false,
+        realConcept: 'NVIDIA Tensor Cores deliver 312 TFLOPS on A100 GPUs'
+    },
+    distributed_training: {
+        id: 'distributed_training',
+        name: 'Distributed Training',
+        category: 'hardware',
+        icon: '🌐',
+        description: 'Shard model and data across multiple accelerators',
+        cost: { research: 20000 },
+        effect: { type: 'globalMultiplier', multiplier: 2.5 },
+        unlocked: false,
+        unlockRequirement: { research: 'tensor_cores' },
+        researched: false,
+        realConcept: 'Data/model/pipeline parallelism used to train GPT-3 on 1024 A100s'
+    },
+    neuromorphic: {
+        id: 'neuromorphic',
+        name: 'Neuromorphic Chips',
+        category: 'hardware',
+        icon: '🧬',
+        description: 'Brain-inspired hardware with event-driven spiking neurons',
+        cost: { research: 75000 },
+        effect: { type: 'efficiency', multiplier: 3.0 },
+        unlocked: false,
+        unlockRequirement: { research: 'distributed_training' },
+        researched: false,
+        realConcept: 'Intel Loihi 2 achieves 1000x energy efficiency over GPUs for inference'
+    },
+
+    // ─── Data Engineering ──────────────────────────────────────────────────────
+    data_augmentation: {
+        id: 'data_augmentation',
+        name: 'Data Augmentation',
+        category: 'data',
+        icon: '🔁',
+        description: 'Synthetically expand training data with transforms',
+        cost: { research: 150 },
+        effect: { type: 'modelPerformance', multiplier: 1.2 },
+        unlocked: true,
+        researched: false,
+        realConcept: 'Flips, crops, color jitter — standard practice since AlexNet (2012)'
+    },
+    transfer_learning: {
+        id: 'transfer_learning',
+        name: 'Transfer Learning',
+        category: 'data',
+        icon: '🔀',
+        description: 'Fine-tune pretrained weights instead of training from scratch',
+        cost: { research: 600 },
+        effect: { type: 'trainingSpeed', multiplier: 1.6 },
+        unlocked: false,
+        unlockRequirement: { research: 'data_augmentation' },
+        researched: false,
+        realConcept: 'ImageNet pretraining + fine-tuning dominates computer vision tasks'
+    },
+    synthetic_data: {
+        id: 'synthetic_data',
+        name: 'Synthetic Data Generation',
+        category: 'data',
+        icon: '🏭',
+        description: 'Generate unlimited training data with GANs and simulators',
+        cost: { research: 3500 },
+        effect: { type: 'modelPerformance', multiplier: 1.45 },
+        unlocked: false,
+        unlockRequirement: { research: 'transfer_learning' },
+        researched: false,
+        realConcept: 'Tesla uses synthetic data from simulation to train Autopilot'
+    },
+    curriculum_learning: {
+        id: 'curriculum_learning',
+        name: 'Curriculum Learning',
+        category: 'data',
+        icon: '📚',
+        description: 'Train on easy examples first, gradually increase difficulty',
+        cost: { research: 7000 },
+        effect: { type: 'trainingSpeed', multiplier: 1.7 },
+        unlocked: false,
+        unlockRequirement: { research: 'synthetic_data' },
+        researched: false,
+        realConcept: 'Mimics human learning — used in AlphaGo and LLM pre-training'
+    },
+    rlhf: {
+        id: 'rlhf',
+        name: 'RLHF',
+        category: 'data',
+        icon: '👥',
+        description: 'Reinforcement Learning from Human Feedback aligns models to intent',
+        cost: { research: 25000 },
+        effect: { type: 'globalMultiplier', multiplier: 2.0 },
+        unlocked: false,
+        unlockRequirement: { research: 'curriculum_learning' },
+        researched: false,
+        realConcept: 'The technique behind ChatGPT — human raters teach models to be helpful'
+    },
+
+    // ─── Meta-Learning ─────────────────────────────────────────────────────────
+    hyperparameter_search: {
+        id: 'hyperparameter_search',
+        name: 'Hyperparameter Search',
+        category: 'meta',
+        icon: '🔍',
+        description: 'Automatically find optimal learning rates and batch sizes',
+        cost: { research: 300 },
+        effect: { type: 'trainingSpeed', multiplier: 1.25 },
+        unlocked: true,
+        researched: false,
+        realConcept: 'Grid search, random search, and Bayesian optimization'
+    },
+    nas: {
+        id: 'nas',
+        name: 'Neural Architecture Search',
+        category: 'meta',
+        icon: '🏗️',
+        description: 'Let algorithms design better neural networks than humans',
+        cost: { research: 4000 },
+        effect: { type: 'modelPerformance', multiplier: 1.5 },
+        unlocked: false,
+        unlockRequirement: { research: 'hyperparameter_search' },
+        researched: false,
+        realConcept: 'EfficientNet and MobileNet discovered via NAS — beats hand-designed nets'
+    },
+    maml: {
+        id: 'maml',
+        name: 'MAML (Few-Shot Learning)',
+        category: 'meta',
+        icon: '🎯',
+        description: 'Learn to learn — adapt to new tasks with just a few examples',
+        cost: { research: 12000 },
+        effect: { type: 'efficiency', multiplier: 1.8 },
+        unlocked: false,
+        unlockRequirement: { research: 'nas' },
+        researched: false,
+        realConcept: 'Model-Agnostic Meta-Learning finds initializations that generalize fast'
+    },
+    knowledge_distillation: {
+        id: 'knowledge_distillation',
+        name: 'Knowledge Distillation',
+        category: 'meta',
+        icon: '🧪',
+        description: 'Compress a large teacher model into a tiny student model',
+        cost: { research: 9000 },
+        effect: { type: 'efficiency', multiplier: 2.0 },
+        unlocked: false,
+        unlockRequirement: { research: 'nas' },
+        researched: false,
+        realConcept: 'DistilBERT is 60% smaller than BERT with 97% of its performance'
+    },
+    continual_learning: {
+        id: 'continual_learning',
+        name: 'Continual Learning',
+        category: 'meta',
+        icon: '♾️',
+        description: 'Learn new tasks without forgetting old ones',
+        cost: { research: 40000 },
+        effect: { type: 'globalMultiplier', multiplier: 2.5 },
+        unlocked: false,
+        unlockRequirement: { research: 'maml' },
+        researched: false,
+        realConcept: 'Elastic Weight Consolidation prevents catastrophic forgetting'
+    },
+
+    // ─── Safety & Ethics ───────────────────────────────────────────────────────
+    bias_detection: {
+        id: 'bias_detection',
+        name: 'Bias Detection',
+        category: 'safety',
+        icon: '🔎',
+        description: 'Audit models for demographic and representational bias',
+        cost: { research: 400 },
+        effect: { type: 'modelPerformance', multiplier: 1.1 },
+        unlocked: true,
+        researched: false,
+        realConcept: 'Fairness metrics like demographic parity and equalized odds'
+    },
+    interpretability: {
+        id: 'interpretability',
+        name: 'Model Interpretability',
+        category: 'safety',
+        icon: '🔬',
+        description: 'Understand why your model makes each prediction',
+        cost: { research: 1500 },
+        effect: { type: 'modelPerformance', multiplier: 1.2 },
+        unlocked: false,
+        unlockRequirement: { research: 'bias_detection' },
+        researched: false,
+        realConcept: 'SHAP values and LIME explain black-box model decisions'
+    },
+    differential_privacy: {
+        id: 'differential_privacy',
+        name: 'Differential Privacy',
+        category: 'safety',
+        icon: '🔒',
+        description: 'Mathematically guarantee training data cannot be extracted',
+        cost: { research: 6000 },
+        effect: { type: 'efficiency', multiplier: 1.4 },
+        unlocked: false,
+        unlockRequirement: { research: 'interpretability' },
+        researched: false,
+        realConcept: 'Apple and Google use DP to collect usage stats without exposing individuals'
+    },
+    red_teaming: {
+        id: 'red_teaming',
+        name: 'Red Teaming',
+        category: 'safety',
+        icon: '🛡️',
+        description: 'Adversarially probe models to find failure modes before deployment',
+        cost: { research: 15000 },
+        effect: { type: 'modelPerformance', multiplier: 1.35 },
+        unlocked: false,
+        unlockRequirement: { research: 'differential_privacy' },
+        researched: false,
+        realConcept: 'OpenAI, Anthropic, and DeepMind all run red teams before major releases'
+    },
+    constitutional_ai: {
+        id: 'constitutional_ai',
+        name: 'Constitutional AI',
+        category: 'safety',
+        icon: '📜',
+        description: 'Encode a set of principles the model must follow at all times',
+        cost: { research: 50000 },
+        effect: { type: 'globalMultiplier', multiplier: 2.0 },
+        unlocked: false,
+        unlockRequirement: { research: 'red_teaming' },
+        researched: false,
+        realConcept: "Anthropic's technique — Claude is trained to critique and revise its own outputs"
     }
 };
 
