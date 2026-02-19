@@ -25,6 +25,11 @@ import { recalculateProduction } from '../core/production-calculator.js';
 import { saveGame, loadGame, exportSave, importSave } from '../core/save-system.js';
 import { processOfflineProgress } from '../core/offline-progress.js';
 
+// Deployment / Prestige system imports
+import { STRATEGIES } from './deployment-strategies.js';
+import { getUpgradeMultiplier } from './deployment-upgrades.js';
+import { createPortfolioEntry } from './deployment-portfolio.js';
+
 // Game constants
 const ACHIEVEMENT_CHECK_INTERVAL = 5.0; // Check achievements every 5 seconds
 
@@ -382,65 +387,119 @@ export class GameState {
     
     performDeployment() {
         const deployInfo = this.getDeploymentInfo();
-        
+
         if (!deployInfo.canDeploy) {
             return { success: false, reason: 'Not enough progress for deployment' };
         }
-        
-        const tokensEarned = deployInfo.tokensOnDeploy;
-        
-        // Record deployment
-        const deploymentRecord = {
-            timestamp: Date.now(),
-            tokensEarned: tokensEarned,
-            totalAccuracy: this.deployment.lifetimeStats.totalAccuracy,
-            deploymentNumber: this.deployment.deployments + 1
-        };
-        
-        this.deployment.history.push(deploymentRecord);
-        this.deployment.tokens += tokensEarned;
+
+        // ── 1. Resolve strategy ──────────────────────────────────────────────
+        const strategyId = this.deployment.selectedStrategy || 'standard';
+        const strategy   = STRATEGIES[strategyId] || STRATEGIES['standard'];
+
+        // ── 2. Calculate tokens ──────────────────────────────────────────────
+        // Base tokens from the accuracy formula (already computed by getDeploymentInfo)
+        const baseTokens = deployInfo.tokensOnDeploy;
+
+        // Apply strategy multiplier (fast 0.75×, standard 1.0×, complete 1.5×)
+        const strategyMultiplier = strategy.tokenMultiplier ?? 1.0;
+
+        // Apply any purchased upgrade multiplier for 'tokenMultiplier' effect type
+        const upgradesPurchased  = this.deployment.upgradesPurchased || {};
+        const upgradeMultiplier  = getUpgradeMultiplier(upgradesPurchased, 'tokenMultiplier');
+
+        const tokensEarned = Math.floor(baseTokens * strategyMultiplier * upgradeMultiplier);
+
+        // ── 3. Snapshot run stats (before reset) ────────────────────────────
+        const deploymentNumber      = this.deployment.deployments + 1;
+        const totalAccuracyAtDeploy = this.deployment.lifetimeStats.totalAccuracy;
+        const modelsTrainedThisRun  = this.stats.modelsTrained;
+        const researchThisRun       = this.stats.completedResearch.length;
+        const runStartTime          = this.stats.startTime || Date.now();
+        const runDurationMs         = Date.now() - runStartTime;
+
+        // ── 4. Update permanent deployment counters ──────────────────────────
+        this.deployment.tokens        += tokensEarned;
         this.deployment.lifetimeTokens += tokensEarned;
         this.deployment.deployments++;
         this.stats.deployments++;
-        
-        // Reset game state
+
+        // ── 5. Record to portfolio (new v0.6 structure) ──────────────────────
+        // Ensure portfolio exists (guard for saves migrated mid-session)
+        if (!this.deployment.portfolio) {
+            this.deployment.portfolio = { history: [] };
+        }
+
+        const portfolioEntry = createPortfolioEntry({
+            deploymentNumber,
+            strategyId,
+            tokensEarned,
+            totalAccuracyAtDeploy,
+            modelsTrainedThisRun,
+            researchCompletedThisRun: researchThisRun,
+            runDurationMs,
+        });
+
+        this.deployment.portfolio.history.push(portfolioEntry);
+
+        // Also keep the legacy history array in sync for any older UI code
+        // that still reads deployment.history.
+        if (!this.deployment.history) this.deployment.history = [];
+        this.deployment.history.push({
+            timestamp:        portfolioEntry.timestamp,
+            tokensEarned,
+            totalAccuracy:    totalAccuracyAtDeploy,
+            deploymentNumber,
+        });
+
+        // ── 6. Reset run state ───────────────────────────────────────────────
         this.resources = initializeResources();
         this.buildings = initializeBuildings();
-        this.models = initializeModels();
-        this.research = initializeResearch();
-        
-        this.currentTraining = null;
+        this.models    = initializeModels();
+        this.research  = initializeResearch();
+
+        this.currentTraining  = null;
         this.trainingProgress = 0;
-        this.training = null;
-        
-        // Reset stats
-        this.stats.totalDataGenerated = 0;
-        this.stats.totalAccuracy = 0;
-        this.stats.maxAccuracy = 0;
-        this.stats.totalCompute = 0;
-        this.stats.totalBuildings = 0;
-        this.stats.modelsTrained = 0;
+        this.training         = null;
+
+        // Reset per-run stats (lifetime stats on deployment object are preserved)
+        this.stats.totalDataGenerated  = 0;
+        this.stats.totalAccuracy       = 0;
+        this.stats.maxAccuracy         = 0;
+        this.stats.totalCompute        = 0;
+        this.stats.totalBuildings      = 0;
+        this.stats.modelsTrained       = 0;
         this.stats.uniqueModelsTrained = 0;
-        this.stats.trainedModels = [];
-        this.stats.completedResearch = [];
-        this.stats.manualClicks = 0;
-        
+        this.stats.trainedModels       = [];
+        this.stats.completedResearch   = [];
+        this.stats.manualClicks        = 0;
+        this.stats.startTime           = Date.now(); // reset run timer
+
         // Invalidate research multiplier cache — completedResearch was reset above.
         this._cachedResearchMultipliers = null;
 
-        // Reset systems
-        this.comboSystem = new ComboSystem();
+        // Reset transient systems
+        this.comboSystem   = new ComboSystem();
         this.trainingQueue = new TrainingQueue(this);
-        
+
         this.recalculateProduction();
-        
-        console.log(`🚀 Deployment #${this.deployment.deployments} complete! Earned ${tokensEarned} tokens.`);
-        
+
+        console.log(
+            `🚀 Deployment #${this.deployment.deployments} complete!` +
+            ` Strategy: ${strategyId} (${strategyMultiplier}×).` +
+            ` Tokens earned: ${tokensEarned}` +
+            ` (base ${baseTokens} × strategy ${strategyMultiplier} × upgrades ${upgradeMultiplier}).`
+        );
+
         return {
-            success: true,
-            tokensEarned: tokensEarned,
-            newTotalTokens: this.deployment.tokens,
-            deploymentRecord: deploymentRecord
+            success:          true,
+            tokensEarned,
+            baseTokens,
+            strategyMultiplier,
+            upgradeMultiplier,
+            strategyId,
+            newTotalTokens:   this.deployment.tokens,
+            deploymentNumber,
+            portfolioEntry,
         };
     }
     
