@@ -4,6 +4,94 @@
 
 ### Added
 
+#### 🚀 Expanded Deployment/Prestige System (Phase 1 of v1.0.0)
+
+**Deployment Strategies**
+- **3 deployment strategies** with speed/reward tradeoffs:
+  - **Fast Deployment** (⚡) — 0.75× tokens, always available, best for quick iteration
+  - **Standard Deployment** (🚀) — 1.0× tokens, default balanced strategy
+  - **Complete Deployment** (🏆) — 1.5× tokens + 10% production bonus next run, unlocks after 3 deployments
+- Strategy selection UI in Deployment modal
+- Strategy bonuses applied on deployment and carried into next run
+- `src/modules/deployment-strategies.js` — strategy definitions and calculations
+
+**Token Shop (15 Permanent Upgrades)**
+- **Token Shop UI** with 4 categories: Training, Efficiency, Research, Prestige
+- **Training upgrades (4):**
+  - Optimised Gradients I–III (1/3/8 tokens) — +25%/+50%/+100% training speed
+  - Xavier Initialisation (2 tokens) — models start at 10% accuracy
+- **Efficiency upgrades (5):**
+  - Data Pipeline I–II (1/4 tokens) — +30%/+60% data production
+  - GPU Overclock I–II (1/4 tokens) — +30%/+60% compute production
+  - Systems Optimisation (5 tokens) — +20% all production
+- **Research upgrades (3):**
+  - Literature Review I–II (2/6 tokens) — +40%/+80% research speed
+  - Prior Knowledge (3 tokens) — start each run with 1 free research unlock
+- **Prestige upgrades (2):**
+  - Deployment Bonus (5 tokens) — +25% tokens earned per deployment
+  - Institutional Memory (4 tokens) — start each run with 2× building production
+- **Total shop cost:** 49 tokens for all upgrades
+- **Prerequisite system** — some upgrades require prior tier (e.g. Gradients II requires Gradients I)
+- `src/modules/deployment-upgrades.js` — upgrade definitions, purchase logic, and multiplier calculations
+
+**Portfolio System**
+- **Deployment history tracking** — every deployment creates a permanent record with:
+  - Strategy used, tokens earned, total accuracy, models trained, research completed, run duration, timestamp
+- **Portfolio Score formula:**
+  - +10 per deployment
+  - +5 per token earned
+  - +2 per model trained
+  - +3 per research completed
+  - +20 bonus for Complete Deployment strategy
+- **6 Portfolio Ranks** based on score:
+  - Intern (0–9) 🎓
+  - Junior Researcher (10–39) 📚
+  - ML Engineer (40–99) 💻
+  - Senior Researcher (100–249) 🔬
+  - ML Architect (250–499) 🏆
+  - AGI Pioneer (500+) 🌟
+- **Portfolio statistics UI:**
+  - Current rank and score
+  - Total deployments, lifetime tokens
+  - Total models trained and research completed (all-time)
+  - Best token run, fastest run duration
+  - Recent history (last 5 deployments)
+- `src/modules/deployment-portfolio.js` — portfolio tracking, scoring, and ranking
+
+**Deployment UI Overhaul**
+- **3-tab Deployment modal:**
+  - **Token Shop** — browse and purchase upgrades by category
+  - **Strategies** — select deployment strategy and view token preview
+  - **Portfolio** — view deployment history, rank, and stats
+- **Deploy button** integrated into game footer controls
+- Upgrade cards display: name, description, cost, prerequisite, owned status
+- Strategy cards display: icon, name, description, token multiplier, unlock requirement
+- Toast notifications for purchases and deployments
+- `src/ui/deployment-ui.js` — modal rendering, tab switching, purchase/deployment handlers
+
+**Core Integration**
+- **Production calculator integration** — Token Shop upgrades feed into `getUpgradeMultipliers()`:
+  - `trainingSpeed`, `dataProduction`, `computeEfficiency`, `researchSpeed`, `globalMultiplier`
+  - All multipliers stack multiplicatively with research and achievement bonuses
+- **Deployment flow rewrite** in `game-state.js`:
+  - Strategy selection and token calculation
+  - Upgrade multiplier application
+  - Portfolio entry creation and history append
+  - Strategy bonuses applied to next run (e.g. Complete's +10% production)
+- **Save version bumped to 0.6** to accommodate:
+  - `deployment.upgradesPurchased` — purchased upgrade map
+  - `deployment.selectedStrategy` — currently selected strategy ID
+  - `deployment.portfolio` — full deployment history array
+
+**Documentation**
+- **`docs/DEPLOYMENT_SYSTEM.md`** — comprehensive 14KB guide covering:
+  - Token formula and milestones
+  - Strategy comparison table and usage tips
+  - Complete Token Shop upgrade list with costs and effects
+  - Portfolio scoring and ranking system
+  - Strategic progression guide (early/mid/late game)
+  - Technical implementation details
+
 #### 🔬 Research Tree Expansion (40+ Items)
 - **Expanded from 17 → 40 research items** across 8 categories (5 items each)
 - **4 new categories added:**
@@ -33,11 +121,29 @@
 #### 🗂️ Architecture
 - **Research definitions extracted** to `src/systems/research/definitions.js` — single source of truth for all 40 items; `ui-render.js` and `research.js` both import from there
 - **`_cachedResearchMultiplier` renamed to `_cachedResearchMultipliers`** (plural) to reflect that the cache now holds an object with all 8 effect types rather than a single scalar
-- **`multipliers` is not persisted** in save data — it is always recomputed from `research` + `achievementBonuses` on load, eliminating any risk of stale cached values
-- **Save version bumped to `0.5`** to reflect the expanded multipliers shape and cache key rename
+- **`multipliers` is not persisted** in save data — it is always recomputed from `research` + `achievementBonuses` + `upgrades` on load, eliminating any risk of stale cached values
+- **Save version bumped to `0.6`** to reflect:
+  - Expanded multipliers shape and cache key rename
+  - New deployment fields: `upgradesPurchased`, `selectedStrategy`, `portfolio`
+  - Upgrade multipliers integrated into production calculator
 
 #### 🔄 Save/Load
 - `GameState.load()` and `GameState.import()` now own the `recalculateProduction()` call: they invalidate `_cachedResearchMultipliers` first, then call `recalculateProduction()` once — avoiding the previous redundant double-pass that existed between `save-system.js` and `game-state.js`
+- Save migration from v0.5 → v0.6 initializes:
+  - `deployment.upgradesPurchased = {}`
+  - `deployment.selectedStrategy = 'standard'`
+  - `deployment.portfolio = []`
+
+### Fixed
+
+#### 🐛 Deployment UI Bugs
+- **Fixed Token Shop import** — changed from non-existent `UPGRADES` export to `UPGRADE_DEFINITIONS` in `deployment-upgrades.js`
+- **Fixed upgrade card rendering** — replaced levelled upgrade logic (maxLevel/baseCost) with flat one-time purchase model (owned boolean)
+- **Fixed purchase function call order** — corrected argument order to match `canPurchaseUpgrade(id, purchased, tokens)` and `purchaseUpgrade(id, purchased, tokens)`
+- **Fixed Deploy button placement** — now inserted into `.footer-controls` instead of falling back to `document.body`
+- **Removed redundant UI elements:**
+  - Old `#btn-deploy` button from Deployment tab (replaced by DeploymentUI modal)
+  - Static `#training-queue-section` from Training tab (duplicate of dynamic TrainingQueueUI)
 
 ---
 
