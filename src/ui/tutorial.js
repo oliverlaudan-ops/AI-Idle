@@ -1,6 +1,14 @@
 /**
- * Tutorial System - Interactive guide for new players
- * Provides step-by-step onboarding with spotlight highlighting and tooltips
+ * TutorialSystem - Guides new players through the game mechanics
+ *
+ * Overlay strategy:
+ *   - .tutorial-overlay  : full-screen dim layer, pointer-events: none (clicks pass through)
+ *   - .tutorial-spotlight: positioned over the target element, box-shadow creates the dim effect,
+ *                          pointer-events: none (clicks pass through to the real element beneath)
+ *   - .tutorial-tooltip  : the instruction card, pointer-events: auto (buttons must be clickable)
+ *
+ * All critical layout properties (display, position, z-index, pointer-events) are set via
+ * inline styles in JS so they can never be overridden by CSS specificity or stacking contexts.
  */
 
 class TutorialSystem {
@@ -20,7 +28,7 @@ class TutorialSystem {
             {
                 id: 'welcome',
                 title: 'Welcome to AI Idle!',
-                content: 'Train AI models, gather resources, and advance through the history of machine learning. Let\'s get started!',
+                content: 'Train AI models, gather resources, and advance through the history of machine learning. Let\'s get you started!',
                 target: null,
                 position: 'center',
                 action: null
@@ -28,7 +36,7 @@ class TutorialSystem {
             {
                 id: 'resources',
                 title: 'Your Resources',
-                content: 'These are your core resources. <strong>Data</strong> and <strong>Compute</strong> are needed to train models. Watch them grow!',
+                content: 'These are your core resources: Data, Compute, and Model Points. You\'ll need them to train models and unlock research.',
                 target: '#resource-panel',
                 position: 'bottom',
                 action: null
@@ -36,15 +44,19 @@ class TutorialSystem {
             {
                 id: 'first-model',
                 title: 'Train Your First Model',
-                content: 'Click <strong>Train</strong> on the Perceptron to start your first training run. This is how you earn Model Points!',
+                content: 'Click the Train button on a model card to start training. Each training run costs resources but earns Model Points.',
                 target: '.model-card:first-child',
                 position: 'right',
-                action: { type: 'click', selector: '.model-card:first-child .btn-train', count: 1 }
+                action: {
+                    type: 'click',
+                    selector: '.model-card:first-child .btn-train',
+                    count: 1
+                }
             },
             {
                 id: 'model-points',
                 title: 'Model Points',
-                content: 'Great! Model Points (MP) unlock upgrades and research. Keep training to earn more!',
+                content: 'Model Points are your main currency for unlocking upgrades and research. Keep training to earn more!',
                 target: '#model-points-display',
                 position: 'bottom',
                 action: null
@@ -52,15 +64,19 @@ class TutorialSystem {
             {
                 id: 'research',
                 title: 'Research Tree',
-                content: 'Spend Model Points on <strong>Research</strong> to unlock powerful multipliers and new capabilities. Try researching something!',
+                content: 'Unlock powerful improvements by spending Model Points in the Research tab. Click the Research tab to explore!',
                 target: '#research-tab',
                 position: 'bottom',
-                action: { type: 'click', selector: '#research-tab', count: 1 }
+                action: {
+                    type: 'click',
+                    selector: '#research-tab',
+                    count: 1
+                }
             },
             {
                 id: 'upgrades',
                 title: 'Upgrades',
-                content: 'The <strong>Upgrades</strong> tab lets you permanently boost your production. Check it out when you have enough MP!',
+                content: 'The Upgrades tab lets you permanently boost your production. Check back often as new upgrades unlock.',
                 target: '#upgrades-tab',
                 position: 'bottom',
                 action: null
@@ -68,7 +84,7 @@ class TutorialSystem {
             {
                 id: 'complete',
                 title: 'You\'re Ready!',
-                content: 'You know the basics! Keep training models, researching new techniques, and unlocking upgrades. Good luck on your AI journey!',
+                content: 'That\'s the basics! Keep training models, researching improvements, and unlocking upgrades. Good luck!',
                 target: null,
                 position: 'center',
                 action: null
@@ -76,24 +92,18 @@ class TutorialSystem {
         ];
     }
 
-    /**
-     * Initialize the tutorial system.
-     * Checks localStorage to see if tutorial was already completed.
-     */
     init() {
         if (localStorage.getItem('ai-idle-tutorial-completed') === 'true') {
             this.isCompleted = true;
             return;
         }
-
         this._ensureElements();
         this.start();
     }
 
-    /**
-     * Ensure tutorial DOM elements exist, creating them if necessary.
-     */
     _ensureElements() {
+        // ── Overlay ──────────────────────────────────────────────────────────
+        // Full-screen dim layer. pointer-events: none so all clicks pass through.
         if (!this.overlay) {
             this.overlay = document.getElementById('tutorial-overlay');
         }
@@ -103,7 +113,23 @@ class TutorialSystem {
             this.overlay.className = 'tutorial-overlay';
             document.body.appendChild(this.overlay);
         }
+        // Force critical properties inline — immune to CSS specificity issues
+        Object.assign(this.overlay.style, {
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            zIndex: '3000',
+            pointerEvents: 'none',   // ← clicks pass through to the game UI
+            display: 'none'
+        });
 
+        // ── Spotlight ────────────────────────────────────────────────────────
+        // Positioned over the target element. The massive box-shadow creates the
+        // dimming effect around it. pointer-events: none so the real element
+        // underneath is still clickable.
         if (!this.spotlight) {
             this.spotlight = document.getElementById('tutorial-spotlight');
         }
@@ -113,7 +139,17 @@ class TutorialSystem {
             this.spotlight.className = 'tutorial-spotlight';
             document.body.appendChild(this.spotlight);
         }
+        Object.assign(this.spotlight.style, {
+            position: 'fixed',
+            zIndex: '3100',
+            pointerEvents: 'none',   // ← clicks pass through to the real element
+            borderRadius: '4px',
+            boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.75)',
+            display: 'none'
+        });
 
+        // ── Tooltip ──────────────────────────────────────────────────────────
+        // The instruction card. pointer-events: auto so Next/Skip buttons work.
         if (!this.tooltipContainer) {
             this.tooltipContainer = document.getElementById('tutorial-tooltip');
         }
@@ -123,11 +159,14 @@ class TutorialSystem {
             this.tooltipContainer.className = 'tutorial-tooltip';
             document.body.appendChild(this.tooltipContainer);
         }
+        Object.assign(this.tooltipContainer.style, {
+            position: 'fixed',
+            zIndex: '3200',
+            pointerEvents: 'auto',   // ← buttons inside must be clickable
+            display: 'none'
+        });
     }
 
-    /**
-     * Start the tutorial from the beginning.
-     */
     start() {
         if (this.isCompleted) return;
 
@@ -141,9 +180,11 @@ class TutorialSystem {
 
         this.isActive = true;
         this.currentStep = 0;
+
+        // Show overlay
         this.overlay.style.display = 'block';
 
-        // Add active class for animations
+        // Add active class for CSS transitions
         setTimeout(() => {
             if (this.overlay) {
                 this.overlay.classList.add('active');
@@ -153,10 +194,6 @@ class TutorialSystem {
         this.showStep(0);
     }
 
-    /**
-     * Display a specific tutorial step.
-     * @param {number} stepIndex - Index of the step to show.
-     */
     showStep(stepIndex) {
         if (stepIndex >= this.steps.length) {
             this.complete();
@@ -184,7 +221,7 @@ class TutorialSystem {
             </div>
         `;
 
-        // Position tooltip
+        // Position tooltip (also sets display: block)
         this._positionTooltip(step);
 
         // Highlight target element
@@ -215,39 +252,37 @@ class TutorialSystem {
         }
     }
 
-    /**
-     * Get a human-readable hint for an action.
-     * @param {object} action
-     * @returns {string}
-     */
     _getActionHint(action) {
-        if (action.type === 'click') {
-            return action.count > 1 ? `Click ${action.count} times to continue` : 'Click to continue';
+        switch (action.type) {
+            case 'click':
+                return 'Click the highlighted element to continue';
+            case 'train':
+                return `Train a model ${action.count} time${action.count !== 1 ? 's' : ''} to continue`;
+            default:
+                return 'Complete the action to continue';
         }
-        return 'Complete the action to continue';
     }
 
-    /**
-     * Position the tooltip relative to the target element.
-     * @param {object} step
-     */
     _positionTooltip(step) {
+        // Make visible
         this.tooltipContainer.style.display = 'block';
 
         if (!step.target || step.position === 'center') {
-            this.tooltipContainer.style.position = 'fixed';
-            this.tooltipContainer.style.top = '50%';
-            this.tooltipContainer.style.left = '50%';
-            this.tooltipContainer.style.transform = 'translate(-50%, -50%)';
+            Object.assign(this.tooltipContainer.style, {
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)'
+            });
             return;
         }
 
         const target = document.querySelector(step.target);
         if (!target) {
-            this.tooltipContainer.style.position = 'fixed';
-            this.tooltipContainer.style.top = '50%';
-            this.tooltipContainer.style.left = '50%';
-            this.tooltipContainer.style.transform = 'translate(-50%, -50%)';
+            Object.assign(this.tooltipContainer.style, {
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)'
+            });
             return;
         }
 
@@ -257,7 +292,6 @@ class TutorialSystem {
         const margin = 12;
 
         this.tooltipContainer.style.transform = '';
-        this.tooltipContainer.style.position = 'fixed';
 
         switch (step.position) {
             case 'bottom':
@@ -283,10 +317,6 @@ class TutorialSystem {
         }
     }
 
-    /**
-     * Highlight a target element with the spotlight.
-     * @param {string} selector
-     */
     _highlightTarget(selector) {
         const target = document.querySelector(selector);
         if (!target) {
@@ -297,35 +327,29 @@ class TutorialSystem {
         const rect = target.getBoundingClientRect();
         const padding = 6;
 
-        this.spotlight.style.display = 'block';
-        this.spotlight.style.position = 'fixed';
-        this.spotlight.style.top = `${rect.top - padding}px`;
-        this.spotlight.style.left = `${rect.left - padding}px`;
-        this.spotlight.style.width = `${rect.width + padding * 2}px`;
-        this.spotlight.style.height = `${rect.height + padding * 2}px`;
+        Object.assign(this.spotlight.style, {
+            display: 'block',
+            top: `${rect.top - padding}px`,
+            left: `${rect.left - padding}px`,
+            width: `${rect.width + padding * 2}px`,
+            height: `${rect.height + padding * 2}px`
+        });
     }
 
-    /**
-     * Clear the spotlight highlight.
-     */
     _clearSpotlight() {
         if (this.spotlight) {
             this.spotlight.style.display = 'none';
         }
     }
 
-    /**
-     * Set up a listener for the required action on the current step.
-     * @param {object} step
-     */
     setupActionListener(step) {
         if (!step.action) return;
 
         this.actionRequired = step.action.count || 1;
         this.actionProgress = 0;
 
-        const target = document.querySelector(step.action.selector);
-        if (!target) return;
+        const targets = document.querySelectorAll(step.action.selector);
+        if (!targets.length) return;
 
         const handler = () => {
             this.actionProgress++;
@@ -335,13 +359,12 @@ class TutorialSystem {
             }
         };
 
-        target.addEventListener(step.action.type, handler);
-        this.activeListeners.push({ el: target, event: step.action.type, handler });
+        targets.forEach(el => {
+            el.addEventListener(step.action.type, handler);
+            this.activeListeners.push({ el, event: step.action.type, handler });
+        });
     }
 
-    /**
-     * Remove all active event listeners.
-     */
     cleanupListeners() {
         this.activeListeners.forEach(({ el, event, handler }) => {
             el.removeEventListener(event, handler);
@@ -349,24 +372,15 @@ class TutorialSystem {
         this.activeListeners = [];
     }
 
-    /**
-     * Advance to the next step.
-     */
     nextStep() {
         this.cleanupListeners();
         this.showStep(this.currentStep + 1);
     }
 
-    /**
-     * Skip the tutorial entirely.
-     */
     skip() {
         this.complete();
     }
 
-    /**
-     * Hide the tutorial overlay with a fade-out animation.
-     */
     _hideOverlay() {
         if (!this.overlay) return;
         this.overlay.classList.remove('active');
@@ -381,9 +395,6 @@ class TutorialSystem {
         }, 300);
     }
 
-    /**
-     * Mark the tutorial as complete, save to localStorage, and hide the UI.
-     */
     complete() {
         this.cleanupListeners();
         this.isActive = false;
@@ -392,25 +403,16 @@ class TutorialSystem {
         this._hideOverlay();
     }
 
-    /**
-     * Public method alias for isCompleted property.
-     * Called by main.js as window.tutorial.isComplete().
-     * @returns {boolean} Whether the tutorial has been completed.
-     */
     isComplete() {
         return this.isCompleted;
     }
 
-    /**
-     * Restart the tutorial from the beginning.
-     * Resets the completed flag and localStorage key, then calls start().
-     * Called by the "Restart Tutorial" button in ui-init.js.
-     */
     restart() {
-        this.isCompleted = false;
         localStorage.removeItem('ai-idle-tutorial-completed');
+        this.isCompleted = false;
         this.isActive = false;
         this.currentStep = 0;
+        this._ensureElements();
         this.start();
     }
 }
