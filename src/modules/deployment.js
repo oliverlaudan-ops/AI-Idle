@@ -65,10 +65,21 @@ export function initializeDeployment() {
             achievements: []          // Achievements (persist across deployments)
         },
         
-        // Upgrades purchased with tokens (to be implemented)
-        upgrades: {},
+        // Strategy selection (for deployment system)
+        selectedStrategy: 'standard', // Default strategy: 'standard', 'fast', 'complete'
         
-        // Deployment history
+        // Upgrades purchased with tokens
+        upgradesPurchased: {},        // { upgradeId: true, ... }
+        
+        // Portfolio tracking (for deployment UI)
+        portfolio: {
+            history: []               // Array of deployment entries with stats
+        },
+        
+        // Current run tracking
+        researchCompletedThisRun: 0,  // Research completed in current run (reset on deploy)
+        
+        // Deployment history (legacy, kept for backwards compatibility)
         history: []
     };
 }
