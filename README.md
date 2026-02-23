@@ -6,20 +6,34 @@ Trainiere neuronale Netzwerke, optimiere Algorithmen und skaliere deine KI-Infra
 
 [![Tests](https://github.com/oliverlaudan-ops/AI-Idle/actions/workflows/test.yml/badge.svg)](https://github.com/oliverlaudan-ops/AI-Idle/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/oliverlaudan-ops/AI-Idle)
+[![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)](https://github.com/oliverlaudan-ops/AI-Idle)
 
 ## 🎮 Features
 
+### Core Gameplay
 - **Resource Management**: Sammle Data, Compute, Accuracy und Research Points
-- **Building System**: Baue Data Centers, Compute Clusters und mehr
+- **Building System**: Baue Data Centers, Compute Clusters, GPU Farms und mehr
 - **Model Training**: Trainiere verschiedene ML-Modelle von Linear Regression bis zu Transformers
-- **Research Tree**: Erforsche Optimizers, Aktivierungsfunktionen und Architekturen
-- **Achievement System**: Schalte Achievements frei für Boni
-- **Deployment System**: Deploye deine Modelle für Tokens
+- **Research Tree**: Erforsche 40+ Technologien in 8 Kategorien (Optimizers, Aktivierungsfunktionen, Hardware, etc.)
+- **Achievement System**: Schalte 30+ Achievements frei für permanente Boni
 - **Offline Progress**: Sammle Ressourcen auch wenn du offline bist
 - **Auto-Save**: Automatisches Speichern deines Fortschritts
 
-## 🏗️ Architektur
+### 🚀 Deployment/Prestige System (v0.6.0)
+- **3 Deployment Strategien**: Fast (0.75×), Standard (1.0×), Complete (1.5×)
+- **Token Shop**: 15 permanente Upgrades in 4 Kategorien
+- **Portfolio System**: Tracking aller Deployments mit Ranks (Intern → AGI Pioneer)
+- **Lifetime Stats**: Persistente Fortschrittsverfolgung über alle Runs
+- **Strategy Unlocks**: Schalte bessere Strategien durch Deployments frei
+
+### 🤖 Coming Soon: Reinforcement Learning Bot (v0.7.0)
+- **DQN Agent**: Deep Q-Network trainiert mit TensorFlow.js
+- **Auto-Pilot Mode**: Bot übernimmt und spielt optimal
+- **Live Training**: Zusehen wie der Bot durch Trial & Error lernt
+- **Performance Metrics**: Rewards, Loss, Success Rate visualisiert
+- **Deployment Strategy**: Bot lernt optimale Deployment-Strategien
+
+## 🏭 Architektur
 
 Das Projekt wurde in **Phase 1 & 2** umfassend refactored für bessere Wartbarkeit, Testbarkeit und Skalierbarkeit.
 
@@ -48,15 +62,23 @@ ai-idle/
 │   │   │   ├── definitions.js
 │   │   │   ├── costs.js
 │   │   │   └── index.js
-│   │   └── research/
-│   │       ├── definitions.js
-│   │       ├── effects.js
+│   │   ├── research/
+│   │   │   ├── definitions.js
+│   │   │   ├── effects.js
+│   │   │   └── index.js
+│   │   └── rl-bot/           # 🔜 Coming in v0.7.0
+│   │       ├── dqn-agent.js
+│   │       ├── game-environment.js
+│   │       ├── replay-buffer.js
 │   │       └── index.js
 │   │
 │   ├── modules/           # Game modules (legacy, being phased out)
 │   │   ├── game-state.js  # Central game state (delegates to core & systems)
 │   │   ├── resources.js
 │   │   ├── deployment.js
+│   │   ├── deployment-strategies.js
+│   │   ├── deployment-upgrades.js
+│   │   ├── deployment-portfolio.js
 │   │   ├── combo-system.js
 │   │   ├── bulk-purchase.js
 │   │   └── settings.js
@@ -91,6 +113,10 @@ ai-idle/
 ├── .github/
 │   └── workflows/
 │       └── test.yml       # CI/CD pipeline
+│
+├── docs/                  # Documentation
+│   ├── DEPLOYMENT_SYSTEM.md
+│   └── DEPLOYMENT.md      # 🔜 Coming soon
 │
 ├── styles/                # CSS styles
 ├── index.html            # Main HTML file
@@ -151,7 +177,7 @@ Jedes System folgt dem gleichen Pattern:
 - **costs.js**: Kosten-Berechnung mit Scaling
 
 #### Research System
-- **definitions.js**: Research Tree
+- **definitions.js**: Research Tree (40+ Items)
 - **effects.js**: Anwendung von Research-Effekten
 
 ## 🚀 Getting Started
@@ -287,20 +313,39 @@ Wir verwenden [Conventional Commits](https://www.conventionalcommits.org/):
 
 ## 🗺️ Roadmap
 
-### v0.3.0 - UI Refactoring
+### ✅ v0.6.0 - Deployment System (Released 2026-02-23)
+- ✅ 3 Deployment Strategien mit Token-Multiplier
+- ✅ Token Shop mit 15 permanenten Upgrades
+- ✅ Portfolio System mit Ranks & Tracking
+- ✅ Lifetime Stats über alle Runs hinweg
+- ✅ Deployment UI mit 3-Tab Modal
+
+### 🔴 v0.7.0 - Reinforcement Learning Bot (In Development)
+- 🔴 DQN Agent mit TensorFlow.js
+- 🔴 Auto-Pilot Mode
+- 🔴 Live Training Visualisierung
+- 🔴 Performance Metrics Dashboard
+- 🔴 Deployment Strategy Optimization
+- 🔴 Bot vs Human Leaderboard
+
+### 🔵 v0.8.0 - UI Refactoring
 - [ ] Komponenten-basierte UI-Architektur
 - [ ] State Management verbessern
 - [ ] Performance-Optimierung für Rendering
+- [ ] Mobile Responsiveness
 
-### v0.4.0 - Advanced Features
-- [ ] Prestige System erweitern
-- [ ] Neue Model-Kategorien
+### 🔵 v0.9.0 - Advanced Features
+- [ ] Neue Model-Kategorien (LLMs, Multimodal)
+- [ ] Erweiterter Research Tree (60+ Items)
+- [ ] Cloud Providers System
 - [ ] Multiplayer-Leaderboards
 
-### v0.5.0 - Polish
+### 🔵 v1.0.0 - Polish & Release
 - [ ] Animationen & VFX
 - [ ] Sound System
-- [ ] Mobile Optimierung
+- [ ] Tutorial System überarbeiten
+- [ ] Balance Pass
+- [ ] Full Documentation
 
 ## 📝 License
 
@@ -308,15 +353,18 @@ MIT License - siehe [LICENSE](LICENSE) für Details
 
 ## 🙏 Acknowledgments
 
-- Inspiriert von klassischen Idle Games
-- Machine Learning Concepts von verschiedenen ML-Frameworks
+- Inspiriert von klassischen Idle Games (Cookie Clicker, Universal Paperclips)
+- Machine Learning Concepts von TensorFlow, PyTorch, und Hugging Face
 - Community Feedback & Contributions
+- Catppuccin Color Theme
 
 ## 📧 Contact
 
 Oliver Laudan - oliver.laudan@gmail.com
 
 Project Link: [https://github.com/oliverlaudan-ops/AI-Idle](https://github.com/oliverlaudan-ops/AI-Idle)
+
+Live Demo: [https://idle.future-pulse.tech](https://idle.future-pulse.tech)
 
 ---
 
