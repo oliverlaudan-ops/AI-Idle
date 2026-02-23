@@ -173,10 +173,13 @@ export class DeploymentUI {
         const dep        = this.gameState.deployment;
         const tokens     = Math.floor(dep?.tokens ?? 0);
         const deployments = dep?.deployments ?? 0;
-        const available  = getAvailableStrategies(dep);
+        
+        // getAvailableStrategies expects the deployment count (number), not the full object
+        const available  = getAvailableStrategies(deployments);
         const selected   = dep?.selectedStrategy ?? 'standard';
 
-        const strategyCards = STRATEGIES.map(s => {
+        // Convert STRATEGIES object to array for iteration
+        const strategyCards = Object.values(STRATEGIES).map(s => {
             const isAvailable = available.some(a => a.id === s.id);
             const isSelected  = s.id === selected;
             const locked      = !isAvailable;
@@ -191,13 +194,14 @@ export class DeploymentUI {
                     </div>
                     <p class="strategy-desc">${s.description}</p>
                     <div class="strategy-multiplier">Token multiplier: <strong>${s.tokenMultiplier}×</strong></div>
-                    ${locked && s.unlockRequirement ? `<div class="strategy-unlock">Unlock: ${s.unlockRequirement}</div>` : ''}
+                    ${locked && s.unlockDeployments ? `<div class="strategy-unlock">Unlock: ${s.unlockDeployments} deployment${s.unlockDeployments !== 1 ? 's' : ''}</div>` : ''}
                 </div>
             `;
         }).join('');
 
         const baseEst  = this._estimateBaseTokens();
-        const strategy = STRATEGIES.find(s => s.id === selected) ?? STRATEGIES[0];
+        // Find selected strategy from STRATEGIES object
+        const strategy = STRATEGIES[selected] ?? STRATEGIES['standard'];
         const estTokens = Math.floor(baseEst * (strategy?.tokenMultiplier ?? 1));
 
         return `
