@@ -7,6 +7,7 @@
 
 import { DQNAgent } from './dqn-agent.js';
 import { GameEnvironment } from './game-environment.js';
+import { getAction } from './action-space.js';
 
 /**
  * Bot Controller States
@@ -25,7 +26,8 @@ const DEFAULT_CONFIG = {
     tickInterval: 1000,     // Milliseconds between ticks (1 = 1 second)
     trainInterval: 1,       // Train every N steps
     maxStepsPerEpisode: 1000, // Safety limit
-    autoSaveInterval: 10    // Auto-save model every N episodes
+    autoSaveInterval: 10,   // Auto-save model every N episodes
+    verboseLogging: true    // Log every action (for debugging)
 };
 
 export class BotController {
@@ -49,6 +51,7 @@ export class BotController {
         this.intervalId = null;
         this.currentEpisode = 0;
         this.totalSteps = 0;
+        this.episodeSteps = 0;
         
         // Metrics
         this.episodeHistory = [];
@@ -59,6 +62,10 @@ export class BotController {
             avgReward: 0,
             lastEpisodeReward: 0
         };
+        
+        // Action tracking (for debugging)
+        this.actionCounts = {};
+        this.actionSuccesses = {};
         
         // Timing
         this.lastTickTime = Date.now();
@@ -79,6 +86,11 @@ export class BotController {
         
         console.log('🚀 Bot starting training...');
         this.state = BotState.TRAINING;
+        this.episodeSteps = 0;
+        
+        // Reset action tracking for new run
+        this.actionCounts = {};
+        this.actionSuccesses = {};
         
         // Start training loop
         this._startTrainingLoop();
@@ -99,6 +111,9 @@ export class BotController {
             clearInterval(this.intervalId);
             this.intervalId = null;
         }
+        
+        // Print action statistics
+        this._printActionStats();
     }
     
     /**
@@ -139,6 +154,14 @@ export class BotController {
         }
         
         console.log(`⏩ Speed set to ${speed}x`);
+    }
+    
+    /**
+     * Toggle verbose logging
+     */
+    toggleVerbose() {
+        this.config.verboseLogging = !this.config.verboseLogging;
+        console.log(`📢 Verbose logging: ${this.config.verboseLogging ? 'ON' : 'OFF'}`);
     }
     
     /**
@@ -191,13 +214,35 @@ export class BotController {
         }
         
         // Agent selects action
-        const action = this.agent.selectAction(state, validActions);
+        const actionId = this.agent.selectAction(state, validActions);
+        const action = getAction(actionId);
+        
+        // Track action attempts
+        this.actionCounts[action.name] = (this.actionCounts[action.name] || 0) + 1;
+        
+        // Verbose logging (only first 20 steps to avoid spam)
+        if (this.config.verboseLogging && this.episodeSteps < 20) {
+            console.log(`  Step ${this.episodeSteps + 1}: Trying "${action.name}"...`);
+        }
         
         // Execute action in environment
-        const { state: nextState, reward, done, info } = await this.environment.step(action);
+        const { state: nextState, reward, done, info } = await this.environment.step(actionId);
+        
+        // Track action results
+        if (info.success) {
+            this.actionSuccesses[action.name] = (this.actionSuccesses[action.name] || 0) + 1;
+        }
+        
+        // Verbose logging
+        if (this.config.verboseLogging && this.episodeSteps < 20) {
+            const status = info.success ? '✅ Success' : '❌ Failed';
+            const reason = info.message ? ` (${info.message})` : '';
+            const rewardStr = reward !== 0 ? ` [Reward: ${reward > 0 ? '+' : ''}${reward.toFixed(1)}]` : '';
+            console.log(`    → ${status}${reason}${rewardStr}`);
+        }
         
         // Store experience
-        this.agent.remember(state, action, reward, nextState, done);
+        this.agent.remember(state, actionId, reward, nextState, done);
         
         // Train agent
         if (this.totalSteps % this.config.trainInterval === 0) {
@@ -206,6 +251,7 @@ export class BotController {
         
         // Update counters
         this.totalSteps++;
+        this.episodeSteps++;
         
         // Episode end (deployment)
         if (done) {
@@ -213,8 +259,7 @@ export class BotController {
         }
         
         // Safety limit
-        const episodeSteps = this.environment.episodeSteps;
-        if (episodeSteps >= this.config.maxStepsPerEpisode) {
+        if (this.episodeSteps >= this.config.maxStepsPerEpisode) {
             console.warn(`Episode exceeded max steps (${this.config.maxStepsPerEpisode})`);
             await this._endEpisode(info);
         }
@@ -232,7 +277,7 @@ export class BotController {
         
         // Store episode history
         this.episodeHistory.push({
-            episode: this.currentEpisode,
+            episode: this.currentEpisode + 1,
             reward: episodeStats.reward,
             steps: episodeStats.steps,
             duration: episodeStats.duration,
@@ -256,8 +301,30 @@ export class BotController {
         
         // Reset environment for next episode
         this.environment.reset();
+        this.episodeSteps = 0;
         
         console.log(`🏆 Episode ${this.currentEpisode} complete! Reward: ${episodeStats.reward.toFixed(0)}, Steps: ${episodeStats.steps}, Tokens: ${info.tokensEarned || 0}`);
+        
+        // Print action stats every 10 episodes
+        if (this.currentEpisode % 10 === 0) {
+            this._printActionStats();
+        }
+    }
+    
+    /**
+     * Print action statistics (for debugging)
+     */
+    _printActionStats() {
+        console.log('\n📊 Action Statistics:');
+        console.log('Action Name | Attempts | Successes | Success Rate');
+        console.log('------------|----------|-----------|-------------');
+        
+        for (const [actionName, attempts] of Object.entries(this.actionCounts)) {
+            const successes = this.actionSuccesses[actionName] || 0;
+            const rate = ((successes / attempts) * 100).toFixed(1);
+            console.log(`${actionName.padEnd(11)} | ${attempts.toString().padStart(8)} | ${successes.toString().padStart(9)} | ${rate.padStart(11)}%`);
+        }
+        console.log('');
     }
     
     /**
@@ -289,10 +356,15 @@ export class BotController {
             speed: this.speed,
             currentEpisode: this.currentEpisode,
             totalSteps: this.totalSteps,
+            episodeSteps: this.episodeSteps,
             ...this.performanceMetrics,
             ...agentStats,
             environment: envInfo,
-            recentEpisodes: this.episodeHistory.slice(-10)
+            recentEpisodes: this.episodeHistory.slice(-10),
+            actionStats: {
+                counts: this.actionCounts,
+                successes: this.actionSuccesses
+            }
         };
     }
     
@@ -322,7 +394,10 @@ export class BotController {
         
         this.currentEpisode = 0;
         this.totalSteps = 0;
+        this.episodeSteps = 0;
         this.episodeHistory = [];
+        this.actionCounts = {};
+        this.actionSuccesses = {};
         
         this.performanceMetrics = {
             stepsPerSecond: 0,
