@@ -1,222 +1,405 @@
-# AI-Idle Development Roadmap
+# 🗺️ AI-Idle Roadmap
 
-## Release Timeline
+**Long-term development plan for AI-Idle**
 
-| Version | Target Date | Status |
-|---------|-------------|--------|
-| v0.1.0 | Jan 30, 2026 | ✅ Released |
-| v0.2.0 | Feb 9, 2026 | ✅ Released |
-| v0.3.0 | Feb 12, 2026 | ✅ Released |
-| v1.0.0 | Late March 2026 | 🎯 In Progress |
+Last Updated: 2026-02-23 | Current Version: 0.6.0
 
 ---
 
-## Version 0.3.x — Polish & Stability
+## ✅ Version 0.6.0 - Deployment System (COMPLETED)
 
-### ✅ v0.3.0 — Core QoL (Released Feb 12, 2026)
-- ✅ Manual Collect Combo System (PR #2)
-- ✅ Tutorial System (PR #3)
-- ✅ Auto-Training Queue (PR #4)
-- ✅ QoL Improvements — Bulk Building Purchase, Enhanced Resource Notifications, Progress Indicators (PR #5)
+**Released:** 2026-02-23  
+**Status:** ✅ Production Ready
 
-### ✅ v0.3.2 — CI/CD & Tests (Released Feb 12, 2026)
-- ✅ GitHub Actions CI/CD pipeline (Node 18/20/22)
-- ✅ 26 tests for ResourceManager and ProductionCalculator
-- ✅ Vitest test runner with coverage support
+### Features Delivered
 
-### ✅ v0.3.3 — Bug Fixes & Performance (Released Feb 18, 2026)
-- ✅ **Tutorial button crash fixed** — null-guards added to `TutorialSystem.start()` / `updateTooltip()` / `positionTooltip()`
-- ✅ **Research multiplier cache** — lazy-loaded `_cachedResearchMultipliers` in `GameState`; O(1) per tick instead of O(n)
+- ✅ **3 Deployment Strategies** (Fast, Standard, Complete)
+- ✅ **Token Shop** with 15 permanent upgrades
+- ✅ **Portfolio System** with 6 ranks (Intern → AGI Pioneer)
+- ✅ **Lifetime Stats** tracking across all deployments
+- ✅ **Smart UI** with performance optimization
+- ✅ **Complete Documentation** (DEPLOYMENT.md)
 
-### ✅ v0.3.4 — Research Tree Expansion (Released Feb 19, 2026)
-- ✅ **40+ research items** across 8 categories (expanded from 17)
-- ✅ **4 new categories:** Hardware Innovations, Data Engineering, Meta-Learning, Safety & Ethics
-- ✅ **8 effect types** fully wired into the game loop: `trainingSpeed`, `modelPerformance`, `efficiency`, `globalMultiplier`, `dataProduction`, `computeEfficiency`, `researchSpeed`, `safetyBonus`
-- ✅ **Array-based multi-prerequisites** — research items can require multiple completed prerequisites
-- ✅ **Research definitions extracted** to `src/systems/research/definitions.js` — single source of truth
-- ✅ **Save version bumped to 0.5** — expanded multipliers shape, renamed cache key
+### Technical Achievements
 
----
+- ✅ Deployment strategies with token multipliers
+- ✅ Upgrade prerequisite system
+- ✅ Portfolio scoring and ranking algorithm
+- ✅ Lifetime accuracy tracking
+- ✅ Efficient re-rendering with dirty flags
+- ✅ Catppuccin-themed UI components
 
-## Version 1.0.0 — Complete Experience (Target: Late March 2026)
+### Impact
 
-### 1. Expanded Prestige / Deployment System 🔄
-
-**Deployment Strategies**
-- Fast Deployment — lower accuracy bonus, quick turnaround
-- Standard Deployment — balanced (current behaviour)
-- Complete Deployment — maximum accuracy bonus, longer cooldown
-
-**Token Shop Expansion (20+ upgrades)**
-- Training Speed Tiers (I–V)
-- Building Efficiency Tiers (I–V)
-- Research Speed Tiers (I–III)
-- Prestige Multiplier Tiers (I–III)
-- Special unlocks: Auto-Deploy, Research Automation, Building Synergies
-
-**Deployment Milestones**
-- 5 deployments — unlock Hardware category
-- 10 deployments — unlock Data Engineering category
-- 25 deployments — unlock Meta-Learning category
-- 50 deployments — unlock Safety & Ethics category
-- 100 deployments — unlock Quantum Computing research
-
-**Model Portfolio System**
-- Track all deployed models with accuracy and timestamp
-- Portfolio score = sum of all deployed model accuracies
-- Portfolio bonuses at 500 / 1000 / 2500 / 5000 portfolio score
-
-**Transfer Learning**
-- Each deployment leaves a "knowledge residue"
-- Residue reduces training time for the next model of the same type
-- Stacks up to 5× per model type
+- 🎮 Adds meaningful progression system
+- 📈 Increases replayability significantly
+- 🏆 Provides long-term goals for players
+- 🔧 Permanent upgrades make runs more efficient
 
 ---
 
-### 2. Research Tree — Specialisation Paths 🔬
+## 🔴 Version 0.7.0 - Reinforcement Learning Bot (IN DEVELOPMENT)
 
-> **Core expansion (40 items, 8 categories) is complete as of v0.3.4.**
-> v1.0.0 adds specialisation paths and late-game research.
+**Target:** Q1 2026 (March)  
+**Status:** 🔴 Phase 1 - Planning & Architecture
 
-**Specialisation Paths (choose one per prestige)**
-- 🖼️ Vision Specialist — bonus to CNN/Vision Transformer training speed and accuracy
-- 💬 Language Specialist — bonus to Transformer/LLM training speed and accuracy
-- 🌐 Generalist — smaller bonuses across all model types, higher global multiplier
-- ⚙️ Hardware Path — extreme compute efficiency, reduced building costs
+### Vision
 
-**Late-Game Research (post-50 deployments)**
-- Quantum Computing — +50% compute efficiency, unlocks Quantum Neural Networks
-- Neuromorphic Integration — buildings produce 2× compute passively
-- AGI Foundations — global multiplier ×2, requires all Safety & Ethics research
+Create an **AI agent that learns to play AI-Idle optimally** using Deep Q-Learning (DQN). The bot will be a playable feature that:
 
-**Research Automation**
-- Token Shop upgrade: "Research Automation" — auto-spends research points on the cheapest available item
-- Configurable priority queue (drag-and-drop, planned post-1.0)
+- Learns from trial and error
+- Optimizes building purchases
+- Discovers efficient strategies
+- Competes with human players
 
----
+### Core Features
 
-### 3. New Model Categories (15–20 total) 🤖
+#### 🤖 DQN Agent
+- **Neural Network:** 3-layer dense architecture with TensorFlow.js
+- **State Space:** Resources, buildings, research status, training state
+- **Action Space:** 20+ actions (build, train, research, wait)
+- **Reward Function:** Accuracy gain per second
 
-**Current models (v0.3.x):** Linear Regression, Logistic Regression, Decision Tree, Random Forest, SVM, K-Means, Neural Network, CNN, RNN, LSTM, Transformer
+#### 🎮 Auto-Pilot Mode
+- Bot takes control and plays automatically
+- Watch in real-time as it learns
+- Speed controls (1×, 2×, 5×, 10×)
+- Pause/resume functionality
 
-**New models for v1.0.0:**
-- Vision Transformer (ViT)
-- Diffusion Model
-- Graph Neural Network (GNN)
-- Mixture of Experts (MoE)
-- Large Language Model (LLM)
-- Multimodal Model
-- Reinforcement Learning Agent
-- World Model
+#### 📊 Live Training Visualization
+- **Metrics Dashboard:**
+  - Episode count
+  - Total reward
+  - Average reward (last 100 episodes)
+  - Exploration rate (epsilon)
+  - Loss over time
+- **Action Distribution Chart**
+- **Reward Curve** (smoothed moving average)
+- **Q-Value Heatmap**
 
-**Model Tiers**
-- Tier 1 (Beginner) — Linear Regression → SVM
-- Tier 2 (Intermediate) — Neural Network → LSTM
-- Tier 3 (Advanced) — Transformer → GNN
-- Tier 4 (Expert) — MoE → World Model
+#### 🏆 Performance Analytics
+- Bot vs Human leaderboard
+- Best runs comparison
+- Strategy discovery tracking
+- Token efficiency metrics
 
----
+### Technical Implementation
 
-### 4. Model Zoo & Collection System 🦁
-
-**Model Gallery**
-- Visual grid of all deployed models
-- Each model card shows: type, accuracy, training time, deployment date
-- Training history sparkline graph per model
-
-**Collection Bonuses**
-- Complete a tier → +10% training speed for that tier
-- Complete all Tier 1 → unlock "Classic ML" achievement (+5% global)
-- Complete all Tier 2 → unlock "Deep Learning" achievement (+10% global)
-- Complete all Tier 3 → unlock "Modern AI" achievement (+15% global)
-- Complete all Tier 4 → unlock "State of the Art" achievement (+25% global)
-
-**Achievements for Collection**
-- "First Steps" — deploy your first model
-- "Diverse Portfolio" — deploy 5 different model types
-- "Completionist" — deploy every model type at least once
-- "Accuracy Chaser" — deploy a model with 99%+ accuracy
-- "Speed Runner" — deploy a model in under 60 seconds
-
----
-
-### 5. Events & Challenges ⚡
-
-**Weekly Challenges (rotating)**
-- Speed Run — deploy 3 models in 10 minutes
-- Efficiency Expert — reach 1000 compute/s using only 5 buildings
-- Research Focus — unlock 10 research items in one session
-- Building Spree — purchase 50 buildings in 5 minutes
-
-**Random Events (probability-based)**
-- 🟢 Hardware Sale — buildings cost 50% less for 60 seconds
-- 🟢 Research Breakthrough — research speed ×3 for 30 seconds
-- 🟡 Data Leak — data production halved for 45 seconds
-- 🟡 Bug in Production — one random building stops producing for 30 seconds
-- 🔴 Power Outage — all production stops for 15 seconds
-- 🔴 Security Audit — must complete a Safety & Ethics research item to resume
-
----
-
-### 6. Mobile Optimisation & PWA 📱
-
-**Responsive Design**
-- Touch-optimised buttons (min 44×44px tap targets)
-- Collapsible sidebar sections
-- Portrait and landscape layout modes
-- Swipe gestures for tab navigation
-
-**Progressive Web App**
-- `manifest.json` with icons (192×192, 512×512)
-- Service worker for offline capability
-- "Add to Home Screen" prompt
-- Push notifications for: research complete, deployment ready, weekly challenge available
-
----
-
-## Implementation Plan (v1.0.0)
-
-| Phase | Focus | Target |
-|-------|-------|--------|
-| Phase 1 | Prestige / Deployment expansion | Week 1 |
-| Phase 2 | New models + Model Zoo | Week 2 |
-| Phase 3 | Events & Challenges | Week 3 |
-| Phase 4 | Mobile / PWA + final balance pass | Week 4 |
-
----
-
-## Post-1.0 Ideas (Backlog)
-
-- Drag-and-drop queue reordering
-- Queue presets (save/load training queues)
-- Smart training recommendations (AI suggests next model)
-- Priority system for training queue
-- Multiplayer leaderboard (portfolio score ranking)
-- Mod support / plugin API
-- Dark/light theme toggle
-- Localisation (i18n)
-
----
-
-## Development Workflow
+#### Module Structure
 
 ```
-feature/fix branch → PR → review → merge to main → tag release
+src/systems/rl-bot/
+├── dqn-agent.js          # Core DQN algorithm
+├── game-environment.js   # GameState wrapper for RL
+├── replay-buffer.js      # Experience replay memory
+├── state-encoder.js      # Normalize game state to neural net input
+├── action-space.js       # Define all possible actions
+├── reward-function.js    # Calculate rewards
+├── bot-controller.js     # Main bot loop
+└── index.js              # Public API
 ```
 
-- All features developed on named branches
-- PRs required for main branch merges
-- Semantic versioning: MAJOR.MINOR.PATCH
-- CHANGELOG.md updated with every release
+#### Neural Network Architecture
+
+```javascript
+// State Input (normalized 0-1)
+// └── Dense Layer (128 neurons, ReLU)
+//     └── Dense Layer (64 neurons, ReLU)
+//         └── Dense Layer (action_space, Linear)
+//             └── Q-Values Output
+```
+
+#### State Representation (20 features)
+
+```javascript
+[
+  // Resources (normalized by current max)
+  data / max_data,
+  compute / max_compute,
+  accuracy / target_accuracy,
+  research_points / max_rp,
+  
+  // Buildings (normalized by cost)
+  data_center_count / 50,
+  compute_cluster_count / 50,
+  gpu_farm_count / 50,
+  // ... (7 building types)
+  
+  // Research (binary flags)
+  has_sgd, has_adam, has_relu, has_transformer,
+  // ... (critical research items)
+  
+  // Training State
+  is_training, training_progress,
+  current_model_tier,
+  
+  // Time
+  run_duration / max_duration
+]
+```
+
+#### Action Space (25 actions)
+
+```javascript
+[
+  'wait',                    // Do nothing this step
+  'build_data_center',       // 7 building types
+  'build_compute_cluster',
+  // ...
+  'train_linear_regression', // 10 model types
+  'train_neural_network',
+  // ...
+  'research_sgd',           // 8 critical research items
+  'research_adam',
+  // ...
+]
+```
+
+#### Reward Function
+
+```javascript
+reward = (
+  accuracy_gain * 1.0 +           // Primary objective
+  efficiency_bonus * 0.5 +        // Reward efficient resource use
+  research_completion * 2.0 +     // Encourage tech progression
+  deployment_success * 50.0 -     // Major reward for deployment
+  invalid_action_penalty * 5.0    // Discourage illegal moves
+)
+```
+
+### UI Components
+
+#### AI Lab Tab Enhancement
+
+```
+🤖 Reinforcement Learning Bot
+┌────────────────────────────────────────┐
+│ Status: [Training / Idle / Playing]       │
+│                                          │
+│ Episode: 1,234                           │
+│ Total Reward: 45,678                     │
+│ Avg Reward (100): 892                    │
+│ Exploration: 15%                         │
+│                                          │
+│ [Start Training] [Stop] [Reset]          │
+│ Speed: [1×] [2×] [5×] [10×]                  │
+│                                          │
+│ 📊 Reward Curve (Live Chart)           │
+│ 🎯 Action Distribution (Pie Chart)     │
+│ 🧠 Q-Value Heatmap (State × Action)    │
+└────────────────────────────────────────┘
+```
+
+### Development Phases
+
+#### Phase 1: Core RL System (❶ week)
+- [x] Architecture planning
+- [ ] DQN Agent implementation
+- [ ] State encoding
+- [ ] Action space definition
+- [ ] Reward function
+- [ ] Experience replay buffer
+
+#### Phase 2: Game Integration (❷ week)
+- [ ] GameEnvironment wrapper
+- [ ] Bot controller
+- [ ] Action executor
+- [ ] State observer
+- [ ] Training loop
+
+#### Phase 3: UI & Visualization (❸ week)
+- [ ] AI Lab tab redesign
+- [ ] Metrics dashboard
+- [ ] Live charts (Chart.js)
+- [ ] Control panel
+- [ ] Speed controls
+
+#### Phase 4: Advanced Features (❹ week)
+- [ ] Model save/load
+- [ ] Pre-trained models
+- [ ] Hyperparameter tuning UI
+- [ ] Bot vs Human leaderboard
+- [ ] Strategy analysis
+
+#### Phase 5: Polish & Documentation (❺ week)
+- [ ] Performance optimization
+- [ ] Tutorial for RL Bot
+- [ ] Documentation
+- [ ] Testing
+- [ ] Balancing
+
+### Success Criteria
+
+- ✅ Bot can play from start to first deployment
+- ✅ Bot discovers efficient building strategies
+- ✅ Training converges (reward increases over time)
+- ✅ UI provides meaningful insights into learning
+- ✅ Players enjoy watching the bot learn
 
 ---
 
-## Success Metrics for v1.0.0
+## 🔵 Version 0.8.0 - UI Refactoring
 
-- [ ] 40+ research items implemented and balanced ✅ (done in v0.3.4)
-- [ ] 15+ model types available
-- [ ] Prestige system with 3 deployment strategies
-- [ ] Mobile-playable on iOS Safari and Android Chrome
-- [ ] PWA installable
-- [ ] 0 known crash bugs at release
-- [ ] Test coverage ≥ 80% on core modules
+**Target:** Q2 2026 (May)  
+**Status:** 🔵 Planned
+
+### Goals
+
+- Component-based UI architecture
+- Improved state management
+- Performance optimization
+- Mobile responsiveness
+
+### Features
+
+- [ ] React/Vue/Svelte migration (TBD)
+- [ ] Modular component system
+- [ ] Centralized state management
+- [ ] Responsive design (mobile-first)
+- [ ] Dark/Light theme toggle
+- [ ] Accessibility improvements (WCAG 2.1)
+
+---
+
+## 🔵 Version 0.9.0 - Advanced Features
+
+**Target:** Q3 2026 (July)  
+**Status:** 🔵 Planned
+
+### New Systems
+
+- [ ] **Model Zoo:** 15+ new ML models (LLMs, Multimodal, etc.)
+- [ ] **Cloud Providers:** AWS, GCP, Azure as building upgrades
+- [ ] **Research Tree Expansion:** 60+ total items
+- [ ] **Multiplayer:** Leaderboards, friend comparisons
+- [ ] **Challenges:** Time-limited events
+- [ ] **Seasons:** Rotating content
+
+### Balance Pass
+
+- Review all progression rates
+- Adjust token formula if needed
+- Balance upgrade costs
+- Fine-tune RL bot difficulty
+
+---
+
+## 🔵 Version 1.0.0 - Polish & Release
+
+**Target:** Q4 2026 (October)  
+**Status:** 🔵 Planned
+
+### Polish Features
+
+- [ ] **Animations & VFX**
+  - Training animations
+  - Deployment effects
+  - Achievement celebrations
+  - Particle effects
+
+- [ ] **Sound System**
+  - Background music
+  - UI sound effects
+  - Ambient sounds
+  - Volume controls
+
+- [ ] **Tutorial System**
+  - Interactive guide
+  - Contextual hints
+  - Feature discovery
+  - Tips & tricks
+
+- [ ] **Achievements Expansion**
+  - 50+ total achievements
+  - Secret achievements
+  - Achievement showcase
+
+- [ ] **Full Documentation**
+  - Player guide
+  - API documentation
+  - Contributing guide
+  - Architecture docs
+
+### Release Preparation
+
+- [ ] Final balance pass
+- [ ] Performance audit
+- [ ] Security review
+- [ ] Browser compatibility testing
+- [ ] Beta testing program
+- [ ] Marketing materials
+- [ ] Launch announcement
+
+---
+
+## 🔮 Future Ideas (Post-1.0)
+
+### Community Features
+- Guild system
+- Cooperative deployments
+- Trading system
+- User-generated content
+
+### Advanced ML Concepts
+- Federated learning
+- Model compression
+- Neural architecture search
+- Adversarial training
+
+### Meta-Game
+- Prestige layers beyond deployment
+- Permanent unlocks
+- Cross-run progression
+- Long-term goals (months)
+
+---
+
+## 🛠️ Technical Debt & Maintenance
+
+### Ongoing Tasks
+
+- **Code Quality**
+  - Maintain >80% test coverage
+  - Regular refactoring
+  - Code review process
+  - Style guide enforcement
+
+- **Performance**
+  - Profile rendering bottlenecks
+  - Optimize production calculations
+  - Lazy loading for large data
+  - Web Worker for RL training
+
+- **Documentation**
+  - Keep README updated
+  - API documentation
+  - Architecture decision records
+  - Changelog maintenance
+
+---
+
+## 📅 Release Schedule
+
+| Version | Target Date | Status | Key Features |
+|---------|------------|--------|-------------|
+| 0.6.0 | 2026-02-23 | ✅ Released | Deployment System |
+| 0.7.0 | 2026-03-31 | 🔴 In Dev | RL Bot |
+| 0.8.0 | 2026-05-31 | 🔵 Planned | UI Refactor |
+| 0.9.0 | 2026-07-31 | 🔵 Planned | Advanced Features |
+| 1.0.0 | 2026-10-31 | 🔵 Planned | Polish & Release |
+
+---
+
+## 💬 Feedback & Suggestions
+
+We value community input! If you have ideas for features or improvements:
+
+- **GitHub Issues:** [Open an issue](https://github.com/oliverlaudan-ops/AI-Idle/issues)
+- **Discussions:** [Join the discussion](https://github.com/oliverlaudan-ops/AI-Idle/discussions)
+- **Email:** oliver.laudan@gmail.com
+
+---
+
+**This roadmap is subject to change based on player feedback, technical constraints, and new ideas!**
+
+*Last Updated: 2026-02-23 by Oliver Laudan*
