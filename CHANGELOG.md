@@ -1,5 +1,122 @@
 # Changelog
 
+## [0.6.0] - 2026-02-23
+
+### ✅ Deployment System Complete — Production Ready!
+
+The **Deployment/Prestige System** is now fully functional and tested in production!
+
+#### 🚀 Features Completed
+
+**Deployment Strategies**
+- ✅ 3 deployment strategies fully functional:
+  - **Fast Deployment** (⚡) — 0.75× tokens, immediate deployment
+  - **Standard Deployment** (🚀) — 1.0× tokens, balanced default
+  - **Complete Deployment** (🏆) — 1.5× tokens, unlocks after 3 deployments
+- ✅ Strategy selection UI with visual feedback
+- ✅ Token calculation with strategy multipliers
+- ✅ Unlock requirements enforced
+
+**Token Shop (15 Permanent Upgrades)**
+- ✅ Fully functional token economy
+- ✅ 4 upgrade categories: Training, Efficiency, Research, Prestige
+- ✅ Prerequisite system working correctly
+- ✅ All 15 upgrades tested and balanced
+- ✅ Purchase validation and error handling
+- ✅ Multipliers correctly applied to game loop
+
+**Portfolio System**
+- ✅ Complete deployment history tracking
+- ✅ Portfolio scoring system (0–500+ points)
+- ✅ 6 achievement ranks from Intern to AGI Pioneer
+- ✅ Statistics dashboard with metrics
+- ✅ Recent deployments table (last 5)
+
+**Deployment UI**
+- ✅ 3-tab modal: Deploy, Token Shop, Portfolio
+- ✅ Responsive design with Catppuccin theme
+- ✅ Progress bar for first deployment
+- ✅ Real-time token preview
+- ✅ Toast notifications for actions
+- ✅ Deploy button in footer controls
+
+#### 🐛 Critical Fixes
+
+**Fix: Deployment Initialization ([Commit 5b7c4c4](https://github.com/oliverlaudan-ops/AI-Idle/commit/5b7c4c4428beff3d92de0b5d031ba5dd6761c25a))**
+- Added missing fields to `initializeDeployment()`:
+  - `selectedStrategy: 'standard'`
+  - `upgradesPurchased: {}`
+  - `portfolio: { history: [] }`
+  - `researchCompletedThisRun: 0`
+- Ensures all deployment features work from first load
+
+**Fix: STRATEGIES Object → Array ([Commit 9be984b](https://github.com/oliverlaudan-ops/AI-Idle/commit/9be984b9403a7e1e8528ff24b15a91b83eee13c5))**
+- Resolved `TypeError: STRATEGIES.map is not a function`
+- Changed `STRATEGIES.map()` to `Object.values(STRATEGIES).map()`
+- Fixed `getAvailableStrategies()` to receive deployment count
+- Strategy cards now render correctly
+
+**Fix: UI Re-rendering Performance ([Commit 7b01155](https://github.com/oliverlaudan-ops/AI-Idle/commit/7b011559087c4c5fd9dc0f5da8824d13e643e4cb))**
+- Added `needsUpdate` flag to prevent 100Hz re-rendering
+- Modal only re-renders on actual state changes
+- Token display updates only when count changes
+- Buttons and strategies now clickable (no more flickering)
+- Massive performance improvement
+
+**Fix: Lifetime Accuracy Tracking ([Commit afe1cbe](https://github.com/oliverlaudan-ops/AI-Idle/commit/afe1cbed2172b348eb499de603ff2ebecbeca7ef))**
+- Added accuracy tracking in `addResource()`
+- `deployment.lifetimeStats.totalAccuracy` now increments correctly
+- First deployment unlocks at 250K lifetime accuracy
+- Progress bar shows correct percentage
+- Deployment button enables when requirements met
+
+**UI Enhancement: Deployment Tab Notice ([Commit 745d2ab](https://github.com/oliverlaudan-ops/AI-Idle/commit/745d2ab0c06bcc26a3ab6c0c6b72728947abcb65))**
+- Added prominent info box in Deployment tab
+- Directs players to footer button for full Deployment Center
+- Styled with gradient background and rocket emoji
+- Improves feature discoverability
+
+#### 📊 Balance & Progression
+
+**Token Formula**
+```javascript
+tokens = floor(sqrt(totalAccuracy / 250000))
+```
+
+**Milestones:**
+- 250K accuracy = 1 token (first deployment!)
+- 1M accuracy = 2 tokens
+- 4M accuracy = 4 tokens  
+- 10M accuracy = 6 tokens
+- 100M accuracy = 20 tokens
+
+**Total Token Shop Cost:** 49 tokens for all 15 upgrades
+
+#### 🎮 Player Experience
+
+- ✅ Clear visual feedback for all actions
+- ✅ Progress tracking to first deployment
+- ✅ Intuitive strategy selection
+- ✅ Comprehensive statistics
+- ✅ Achievement-style ranks
+- ✅ Smooth performance (60 FPS)
+
+### Changed
+
+#### Architecture
+- Deployment UI now uses smart re-rendering
+- Lifetime stats persist across deployments
+- Save version remains at 0.6 (stable)
+
+### Documentation
+
+- ✅ Complete deployment system documentation
+- ✅ Feature announcement in README
+- ✅ Updated CHANGELOG with all fixes
+- 🔜 Detailed deployment guide in `docs/DEPLOYMENT.md`
+
+---
+
 ## [Unreleased — v0.3.4] - 2026-02-19
 
 ### Added
