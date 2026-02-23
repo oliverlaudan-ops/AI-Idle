@@ -3,11 +3,13 @@
  * 
  * Implements DQN algorithm for playing AI-Idle optimally.
  * Uses TensorFlow.js for neural network training.
+ * 
+ * PRIMARY GOAL: Learn to maximize tokens through optimal deployment!
  */
 
 import * as tf from '@tensorflow/tfjs';
 import { ReplayBuffer } from './replay-buffer.js';
-import { getActionSpaceSize } from './action-space.js';
+import { getActionSpaceSize, isDeploymentAction } from './action-space.js';
 import { getStateDimensions } from './state-encoder.js';
 
 /**
@@ -48,8 +50,10 @@ export class DQNAgent {
         this.config = { ...DEFAULT_CONFIG, ...config };
         
         // State and action spaces
-        this.stateDim = getStateDimensions();
-        this.actionDim = getActionSpaceSize();
+        this.stateDim = getStateDimensions();   // 27 dimensions (with deployment features)
+        this.actionDim = getActionSpaceSize();  // 29 actions (with deployment actions)
+        
+        console.log(`🤖 DQN Agent initialized: ${this.stateDim}D state → ${this.actionDim} actions`);
         
         // Neural networks
         this.model = this._buildModel();
@@ -75,6 +79,7 @@ export class DQNAgent {
     
     /**
      * Build the Q-network
+     * Architecture: 27 → 128 → 64 → 29
      * @returns {tf.Sequential} TensorFlow model
      */
     _buildModel() {
@@ -152,11 +157,16 @@ export class DQNAgent {
      * @param {number} action - Action taken
      * @param {number} reward - Reward received
      * @param {Float32Array} nextState - Next state
-     * @param {boolean} done - Whether episode ended
+     * @param {boolean} done - Whether episode ended (e.g., deployment)
      */
     remember(state, action, reward, nextState, done) {
         this.replayBuffer.add(state, action, reward, nextState, done);
         this.stepCount++;
+        
+        // Log deployment actions
+        if (isDeploymentAction(action)) {
+            console.log(`🚀 Bot attempted deployment! Reward: ${reward.toFixed(0)}, Done: ${done}`);
+        }
     }
     
     /**
@@ -254,6 +264,8 @@ export class DQNAgent {
         this.totalReward += episodeReward;
         this.rewardHistory.push(episodeReward);
         this.decayEpsilon();
+        
+        console.log(`🏁 Episode ${this.episodeCount} complete! Reward: ${episodeReward.toFixed(0)}, ε: ${this.epsilon.toFixed(3)}`);
     }
     
     /**
@@ -289,7 +301,7 @@ export class DQNAgent {
      */
     async saveModel(name = 'ai-idle-dqn') {
         await this.model.save(`indexeddb://${name}`);
-        console.log(`Model saved as ${name}`);
+        console.log(`💾 Model saved as ${name}`);
     }
     
     /**
@@ -300,7 +312,7 @@ export class DQNAgent {
         try {
             this.model = await tf.loadLayersModel(`indexeddb://${name}`);
             this._updateTargetModel();
-            console.log(`Model loaded from ${name}`);
+            console.log(`💾 Model loaded from ${name}`);
             return true;
         } catch (error) {
             console.warn(`Failed to load model: ${error.message}`);
