@@ -3,6 +3,8 @@
  * 
  * Converts game state into a normalized feature vector for neural network input.
  * All features are scaled to [0, 1] range for better training stability.
+ * 
+ * DEPLOYMENT-FOCUSED: Bot needs to know when it can deploy!
  */
 
 /**
@@ -11,10 +13,12 @@
 const MAX_VALUES = {
     data: 1e6,              // 1 million
     compute: 1e6,           // 1 million
-    accuracy: 1e5,          // 100K (per run, not lifetime)
+    accuracy: 1e5,          // 100K (current run)
+    lifetimeAccuracy: 1e6,  // 1M lifetime (for deployment tracking)
     researchPoints: 1000,   // 1000 RP
     buildingCount: 100,     // Max 100 of each building type
-    runDuration: 3600       // 1 hour in seconds
+    runDuration: 3600,      // 1 hour in seconds
+    deployments: 20         // Max 20 deployments tracked
 };
 
 /**
@@ -47,7 +51,7 @@ const BUILDINGS = [
 /**
  * Encode game state into feature vector
  * @param {object} gameState - Current game state
- * @returns {Float32Array} Normalized feature vector (23 dimensions)
+ * @returns {Float32Array} Normalized feature vector (27 dimensions)
  */
 export function encodeState(gameState) {
     const features = [];
@@ -95,6 +99,25 @@ export function encodeState(gameState) {
     
     features.push(isTraining, trainingProgress, modelTier);
     
+    // ========== Deployment Features (4 features) - CRITICAL! ==========
+    
+    // Lifetime accuracy (how close to deployment?)
+    const lifetimeAccuracy = gameState.deployment?.lifetimeStats?.totalAccuracy ?? gameState.stats.totalAccuracy;
+    features.push(normalize(lifetimeAccuracy, MAX_VALUES.lifetimeAccuracy));
+    
+    // Can deploy right now? (binary)
+    const deployInfo = gameState.getDeploymentInfo?.();
+    const canDeploy = deployInfo && deployInfo.canDeploy ? 1 : 0;
+    features.push(canDeploy);
+    
+    // Complete strategy unlocked? (binary)
+    const deployments = gameState.deployment?.deployments ?? 0;
+    const completeUnlocked = deployments >= 3 ? 1 : 0;
+    features.push(completeUnlocked);
+    
+    // Number of past deployments (helps bot learn progression)
+    features.push(normalize(deployments, MAX_VALUES.deployments));
+    
     // ========== Time (1 feature) ==========
     const currentTime = Date.now();
     const startTime = gameState.stats.startTime || currentTime;
@@ -133,9 +156,10 @@ function normalize(value, max) {
  */
 export function getStateDimensions() {
     return 4 +                      // Resources
-           BUILDINGS.length +        // Buildings
-           CRITICAL_RESEARCH.length + // Research
+           BUILDINGS.length +        // Buildings (7)
+           CRITICAL_RESEARCH.length + // Research (8)
            3 +                       // Training
+           4 +                       // Deployment (NEW!)
            1;                        // Time
 }
 
@@ -161,6 +185,9 @@ export function getFeatureNames() {
     
     // Training
     names.push('isTraining', 'trainingProgress', 'modelTier');
+    
+    // Deployment
+    names.push('lifetimeAccuracy', 'canDeploy', 'completeUnlocked', 'pastDeployments');
     
     // Time
     names.push('runDuration');
@@ -225,6 +252,19 @@ export function stateDifference(state1, state2) {
     }
     
     return differences;
+}
+
+/**
+ * Get deployment readiness score (0-1, how close to deployment?)
+ * Useful for debugging and UI display
+ * @param {object} gameState - Game state
+ * @returns {number} Readiness score
+ */
+export function getDeploymentReadiness(gameState) {
+    const lifetimeAccuracy = gameState.deployment?.lifetimeStats?.totalAccuracy ?? gameState.stats.totalAccuracy;
+    const threshold = 250000;
+    
+    return Math.min(1.0, lifetimeAccuracy / threshold);
 }
 
 /**
