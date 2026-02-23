@@ -2,23 +2,37 @@
  * Reward Function for RL Bot
  * 
  * Calculates rewards to guide the RL agent's learning.
+ * 
+ * PRIMARY OBJECTIVE: Maximize tokens earned through optimal deployment!
+ * 
  * Rewards are designed to encourage:
- * - Accuracy gain (primary objective)
+ * - Token acquisition (deployment with maximum efficiency)
+ * - Accuracy gain (means to an end - tokens!)
  * - Efficient resource management
  * - Research progress
- * - Successful deployments
+ * - Optimal deployment timing
  */
 
+import { isDeploymentAction, getDeploymentStrategy } from './action-space.js';
+
 /**
- * Reward weights (can be tuned for better performance)
+ * Reward weights (carefully tuned for deployment-focused learning)
  */
 const REWARD_WEIGHTS = {
-    accuracy: 1.0,           // Per point of accuracy gained
-    efficiency: 0.5,         // Bonus for high resource efficiency
-    research: 2.0,           // Bonus per research completed
-    deployment: 50.0,        // Large bonus for successful deployment
-    invalidAction: -5.0,     // Penalty for invalid actions
-    idle: -0.1               // Small penalty for doing nothing when could act
+    // Primary objective: TOKENS!
+    tokensEarned: 100.0,         // Huge reward per token (was 50)
+    deploymentBonus: 50.0,       // Extra for using Complete strategy
+    timeEfficiency: 20.0,        // Reward for fast runs
+    
+    // Secondary objectives (help reach deployment)
+    accuracy: 0.1,               // Per point of accuracy (reduced from 1.0)
+    efficiency: 0.5,             // Resource balance bonus
+    research: 2.0,               // Research completion
+    
+    // Penalties
+    invalidAction: -5.0,         // Invalid action penalty
+    idle: -0.1,                  // Penalty for waiting when could act
+    prematureDeployment: -10.0   // Penalty for deploying too early
 };
 
 /**
@@ -27,9 +41,10 @@ const REWARD_WEIGHTS = {
  * @param {number} actionId - Action taken
  * @param {object} newState - State after action
  * @param {boolean} actionSucceeded - Whether action was valid and executed
+ * @param {object} deploymentResult - Deployment result if action was deployment
  * @returns {number} Reward value
  */
-export function calculateReward(previousState, actionId, newState, actionSucceeded) {
+export function calculateReward(previousState, actionId, newState, actionSucceeded, deploymentResult = null) {
     let reward = 0;
     
     // ========== Invalid Action Penalty ==========
@@ -37,29 +52,57 @@ export function calculateReward(previousState, actionId, newState, actionSucceed
         return REWARD_WEIGHTS.invalidAction;
     }
     
-    // ========== Primary Objective: Accuracy Gain ==========
+    // ========== PRIMARY REWARD: DEPLOYMENT SUCCESS ==========
+    if (deploymentResult && deploymentResult.success) {
+        const tokensEarned = deploymentResult.tokensEarned;
+        const strategyId = deploymentResult.strategyId;
+        const runDuration = deploymentResult.runDurationMs / 1000; // Convert to seconds
+        
+        // MASSIVE REWARD FOR TOKENS!
+        reward += tokensEarned * REWARD_WEIGHTS.tokensEarned;
+        
+        // BONUS: Complete Strategy (1.5x multiplier)
+        if (strategyId === 'complete') {
+            reward += REWARD_WEIGHTS.deploymentBonus;
+        }
+        
+        // TIME EFFICIENCY: Reward faster runs
+        // Optimal run time: 300-600 seconds (5-10 minutes)
+        const timeEfficiency = calculateTimeEfficiency(runDuration);
+        reward += timeEfficiency * REWARD_WEIGHTS.timeEfficiency;
+        
+        console.log(`🎉 DEPLOYMENT REWARD: ${reward.toFixed(0)} (${tokensEarned} tokens, ${strategyId} strategy, ${runDuration.toFixed(0)}s)`);
+        
+        return reward; // Return immediately - this is the ultimate success!
+    }
+    
+    // ========== Check for Premature Deployment Attempt ==========
+    if (isDeploymentAction(actionId)) {
+        // If we tried to deploy but couldn't (not enough accuracy)
+        const lifetimeAccuracy = previousState.deployment?.lifetimeStats?.totalAccuracy ?? 0;
+        if (lifetimeAccuracy < 250000) {
+            return REWARD_WEIGHTS.prematureDeployment;
+        }
+    }
+    
+    // ========== Secondary Objectives (during run) ==========
+    
+    // Accuracy Gain (small reward, accumulates over time)
     const accuracyGain = newState.stats.totalAccuracy - previousState.stats.totalAccuracy;
     reward += accuracyGain * REWARD_WEIGHTS.accuracy;
     
-    // ========== Efficiency Bonus ==========
+    // Efficiency Bonus
     const efficiencyBonus = calculateEfficiencyBonus(newState);
     reward += efficiencyBonus * REWARD_WEIGHTS.efficiency;
     
-    // ========== Research Completion Bonus ==========
+    // Research Completion Bonus
     const researchCompleted = newState.stats.completedResearch.length - 
                              previousState.stats.completedResearch.length;
     if (researchCompleted > 0) {
         reward += researchCompleted * REWARD_WEIGHTS.research;
     }
     
-    // ========== Deployment Success Bonus ==========
-    const deploymentCount = newState.stats.deployments - previousState.stats.deployments;
-    if (deploymentCount > 0) {
-        reward += deploymentCount * REWARD_WEIGHTS.deployment;
-    }
-    
-    // ========== Idle Penalty ==========
-    // Penalize "wait" action if there were valid actions available
+    // Idle Penalty
     if (actionId === 0) { // Wait action
         const hasResources = newState.resources.data.amount > 100 && 
                            newState.resources.compute.amount > 100;
@@ -69,6 +112,30 @@ export function calculateReward(previousState, actionId, newState, actionSucceed
     }
     
     return reward;
+}
+
+/**
+ * Calculate time efficiency bonus
+ * Rewards runs that are fast but not rushed
+ * @param {number} runDuration - Run duration in seconds
+ * @returns {number} Efficiency score [0, 1]
+ */
+function calculateTimeEfficiency(runDuration) {
+    // Optimal range: 300-600 seconds (5-10 minutes)
+    const optimalMin = 300;
+    const optimalMax = 600;
+    
+    if (runDuration < optimalMin) {
+        // Too fast - probably premature
+        return 0.3;
+    } else if (runDuration <= optimalMax) {
+        // Perfect timing!
+        return 1.0;
+    } else {
+        // Too slow - diminishing returns
+        const penalty = Math.max(0, 1.0 - (runDuration - optimalMax) / 1800); // Decay over 30 min
+        return penalty;
+    }
 }
 
 /**
@@ -94,7 +161,6 @@ function calculateEfficiencyBonus(state) {
                            Math.max(dataPerSec, computePerSec);
     
     // Reward balanced resource management
-    // Perfect balance (ratio = 1) gives maximum bonus
     const balanceBonus = (ratio + productionRatio) / 2;
     
     return balanceBonus;
@@ -107,10 +173,16 @@ function calculateEfficiencyBonus(state) {
  * @param {number} actionId - Action taken
  * @param {object} newState - State after action
  * @param {boolean} actionSucceeded - Whether action was valid
+ * @param {object} deploymentResult - Deployment result
  * @returns {number} Shaped reward
  */
-export function calculateShapedReward(previousState, actionId, newState, actionSucceeded) {
-    let reward = calculateReward(previousState, actionId, newState, actionSucceeded);
+export function calculateShapedReward(previousState, actionId, newState, actionSucceeded, deploymentResult = null) {
+    let reward = calculateReward(previousState, actionId, newState, actionSucceeded, deploymentResult);
+    
+    // Don't add shaping for deployment - reward is already huge
+    if (deploymentResult && deploymentResult.success) {
+        return reward;
+    }
     
     // Add potential-based reward shaping
     // Φ(s') - Φ(s) where Φ is a potential function
@@ -132,18 +204,19 @@ export function calculateShapedReward(previousState, actionId, newState, actionS
 function estimatePotential(state) {
     let potential = 0;
     
-    // Accuracy progress toward deployment
-    const accuracyProgress = state.stats.totalAccuracy / 250000; // First deployment at 250K
-    potential += Math.min(accuracyProgress, 1.0) * 10;
+    // PRIMARY: Accuracy progress toward deployment (most important!)
+    const lifetimeAccuracy = state.deployment?.lifetimeStats?.totalAccuracy ?? state.stats.totalAccuracy;
+    const accuracyProgress = lifetimeAccuracy / 250000; // First deployment at 250K
+    potential += Math.min(accuracyProgress, 1.0) * 50; // Huge potential weight!
     
-    // Production capacity
+    // Production capacity (helps reach deployment faster)
     const productionScore = (state.resources.data.perSecond + 
                            state.resources.compute.perSecond) / 1000;
-    potential += Math.min(productionScore, 1.0) * 5;
+    potential += Math.min(productionScore, 1.0) * 10;
     
-    // Research progress
+    // Research progress (force multipliers)
     const researchProgress = state.stats.completedResearch.length / 40; // 40 total research items
-    potential += researchProgress * 3;
+    potential += researchProgress * 5;
     
     // Building infrastructure
     let totalBuildings = 0;
@@ -151,7 +224,7 @@ function estimatePotential(state) {
         totalBuildings += building.count || 0;
     }
     const buildingScore = Math.min(totalBuildings / 50, 1.0);
-    potential += buildingScore * 2;
+    potential += buildingScore * 3;
     
     return potential;
 }
