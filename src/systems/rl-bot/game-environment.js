@@ -101,6 +101,12 @@ export class GameEnvironment {
         // Execute action
         const actionResult = await this._executeAction(actionId);
         
+        // IMPORTANT: Store action result message in gameState for reward function
+        this.gameState._lastActionInfo = {
+            message: actionResult.message,
+            success: actionResult.success
+        };
+        
         // Get new state
         const newState = this.observe();
         
@@ -111,7 +117,7 @@ export class GameEnvironment {
         const reward = calculateReward(
             previousState,
             actionId,
-            this.gameState,
+            this.gameState, // Pass gameState with _lastActionInfo!
             actionResult.success,
             actionResult.deploymentResult
         );
@@ -165,6 +171,11 @@ export class GameEnvironment {
         this.episodeReward = 0;
         this.previousState = null;
         this.debugValidActions = true; // Enable debug logging for new episode
+        
+        // Clear last action info
+        if (this.gameState._lastActionInfo) {
+            delete this.gameState._lastActionInfo;
+        }
         
         return this.observe();
     }
