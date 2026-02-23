@@ -126,6 +126,11 @@ export class GameState {
     
     addResource(resourceId, amount) {
         this.resourceManager.addResource(resourceId, amount);
+        
+        // Track lifetime accuracy for deployment system
+        if (resourceId === 'accuracy' && amount > 0) {
+            this.deployment.lifetimeStats.totalAccuracy += amount;
+        }
     }
     
     canAfford(costs) {
