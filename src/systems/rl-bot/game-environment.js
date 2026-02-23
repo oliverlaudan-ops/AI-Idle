@@ -11,7 +11,7 @@
  */
 
 import { encodeState, getDeploymentReadiness } from './state-encoder.js';
-import { getValidActions, isDeploymentAction, getAction } from './action-space.js';
+import { getValidActions, isDeploymentAction, getAction, isActionValid } from './action-space.js';
 import { calculateReward } from './reward-function.js';
 
 export class GameEnvironment {
@@ -30,6 +30,9 @@ export class GameEnvironment {
         // Previous state for reward calculation
         this.previousState = null;
         
+        // Debug flag
+        this.debugValidActions = false;
+        
         console.log('🎮 Game Environment initialized');
     }
     
@@ -46,7 +49,43 @@ export class GameEnvironment {
      * @returns {array} Array of valid action IDs
      */
     getValidActions() {
-        return getValidActions(this.gameState);
+        const validActions = getValidActions(this.gameState);
+        
+        // Debug logging (only first time)
+        if (this.debugValidActions && this.episodeSteps === 0) {
+            console.log('\n🔍 Debugging Valid Actions:');
+            console.log(`Valid actions: ${validActions.length}`);
+            
+            // Show sample of what's unlocked
+            console.log('\n🏭 Buildings:');
+            for (const [id, building] of Object.entries(this.gameState.buildings || {})) {
+                if (building.unlocked) {
+                    console.log(`  ✅ ${id}: unlocked=${building.unlocked}, count=${building.count}`);
+                }
+            }
+            
+            console.log('\n🧠 Models:');
+            for (const [id, model] of Object.entries(this.gameState.models || {})) {
+                if (model.unlocked) {
+                    console.log(`  ✅ ${id}: unlocked=${model.unlocked}`);
+                }
+            }
+            
+            console.log('\n🔬 Research:');
+            for (const [id, research] of Object.entries(this.gameState.research || {})) {
+                if (research.unlocked && !research.researched) {
+                    console.log(`  ✅ ${id}: unlocked=${research.unlocked}, researched=${research.researched}`);
+                }
+            }
+            
+            console.log(`\n🎯 Valid action IDs: [${validActions.join(', ')}]`);
+            console.log('Action names:', validActions.map(id => getAction(id).name));
+            console.log('');
+            
+            this.debugValidActions = false; // Only log once per episode
+        }
+        
+        return validActions;
     }
     
     /**
@@ -89,7 +128,8 @@ export class GameEnvironment {
             tokensEarned: actionResult.tokensEarned || 0,
             validActions: this.getValidActions().length,
             deploymentReadiness: getDeploymentReadiness(this.gameState),
-            episodeSteps: this.episodeSteps
+            episodeSteps: this.episodeSteps,
+            message: actionResult.message
         };
         
         return {
@@ -124,6 +164,7 @@ export class GameEnvironment {
         this.episodeSteps = 0;
         this.episodeReward = 0;
         this.previousState = null;
+        this.debugValidActions = true; // Enable debug logging for new episode
         
         return this.observe();
     }
