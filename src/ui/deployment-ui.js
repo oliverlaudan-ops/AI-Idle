@@ -12,6 +12,8 @@ export class DeploymentUI {
         this.gameState  = gameState;
         this.modalOpen  = false;
         this.activeTab  = 'deploy'; // 'deploy' | 'shop' | 'portfolio'
+        this.needsUpdate = false;    // Flag to control re-rendering
+        this.lastTokenCount = 0;     // Track token changes
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -30,8 +32,19 @@ export class DeploymentUI {
     // ─────────────────────────────────────────────────────────────────────────
 
     update() {
+        // Always update token display (lightweight)
         this._updateTokenDisplay();
-        if (this.modalOpen) this._renderActiveTab();
+        
+        // Only re-render modal content if it's open AND something changed
+        if (this.modalOpen && this.needsUpdate) {
+            this._renderActiveTab();
+            this.needsUpdate = false;
+        }
+    }
+    
+    // Mark that the UI needs to be updated (called externally or after state changes)
+    markDirty() {
+        this.needsUpdate = true;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -50,8 +63,19 @@ export class DeploymentUI {
     }
 
     _updateTokenDisplay() {
-        const el = document.getElementById('hud-token-count');
-        if (el) el.textContent = Math.floor(this.gameState.deployment?.tokens ?? 0);
+        const currentTokens = Math.floor(this.gameState.deployment?.tokens ?? 0);
+        
+        // Only update DOM if token count changed
+        if (currentTokens !== this.lastTokenCount) {
+            const el = document.getElementById('hud-token-count');
+            if (el) el.textContent = currentTokens;
+            this.lastTokenCount = currentTokens;
+            
+            // Token count changed, mark modal for update if it's showing the shop
+            if (this.modalOpen && this.activeTab === 'shop') {
+                this.needsUpdate = true;
+            }
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -129,6 +153,7 @@ export class DeploymentUI {
             btn.addEventListener('click', () => {
                 this.activeTab = btn.dataset.tab;
                 this._setActiveTabButton(this.activeTab);
+                this.needsUpdate = true;  // Mark for update when tab changes
                 this._renderActiveTab();
             });
         });
@@ -139,6 +164,7 @@ export class DeploymentUI {
         if (!overlay) return;
         overlay.classList.remove('hidden');
         this.modalOpen = true;
+        this.needsUpdate = true;  // Force initial render when opening
         this._setActiveTabButton(this.activeTab);
         this._renderActiveTab();
     }
@@ -199,34 +225,50 @@ export class DeploymentUI {
             `;
         }).join('');
 
-        const baseEst  = this._estimateBaseTokens();
-        // Find selected strategy from STRATEGIES object
-        const strategy = STRATEGIES[selected] ?? STRATEGIES['standard'];
-        const estTokens = Math.floor(baseEst * (strategy?.tokenMultiplier ?? 1));
+        // Use deployment.lifetimeStats.totalAccuracy for calculation
+        const lifetimeAccuracy = dep?.lifetimeStats?.totalAccuracy ?? 0;
+        const deployInfo = this.gameState.getDeploymentInfo();
+        const estTokens = deployInfo?.tokensOnDeploy ?? 0;
+        
+        // Show current progress
+        const requiredForFirst = 250000;
+        const progressPercent = Math.min(100, (lifetimeAccuracy / requiredForFirst) * 100);
 
         return `
             <div class="deploy-tab">
                 <div class="deploy-stats">
                     <div class="dstat"><span class="dstat-label">Tokens</span><span class="dstat-value">${tokens}</span></div>
                     <div class="dstat"><span class="dstat-label">Deployments</span><span class="dstat-value">${deployments}</span></div>
-                    <div class="dstat"><span class="dstat-label">Est. Reward</span><span class="dstat-value">~${estTokens} tokens</span></div>
+                    <div class="dstat"><span class="dstat-label">Lifetime Accuracy</span><span class="dstat-value">${(lifetimeAccuracy / 1000).toFixed(1)}K</span></div>
                 </div>
+                
+                ${!deployInfo.canDeploy ? `
+                    <div class="deployment-progress-box">
+                        <h3>Progress to First Deployment</h3>
+                        <p>You need <strong>250K total accuracy</strong> to unlock your first deployment.</p>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: ${progressPercent}%"></div>
+                            <span class="progress-bar-text">${(lifetimeAccuracy / 1000).toFixed(1)}K / 250K (${progressPercent.toFixed(1)}%)</span>
+                        </div>
+                        <p class="progress-hint">💡 Keep training models to increase your total accuracy!</p>
+                    </div>
+                ` : `
+                    <div class="deployment-ready-box">
+                        <h3>✅ Ready to Deploy!</h3>
+                        <p>You will earn <strong>${estTokens} token${estTokens !== 1 ? 's' : ''}</strong> on deployment.</p>
+                    </div>
+                `}
 
                 <h3 class="section-title">Choose Strategy</h3>
                 <div class="strategy-grid">${strategyCards}</div>
 
-                <button class="btn-deploy" id="btn-confirm-deploy">
-                    🚀 Deploy Now
+                <button class="btn-deploy ${!deployInfo.canDeploy ? 'disabled' : ''}" 
+                        id="btn-confirm-deploy"
+                        ${!deployInfo.canDeploy ? 'disabled' : ''}>
+                    🚀 Deploy Now ${deployInfo.canDeploy ? `(+${estTokens} tokens)` : '(Need 250K accuracy)'}
                 </button>
             </div>
         `;
-    }
-
-    _estimateBaseTokens() {
-        const gs = this.gameState;
-        const models   = gs.stats?.modelsTrained ?? 0;
-        const research = gs.deployment?.researchCompletedThisRun ?? 0;
-        return Math.max(1, Math.floor(models * 0.5 + research * 2));
     }
 
     _bindDeployTab() {
@@ -237,13 +279,14 @@ export class DeploymentUI {
                 if (this.gameState.deployment) {
                     this.gameState.deployment.selectedStrategy = stratId;
                 }
+                this.needsUpdate = true;
                 this._renderActiveTab();
             });
         });
 
         // Deploy button
         const deployBtn = document.getElementById('btn-confirm-deploy');
-        if (deployBtn) {
+        if (deployBtn && !deployBtn.disabled) {
             deployBtn.addEventListener('click', () => {
                 const result = this.gameState.performDeployment?.();
                 if (!result) {
@@ -255,6 +298,7 @@ export class DeploymentUI {
                         `🚀 Deployed! Earned ${result.tokensEarned} tokens (${result.strategyId} strategy)`,
                         'success'
                     );
+                    this.needsUpdate = true;
                     this._renderActiveTab();
                     this._updateTokenDisplay();
                 } else {
@@ -353,6 +397,7 @@ export class DeploymentUI {
                     dep.tokens            = result.remainingTokens;
                     // Invalidate production cache so multipliers are recomputed
                     this.gameState._cachedResearchMultipliers = null;
+                    this.needsUpdate = true;
                     this._renderActiveTab();
                     this._updateTokenDisplay();
                     const upgName = UPGRADE_DEFINITIONS[upgradeId]?.name ?? upgradeId;
@@ -518,6 +563,35 @@ export class DeploymentUI {
             .dstat { background: #313244; border-radius: 8px; padding: 10px 16px; flex: 1; text-align: center; }
             .dstat-label { display: block; font-size: 11px; color: #a6adc8; margin-bottom: 4px; }
             .dstat-value { font-size: 20px; font-weight: 700; color: #cba6f7; }
+            
+            /* ── Progress box ── */
+            .deployment-progress-box, .deployment-ready-box {
+                background: #313244; border-radius: 8px; padding: 16px; margin-bottom: 16px;
+            }
+            .deployment-progress-box h3, .deployment-ready-box h3 {
+                margin: 0 0 8px; font-size: 16px;
+            }
+            .deployment-progress-box p, .deployment-ready-box p {
+                margin: 0 0 12px; color: #a6adc8;
+            }
+            .progress-bar-container {
+                position: relative; background: #1e1e2e; border-radius: 8px;
+                height: 32px; overflow: hidden; margin-bottom: 8px;
+            }
+            .progress-bar-fill {
+                position: absolute; left: 0; top: 0; bottom: 0;
+                background: linear-gradient(90deg, #6c63ff, #48cfad);
+                transition: width 0.3s ease;
+            }
+            .progress-bar-text {
+                position: absolute; inset: 0;
+                display: flex; align-items: center; justify-content: center;
+                font-weight: 600; font-size: 13px; color: #cdd6f4;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            }
+            .progress-hint {
+                font-size: 12px; color: #a6adc8; margin: 0;
+            }
 
             .strategy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-bottom: 20px; }
             .strategy-card {
@@ -542,7 +616,10 @@ export class DeploymentUI {
                 color: #fff; border: none; border-radius: 8px; cursor: pointer;
                 transition: opacity .2s;
             }
-            .btn-deploy:hover { opacity: .88; }
+            .btn-deploy:hover:not(:disabled) { opacity: .88; }
+            .btn-deploy.disabled, .btn-deploy:disabled {
+                background: #45475a; color: #6c7086; cursor: not-allowed; opacity: 0.6;
+            }
 
             /* ── Shop tab ── */
             .shop-balance { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
