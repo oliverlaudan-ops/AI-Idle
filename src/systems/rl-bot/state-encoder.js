@@ -49,40 +49,74 @@ const BUILDINGS = [
 ];
 
 /**
+ * Safe get helper - returns 0 if property doesn't exist
+ * @param {object} obj - Object to access
+ * @param {string} path - Dot-separated path (e.g., 'resources.data.amount')
+ * @returns {number} Value or 0
+ */
+function safeGet(obj, path, defaultValue = 0) {
+    try {
+        const keys = path.split('.');
+        let current = obj;
+        
+        for (const key of keys) {
+            if (current === null || current === undefined) {
+                return defaultValue;
+            }
+            current = current[key];
+        }
+        
+        return current ?? defaultValue;
+    } catch (error) {
+        console.warn(`[State Encoder] Failed to access ${path}:`, error);
+        return defaultValue;
+    }
+}
+
+/**
  * Encode game state into feature vector
  * @param {object} gameState - Current game state
  * @returns {Float32Array} Normalized feature vector (27 dimensions)
  */
 export function encodeState(gameState) {
+    // Validate gameState
+    if (!gameState) {
+        console.error('[State Encoder] gameState is null/undefined!');
+        return new Float32Array(27); // Return zeros
+    }
+    
     const features = [];
     
     // ========== Resources (4 features) ==========
     features.push(
-        normalize(gameState.resources.data.amount, MAX_VALUES.data),
-        normalize(gameState.resources.compute.amount, MAX_VALUES.compute),
-        normalize(gameState.stats.totalAccuracy, MAX_VALUES.accuracy),
-        normalize(gameState.resources.researchPoints.amount, MAX_VALUES.researchPoints)
+        normalize(safeGet(gameState, 'resources.data.amount'), MAX_VALUES.data),
+        normalize(safeGet(gameState, 'resources.compute.amount'), MAX_VALUES.compute),
+        normalize(safeGet(gameState, 'stats.totalAccuracy'), MAX_VALUES.accuracy),
+        normalize(safeGet(gameState, 'resources.research.amount'), MAX_VALUES.researchPoints)
     );
     
     // ========== Buildings (7 features) ==========
     for (const buildingId of BUILDINGS) {
-        const building = gameState.buildings[buildingId];
-        const count = building ? building.count : 0;
+        const count = safeGet(gameState, `buildings.${buildingId}.count`, 0);
         features.push(normalize(count, MAX_VALUES.buildingCount));
     }
     
     // ========== Research Status (8 binary features) ==========
     for (const researchId of CRITICAL_RESEARCH) {
-        const research = gameState.research[researchId];
-        const completed = research && research.researched ? 1 : 0;
-        features.push(completed);
+        const researched = safeGet(gameState, `research.${researchId}.researched`, false);
+        features.push(researched ? 1 : 0);
     }
     
     // ========== Training State (3 features) ==========
     const isTraining = gameState.currentTraining ? 1 : 0;
-    const trainingProgress = gameState.currentTraining 
-        ? (gameState.trainingProgress / gameState.models[gameState.currentTraining].trainingTime)
-        : 0;
+    
+    let trainingProgress = 0;
+    if (gameState.currentTraining && gameState.models && gameState.models[gameState.currentTraining]) {
+        const model = gameState.models[gameState.currentTraining];
+        const progress = safeGet(gameState, 'trainingProgress', 0);
+        const trainingTime = model.trainingTime || 1;
+        trainingProgress = progress / trainingTime;
+    }
     
     // Current model tier (0-1 scale, 0=none, 1=advanced)
     let modelTier = 0;
@@ -102,16 +136,24 @@ export function encodeState(gameState) {
     // ========== Deployment Features (4 features) - CRITICAL! ==========
     
     // Lifetime accuracy (how close to deployment?)
-    const lifetimeAccuracy = gameState.deployment?.lifetimeStats?.totalAccuracy ?? gameState.stats.totalAccuracy;
+    const lifetimeAccuracy = safeGet(gameState, 'deployment.lifetimeStats.totalAccuracy', 
+                                      safeGet(gameState, 'stats.totalAccuracy', 0));
     features.push(normalize(lifetimeAccuracy, MAX_VALUES.lifetimeAccuracy));
     
     // Can deploy right now? (binary)
-    const deployInfo = gameState.getDeploymentInfo?.();
-    const canDeploy = deployInfo && deployInfo.canDeploy ? 1 : 0;
+    let canDeploy = 0;
+    try {
+        if (gameState.getDeploymentInfo && typeof gameState.getDeploymentInfo === 'function') {
+            const deployInfo = gameState.getDeploymentInfo();
+            canDeploy = deployInfo && deployInfo.canDeploy ? 1 : 0;
+        }
+    } catch (error) {
+        console.warn('[State Encoder] getDeploymentInfo() failed:', error);
+    }
     features.push(canDeploy);
     
     // Complete strategy unlocked? (binary)
-    const deployments = gameState.deployment?.deployments ?? 0;
+    const deployments = safeGet(gameState, 'deployment.deployments', 0);
     const completeUnlocked = deployments >= 3 ? 1 : 0;
     features.push(completeUnlocked);
     
@@ -120,9 +162,16 @@ export function encodeState(gameState) {
     
     // ========== Time (1 feature) ==========
     const currentTime = Date.now();
-    const startTime = gameState.stats.startTime || currentTime;
+    const startTime = safeGet(gameState, 'stats.startTime', currentTime);
     const runDuration = (currentTime - startTime) / 1000; // seconds
     features.push(normalize(runDuration, MAX_VALUES.runDuration));
+    
+    // Validate feature count
+    if (features.length !== 27) {
+        console.error(`[State Encoder] Expected 27 features, got ${features.length}`);
+        // Pad with zeros if needed
+        while (features.length < 27) features.push(0);
+    }
     
     // Convert to Float32Array for TensorFlow.js
     return new Float32Array(features);
@@ -137,6 +186,7 @@ export function encodeState(gameState) {
  */
 function normalize(value, max) {
     if (max === 0) return 0;
+    if (typeof value !== 'number' || isNaN(value)) return 0;
     
     // Linear normalization with soft clipping
     const ratio = value / max;
@@ -204,7 +254,7 @@ export function decodeState(stateVector) {
     const featureNames = getFeatureNames();
     const decoded = {};
     
-    for (let i = 0; i < featureNames.length; i++) {
+    for (let i = 0; i < featureNames.length && i < stateVector.length; i++) {
         decoded[featureNames[i]] = stateVector[i];
     }
     
@@ -239,11 +289,13 @@ export function stateDifference(state1, state2) {
     const featureNames = getFeatureNames();
     const differences = [];
     
-    for (let i = 0; i < state1.length; i++) {
+    const minLength = Math.min(state1.length, state2.length);
+    
+    for (let i = 0; i < minLength; i++) {
         const diff = Math.abs(state2[i] - state1[i]);
         if (diff > 0.01) { // Only report significant changes
             differences.push({
-                feature: featureNames[i],
+                feature: featureNames[i] || `feature_${i}`,
                 before: state1[i].toFixed(3),
                 after: state2[i].toFixed(3),
                 change: (state2[i] - state1[i]).toFixed(3)
@@ -261,7 +313,10 @@ export function stateDifference(state1, state2) {
  * @returns {number} Readiness score
  */
 export function getDeploymentReadiness(gameState) {
-    const lifetimeAccuracy = gameState.deployment?.lifetimeStats?.totalAccuracy ?? gameState.stats.totalAccuracy;
+    if (!gameState) return 0;
+    
+    const lifetimeAccuracy = safeGet(gameState, 'deployment.lifetimeStats.totalAccuracy', 
+                                      safeGet(gameState, 'stats.totalAccuracy', 0));
     const threshold = 250000;
     
     return Math.min(1.0, lifetimeAccuracy / threshold);
