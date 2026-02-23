@@ -13,7 +13,7 @@
  * - Optimal deployment timing
  */
 
-import { isDeploymentAction, getDeploymentStrategy } from './action-space.js';
+import { isDeploymentAction, getDeploymentStrategy, ActionType, getAction } from './action-space.js';
 
 /**
  * Reward weights (carefully tuned for deployment-focused learning)
@@ -25,14 +25,17 @@ const REWARD_WEIGHTS = {
     timeEfficiency: 20.0,        // Reward for fast runs
     
     // Secondary objectives (help reach deployment)
-    accuracy: 0.1,               // Per point of accuracy (reduced from 1.0)
+    buildingSuccess: 5.0,        // Successful building purchase
+    trainingSuccess: 10.0,       // Successful training start
+    researchSuccess: 10.0,       // Successful research completion
+    accuracy: 0.1,               // Per point of accuracy
     efficiency: 0.5,             // Resource balance bonus
-    research: 2.0,               // Research completion
     
-    // Penalties
-    invalidAction: -5.0,         // Invalid action penalty
-    idle: -0.1,                  // Penalty for waiting when could act
-    prematureDeployment: -10.0   // Penalty for deploying too early
+    // Penalties (MUCH REDUCED!)
+    cannotAfford: -0.1,          // Tiny penalty for trying expensive actions
+    invalidAction: -1.0,         // Small penalty for truly invalid actions
+    idle: -0.05,                 // Tiny penalty for waiting when could act
+    prematureDeployment: -5.0    // Medium penalty for deploying too early
 };
 
 /**
@@ -46,10 +49,23 @@ const REWARD_WEIGHTS = {
  */
 export function calculateReward(previousState, actionId, newState, actionSucceeded, deploymentResult = null) {
     let reward = 0;
+    const action = getAction(actionId);
     
-    // ========== Invalid Action Penalty ==========
+    // ========== Invalid Action Handling ==========
     if (!actionSucceeded) {
-        return REWARD_WEIGHTS.invalidAction;
+        // Check WHY it failed - different penalties!
+        const actionInfo = newState._lastActionInfo || {};
+        
+        // If failed because "cannot afford" - tiny penalty (bot should try!)
+        if (actionInfo.message && 
+            (actionInfo.message.includes('Cannot afford') || 
+             actionInfo.message.includes('cannot afford') ||
+             actionInfo.message.includes('Not enough'))) {
+            return REWARD_WEIGHTS.cannotAfford; // -0.1 (almost neutral!)
+        }
+        
+        // Other failures (not unlocked, etc.) - small penalty
+        return REWARD_WEIGHTS.invalidAction; // -1.0
     }
     
     // ========== PRIMARY REWARD: DEPLOYMENT SUCCESS ==========
@@ -85,6 +101,23 @@ export function calculateReward(previousState, actionId, newState, actionSucceed
         }
     }
     
+    // ========== SUCCESS REWARDS (MUCH HIGHER!) ==========
+    
+    // Building Purchase Success
+    if (action.type === ActionType.BUILD) {
+        reward += REWARD_WEIGHTS.buildingSuccess; // +5.0
+    }
+    
+    // Training Start Success
+    if (action.type === ActionType.TRAIN) {
+        reward += REWARD_WEIGHTS.trainingSuccess; // +10.0
+    }
+    
+    // Research Completion Success
+    if (action.type === ActionType.RESEARCH) {
+        reward += REWARD_WEIGHTS.researchSuccess; // +10.0
+    }
+    
     // ========== Secondary Objectives (during run) ==========
     
     // Accuracy Gain (small reward, accumulates over time)
@@ -95,19 +128,12 @@ export function calculateReward(previousState, actionId, newState, actionSucceed
     const efficiencyBonus = calculateEfficiencyBonus(newState);
     reward += efficiencyBonus * REWARD_WEIGHTS.efficiency;
     
-    // Research Completion Bonus
-    const researchCompleted = newState.stats.completedResearch.length - 
-                             previousState.stats.completedResearch.length;
-    if (researchCompleted > 0) {
-        reward += researchCompleted * REWARD_WEIGHTS.research;
-    }
-    
-    // Idle Penalty
+    // Idle Penalty (tiny now!)
     if (actionId === 0) { // Wait action
         const hasResources = newState.resources.data.amount > 100 && 
                            newState.resources.compute.amount > 100;
         if (hasResources) {
-            reward += REWARD_WEIGHTS.idle;
+            reward += REWARD_WEIGHTS.idle; // -0.05
         }
     }
     
