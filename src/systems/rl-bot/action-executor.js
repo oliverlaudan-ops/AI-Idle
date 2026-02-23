@@ -60,60 +60,46 @@ function executeWait() {
  * @returns {object} Result
  */
 function executeBuilding(gameState, buildingId) {
-    const building = gameState.buildings[buildingId];
-    
-    if (!building || !building.unlocked) {
+    try {
+        const building = gameState.buildings[buildingId];
+        
+        if (!building || !building.unlocked) {
+            return {
+                success: false,
+                deployed: false,
+                message: `Building ${buildingId} not unlocked`
+            };
+        }
+        
+        // Use official GameState method if available
+        if (gameState.purchaseBuilding && typeof gameState.purchaseBuilding === 'function') {
+            const result = gameState.purchaseBuilding(buildingId, 1);
+            
+            if (result && result.success) {
+                return {
+                    success: true,
+                    deployed: false,
+                    message: `Built ${buildingId}`
+                };
+            }
+            
+            return {
+                success: false,
+                deployed: false,
+                message: `Cannot afford ${buildingId}`
+            };
+        }
+        
+        // Fallback should never be reached if GameState is properly initialized
         return {
             success: false,
             deployed: false,
-            message: `Building ${buildingId} not unlocked`
+            message: `GameState.purchaseBuilding() not available`
         };
+    } catch (error) {
+        console.error(`[Action Executor] Building error:`, error);
+        return { success: false, deployed: false };
     }
-    
-    // Get building cost
-    const cost = gameState.getBuildingCost?.(buildingId);
-    if (!cost) {
-        return {
-            success: false,
-            deployed: false,
-            message: `Could not calculate cost for ${buildingId}`
-        };
-    }
-    
-    // Check if can afford
-    if (!gameState.canAfford(cost)) {
-        return {
-            success: false,
-            deployed: false,
-            message: `Cannot afford ${buildingId}`
-        };
-    }
-    
-    // Purchase building (assuming game state has purchaseBuilding method)
-    if (gameState.purchaseBuilding) {
-        gameState.purchaseBuilding(buildingId);
-        return {
-            success: true,
-            deployed: false,
-            message: `Built ${buildingId}`
-        };
-    }
-    
-    // Fallback: manual purchase
-    gameState.resources.data.amount -= cost.data || 0;
-    gameState.resources.compute.amount -= cost.compute || 0;
-    building.count++;
-    
-    // Recalculate production
-    if (gameState.recalculateProduction) {
-        gameState.recalculateProduction();
-    }
-    
-    return {
-        success: true,
-        deployed: false,
-        message: `Built ${buildingId}`
-    };
 }
 
 /**
@@ -123,55 +109,54 @@ function executeBuilding(gameState, buildingId) {
  * @returns {object} Result
  */
 function executeTraining(gameState, modelId) {
-    // Check if already training
-    if (gameState.currentTraining) {
+    try {
+        // Check if already training
+        if (gameState.currentTraining) {
+            return {
+                success: false,
+                deployed: false,
+                message: 'Already training a model'
+            };
+        }
+        
+        const model = gameState.models[modelId];
+        
+        if (!model || !model.unlocked) {
+            return {
+                success: false,
+                deployed: false,
+                message: `Model ${modelId} not unlocked`
+            };
+        }
+        
+        // Use official GameState method if available
+        if (gameState.startTraining && typeof gameState.startTraining === 'function') {
+            const success = gameState.startTraining(modelId);
+            
+            if (success) {
+                return {
+                    success: true,
+                    deployed: false,
+                    message: `Started training ${modelId}`
+                };
+            }
+            
+            return {
+                success: false,
+                deployed: false,
+                message: `Cannot start training ${modelId}`
+            };
+        }
+        
         return {
             success: false,
             deployed: false,
-            message: 'Already training a model'
+            message: `GameState.startTraining() not available`
         };
+    } catch (error) {
+        console.error(`[Action Executor] Training error:`, error);
+        return { success: false, deployed: false };
     }
-    
-    const model = gameState.models[modelId];
-    
-    if (!model || !model.unlocked) {
-        return {
-            success: false,
-            deployed: false,
-            message: `Model ${modelId} not unlocked`
-        };
-    }
-    
-    // Check requirements
-    if (!gameState.canAfford(model.requirements)) {
-        return {
-            success: false,
-            deployed: false,
-            message: `Cannot afford to train ${modelId}`
-        };
-    }
-    
-    // Start training (assuming game state has startTraining method)
-    if (gameState.startTraining) {
-        gameState.startTraining(modelId);
-        return {
-            success: true,
-            deployed: false,
-            message: `Started training ${modelId}`
-        };
-    }
-    
-    // Fallback: manual training start
-    gameState.resources.data.amount -= model.requirements.data || 0;
-    gameState.resources.compute.amount -= model.requirements.compute || 0;
-    gameState.currentTraining = modelId;
-    gameState.trainingProgress = 0;
-    
-    return {
-        success: true,
-        deployed: false,
-        message: `Started training ${modelId}`
-    };
 }
 
 /**
@@ -181,50 +166,45 @@ function executeTraining(gameState, modelId) {
  * @returns {object} Result
  */
 function executeResearch(gameState, researchId) {
-    const research = gameState.research[researchId];
-    
-    if (!research || !research.unlocked || research.researched) {
+    try {
+        const research = gameState.research?.[researchId];
+        
+        if (!research || !research.unlocked || research.researched) {
+            return {
+                success: false,
+                deployed: false,
+                message: `Research ${researchId} not available`
+            };
+        }
+        
+        // Use official GameState method (performResearch from game-state.js line 299)
+        if (gameState.performResearch && typeof gameState.performResearch === 'function') {
+            const success = gameState.performResearch(researchId);
+            
+            if (success) {
+                return {
+                    success: true,
+                    deployed: false,
+                    message: `Researched ${researchId}`
+                };
+            }
+            
+            return {
+                success: false,
+                deployed: false,
+                message: `Cannot afford research ${researchId}`
+            };
+        }
+        
         return {
             success: false,
             deployed: false,
-            message: `Research ${researchId} not available`
+            message: `GameState.performResearch() not available`
         };
+    } catch (error) {
+        console.error(`[Action Executor] Research error:`, error);
+        return { success: false, deployed: false };
     }
-    
-    // Check if can afford
-    if (!gameState.canAfford(research.cost)) {
-        return {
-            success: false,
-            deployed: false,
-            message: `Cannot afford research ${researchId}`
-        };
-    }
-    
-    // Complete research (assuming game state has completeResearch method)
-    if (gameState.completeResearch) {
-        gameState.completeResearch(researchId);
-        return {
-            success: true,
-            deployed: false,
-            message: `Researched ${researchId}`
-        };
-    }
-    
-    // Fallback: manual research
-    gameState.resources.researchPoints.amount -= research.cost.researchPoints || 0;
-    research.researched = true;
-    gameState.stats.completedResearch.push(researchId);
-    
-    // Apply research effects
-    if (gameState.applyResearchEffects) {
-        gameState.applyResearchEffects(researchId);
-    }
-    
-    return {
-        success: true,
-        deployed: false,
-        message: `Researched ${researchId}`
-    };
 }
 
 /**
@@ -234,86 +214,81 @@ function executeResearch(gameState, researchId) {
  * @returns {object} Result with deployment details
  */
 async function executeDeployment(gameState, strategyId) {
-    // Check if can deploy
-    const deployInfo = gameState.getDeploymentInfo?.();
-    
-    if (!deployInfo || !deployInfo.canDeploy) {
-        return {
-            success: false,
-            deployed: false,
-            message: 'Cannot deploy yet (need 250K lifetime accuracy)'
-        };
-    }
-    
-    // Check if strategy is unlocked
-    if (strategyId === 'complete') {
-        const deployments = gameState.deployment?.deployments ?? 0;
-        if (deployments < 3) {
+    try {
+        // Check if can deploy
+        const deployInfo = gameState.getDeploymentInfo?.();
+        
+        if (!deployInfo || !deployInfo.canDeploy) {
             return {
                 success: false,
                 deployed: false,
-                message: 'Complete strategy requires 3+ deployments'
+                message: 'Cannot deploy yet (need 250K lifetime accuracy)'
             };
         }
-    }
-    
-    // Calculate tokens with strategy multiplier
-    const baseTokens = deployInfo.tokensEarned;
-    const multipliers = {
-        'fast': 0.75,
-        'standard': 1.0,
-        'complete': 1.5
-    };
-    const multiplier = multipliers[strategyId] || 1.0;
-    const tokensEarned = Math.floor(baseTokens * multiplier);
-    
-    // Store run duration for reward calculation
-    const runDurationMs = Date.now() - (gameState.stats.startTime || Date.now());
-    
-    // Execute deployment (assuming game state has deploy method)
-    if (gameState.deploy) {
-        const result = await gameState.deploy(strategyId);
+        
+        // Check if strategy is unlocked
+        if (strategyId === 'complete') {
+            const deployments = gameState.deployment?.deployments ?? 0;
+            if (deployments < 3) {
+                return {
+                    success: false,
+                    deployed: false,
+                    message: 'Complete strategy requires 3+ deployments'
+                };
+            }
+        }
+        
+        // Set the strategy before deployment
+        if (gameState.deployment) {
+            gameState.deployment.selectedStrategy = strategyId;
+        }
+        
+        // Store pre-deployment info for reward calculation
+        const preDeployTokens = gameState.deployment?.tokens ?? 0;
+        const runDurationMs = Date.now() - (gameState.stats?.startTime ?? Date.now());
+        const lifetimeAccuracy = gameState.deployment?.lifetimeStats?.totalAccuracy ?? 0;
+        
+        // Use official GameState method (performDeployment from game-state.js line 378)
+        if (gameState.performDeployment && typeof gameState.performDeployment === 'function') {
+            const result = gameState.performDeployment();
+            
+            if (result && result.success) {
+                const tokensEarned = result.tokensEarned ?? 0;
+                
+                return {
+                    success: true,
+                    deployed: true,
+                    tokensEarned,
+                    deploymentResult: {
+                        success: true,
+                        tokensEarned,
+                        strategyId,
+                        runDurationMs,
+                        lifetimeAccuracy,
+                        baseTokens: result.baseTokens,
+                        strategyMultiplier: result.strategyMultiplier,
+                        upgradeMultiplier: result.upgradeMultiplier
+                    },
+                    message: `🚀 Deployed with ${strategyId} strategy! Earned ${tokensEarned} tokens!`
+                };
+            }
+            
+            return {
+                success: false,
+                deployed: false,
+                message: result?.reason ?? 'Deployment failed'
+            };
+        }
         
         return {
-            success: true,
-            deployed: true,
-            tokensEarned,
-            deploymentResult: {
-                success: true,
-                tokensEarned,
-                strategyId,
-                runDurationMs,
-                lifetimeAccuracy: deployInfo.lifetimeAccuracy
-            },
-            message: `Deployed with ${strategyId} strategy! Earned ${tokensEarned} tokens!`
+            success: false,
+            deployed: false,
+            message: `GameState.performDeployment() not available`
         };
+    } catch (error) {
+        console.error(`[Action Executor] Deployment error:`, error);
+        return { success: false, deployed: false };
     }
-    
-    // Fallback: manual deployment (simplified)
-    console.log(`🚀 DEPLOYMENT: ${strategyId} strategy, ${tokensEarned} tokens`);
-    
-    // Award tokens
-    if (gameState.deployment) {
-        gameState.deployment.tokens = (gameState.deployment.tokens || 0) + tokensEarned;
-        gameState.deployment.deployments = (gameState.deployment.deployments || 0) + 1;
-        gameState.deployment.lifetimeStats = gameState.deployment.lifetimeStats || {};
-        gameState.deployment.lifetimeStats.totalTokensEarned = 
-            (gameState.deployment.lifetimeStats.totalTokensEarned || 0) + tokensEarned;
-    }
-    
-    return {
-        success: true,
-        deployed: true,
-        tokensEarned,
-        deploymentResult: {
-            success: true,
-            tokensEarned,
-            strategyId,
-            runDurationMs,
-            lifetimeAccuracy: deployInfo.lifetimeAccuracy
-        },
-        message: `Deployed with ${strategyId} strategy! Earned ${tokensEarned} tokens!`
-    };
 }
 
 /**
