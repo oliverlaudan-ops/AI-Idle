@@ -3,6 +3,8 @@
  * 
  * Defines all possible actions the bot can take in the game.
  * Each action has an ID, type, and target.
+ * 
+ * IMPORTANT: Uses actual game IDs from AI-Idle (not generic names)
  */
 
 /**
@@ -13,11 +15,11 @@ export const ActionType = {
     BUILD: 'build',
     TRAIN: 'train',
     RESEARCH: 'research',
-    DEPLOY: 'deploy'        // NEW: Deployment/Prestige action
+    DEPLOY: 'deploy'
 };
 
 /**
- * Complete action space (29 actions)
+ * Complete action space - using ACTUAL game IDs!
  */
 export const ACTION_SPACE = [
     // 0. Do nothing (always valid)
@@ -28,165 +30,147 @@ export const ACTION_SPACE = [
         name: 'Wait'
     },
     
-    // 1-7. Building purchases (7 actions)
+    // 1-9. Building purchases (9 buildings from actual game)
     {
         id: 1,
         type: ActionType.BUILD,
-        target: 'dataCenter',
-        name: 'Build Data Center'
+        target: 'datacollector',
+        name: 'Build Data Collector'
     },
     {
         id: 2,
         type: ActionType.BUILD,
-        target: 'computeCluster',
-        name: 'Build Compute Cluster'
+        target: 'cpucore',
+        name: 'Build CPU Core'
     },
     {
         id: 3,
         type: ActionType.BUILD,
-        target: 'gpuFarm',
-        name: 'Build GPU Farm'
+        target: 'storageserver',
+        name: 'Build Storage Server'
     },
     {
         id: 4,
         type: ActionType.BUILD,
-        target: 'researchLab',
-        name: 'Build Research Lab'
+        target: 'gpucluster',
+        name: 'Build GPU Cluster'
     },
     {
         id: 5,
         type: ActionType.BUILD,
-        target: 'dataWarehouse',
-        name: 'Build Data Warehouse'
+        target: 'datapipeline',
+        name: 'Build Data Pipeline'
     },
     {
         id: 6,
         type: ActionType.BUILD,
-        target: 'tensorCore',
-        name: 'Build Tensor Core'
+        target: 'coolingsystem',
+        name: 'Build Cooling System'
     },
     {
         id: 7,
         type: ActionType.BUILD,
-        target: 'quantumProcessor',
-        name: 'Build Quantum Processor'
+        target: 'tpuarray',
+        name: 'Build TPU Array'
     },
-    
-    // 8-17. Model training (10 actions)
     {
         id: 8,
-        type: ActionType.TRAIN,
-        target: 'linearRegression',
-        name: 'Train Linear Regression'
+        type: ActionType.BUILD,
+        target: 'distributedsystem',
+        name: 'Build Distributed System'
     },
     {
         id: 9,
-        type: ActionType.TRAIN,
-        target: 'logisticRegression',
-        name: 'Train Logistic Regression'
+        type: ActionType.BUILD,
+        target: 'quantumprocessor',
+        name: 'Build Quantum Processor'
     },
+    
+    // 10-13. Model training (4 models from actual game)
     {
         id: 10,
         type: ActionType.TRAIN,
-        target: 'neuralNetwork',
-        name: 'Train Neural Network'
+        target: 'digitrecognition',
+        name: 'Train Digit Recognition'
     },
     {
         id: 11,
         type: ActionType.TRAIN,
-        target: 'deepNeuralNetwork',
-        name: 'Train Deep Neural Network'
+        target: 'imageclassification',
+        name: 'Train Image Classification'
     },
     {
         id: 12,
         type: ActionType.TRAIN,
-        target: 'cnn',
-        name: 'Train CNN'
+        target: 'objectdetection',
+        name: 'Train Object Detection'
     },
     {
         id: 13,
         type: ActionType.TRAIN,
-        target: 'rnn',
-        name: 'Train RNN'
+        target: 'nlpmodel',
+        name: 'Train NLP Model'
     },
+    
+    // 14-22. Research items (9 research from actual game)
     {
         id: 14,
-        type: ActionType.TRAIN,
-        target: 'lstm',
-        name: 'Train LSTM'
+        type: ActionType.RESEARCH,
+        target: 'momentum',
+        name: 'Research Momentum'
     },
     {
         id: 15,
-        type: ActionType.TRAIN,
-        target: 'gru',
-        name: 'Train GRU'
+        type: ActionType.RESEARCH,
+        target: 'leakyrelu',
+        name: 'Research Leaky ReLU'
     },
     {
         id: 16,
-        type: ActionType.TRAIN,
-        target: 'transformer',
-        name: 'Train Transformer'
+        type: ActionType.RESEARCH,
+        target: 'cnn',
+        name: 'Research CNN'
     },
     {
         id: 17,
-        type: ActionType.TRAIN,
-        target: 'gpt',
-        name: 'Train GPT'
+        type: ActionType.RESEARCH,
+        target: 'batchnorm',
+        name: 'Research Batch Normalization'
     },
-    
-    // 18-25. Critical research items (8 actions)
     {
         id: 18,
         type: ActionType.RESEARCH,
-        target: 'sgd',
-        name: 'Research SGD'
+        target: 'weightdecay',
+        name: 'Research Weight Decay'
     },
     {
         id: 19,
         type: ActionType.RESEARCH,
-        target: 'adam',
-        name: 'Research Adam'
+        target: 'gpu_acceleration',
+        name: 'Research GPU Acceleration'
     },
     {
         id: 20,
         type: ActionType.RESEARCH,
-        target: 'relu',
-        name: 'Research ReLU'
+        target: 'data_augmentation',
+        name: 'Research Data Augmentation'
     },
     {
         id: 21,
         type: ActionType.RESEARCH,
-        target: 'batchNorm',
-        name: 'Research Batch Normalization'
+        target: 'hyperparameter_search',
+        name: 'Research Hyperparameter Search'
     },
     {
         id: 22,
         type: ActionType.RESEARCH,
-        target: 'dropout',
-        name: 'Research Dropout'
-    },
-    {
-        id: 23,
-        type: ActionType.RESEARCH,
-        target: 'attention',
-        name: 'Research Attention Mechanism'
-    },
-    {
-        id: 24,
-        type: ActionType.RESEARCH,
-        target: 'transferLearning',
-        name: 'Research Transfer Learning'
-    },
-    {
-        id: 25,
-        type: ActionType.RESEARCH,
-        target: 'dataAugmentation',
-        name: 'Research Data Augmentation'
+        target: 'bias_detection',
+        name: 'Research Bias Detection'
     },
     
-    // 26-28. Deployment actions (3 actions) - THE ULTIMATE GOAL!
+    // 23-25. Deployment actions (3 strategies)
     {
-        id: 26,
+        id: 23,
         type: ActionType.DEPLOY,
         target: 'fast',
         name: 'Deploy (Fast Strategy)',
@@ -194,7 +178,7 @@ export const ACTION_SPACE = [
         description: 'Quick deployment for fast iteration'
     },
     {
-        id: 27,
+        id: 24,
         type: ActionType.DEPLOY,
         target: 'standard',
         name: 'Deploy (Standard Strategy)',
@@ -202,7 +186,7 @@ export const ACTION_SPACE = [
         description: 'Balanced deployment strategy'
     },
     {
-        id: 28,
+        id: 25,
         type: ActionType.DEPLOY,
         target: 'complete',
         name: 'Deploy (Complete Strategy)',
@@ -213,7 +197,7 @@ export const ACTION_SPACE = [
 
 /**
  * Get action by ID
- * @param {number} actionId - Action ID (0-28)
+ * @param {number} actionId - Action ID
  * @returns {object} Action definition
  */
 export function getAction(actionId) {
@@ -228,7 +212,7 @@ export function getAction(actionId) {
  * @returns {number} Action space size
  */
 export function getActionSpaceSize() {
-    return ACTION_SPACE.length;
+    return ACTION_SPACE.length; // Now 26 actions (was 29)
 }
 
 /**
