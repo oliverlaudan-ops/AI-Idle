@@ -5,9 +5,10 @@
  * Uses TensorFlow.js for neural network training.
  * 
  * PRIMARY GOAL: Learn to maximize tokens through optimal deployment!
+ * 
+ * Note: TensorFlow.js is loaded from CDN (see index.html), available as global 'tf'
  */
 
-import * as tf from '@tensorflow/tfjs';
 import { ReplayBuffer } from './replay-buffer.js';
 import { getActionSpaceSize, isDeploymentAction } from './action-space.js';
 import { getStateDimensions } from './state-encoder.js';
@@ -47,6 +48,11 @@ export class DQNAgent {
      * @param {object} config - Hyperparameters (optional)
      */
     constructor(config = {}) {
+        // Check if TensorFlow.js is available
+        if (typeof tf === 'undefined') {
+            throw new Error('TensorFlow.js not loaded! Must load from CDN first.');
+        }
+        
         this.config = { ...DEFAULT_CONFIG, ...config };
         
         // State and action spaces
