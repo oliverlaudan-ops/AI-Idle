@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="src/ui/settings-styles.css">
     <link rel="stylesheet" href="src/ui/hotkey-styles.css">
     <link rel="stylesheet" href="src/ui/deployment-styles.css">
+    <link rel="stylesheet" href="styles/rl-bot.css">
     
     <!-- TensorFlow.js v4.x - ML in the Browser (Lazy loaded when AI Lab is opened) -->
     <!-- crossorigin=anonymous prevents Safari tracking prevention issues -->
@@ -324,16 +325,14 @@
                 </div>
             </div>
 
-            <!-- AI Lab Tab (NEW) -->
+            <!-- AI Lab Tab (RL BOT INTEGRATION!) -->
             <div class="tab-content" id="tab-ai-lab">
                 <div class="tab-header">
-                    <h2>🤖 AI Lab - Real Machine Learning</h2>
-                    <p class="tab-description">Train real neural networks and watch AI learn to play!</p>
+                    <h2>🤖 AI Lab - Reinforcement Learning Bot</h2>
+                    <p class="tab-description">Watch an AI agent learn to play AI-Idle optimally through deep reinforcement learning!</p>
                 </div>
                 <div id="ai-lab-content">
-                    <p style="text-align: center; padding: 2rem; color: var(--text-secondary);">
-                        Loading AI Lab... <span id="ai-lab-status">Initializing TensorFlow.js</span>
-                    </p>
+                    <!-- RL Bot UI will be rendered here -->
                 </div>
             </div>
         </main>
