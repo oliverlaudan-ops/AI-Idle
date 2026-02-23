@@ -33,7 +33,8 @@ window.queueUI = null;
 window.bulkPurchaseUI = null;
 window.settingsUI = null;
 window.hotkeys = null;
-window.aiLab = null; // Lazy-loaded AI Lab
+window.aiLab = null; // Deprecated - now using rlBotUI
+window.rlBotUI = null; // RL Bot UI instance
 window.deploymentUI = null; // Deployment UI
 
 // Game loop state
@@ -140,7 +141,7 @@ async function init() {
             hotkeyBtn.addEventListener('click', () => window.hotkeys.showHelp());
         }
         
-        // Setup AI Lab lazy loading
+        // Setup AI Lab lazy loading (RL Bot)
         setupAILabLazyLoad();
         
         // Apply settings
@@ -166,13 +167,13 @@ async function init() {
     }
 }
 
-// Setup AI Lab lazy loading (only load TensorFlow.js when tab is opened)
+// Setup AI Lab lazy loading (RL Bot system)
 function setupAILabLazyLoad() {
     const aiLabTab = document.querySelector('[data-tab="ai-lab"]');
     if (!aiLabTab) return;
     
     aiLabTab.addEventListener('click', async () => {
-        if (window.aiLab) return; // Already loaded
+        if (window.rlBotUI) return; // Already loaded
         
         const statusEl = document.getElementById('ai-lab-status');
         if (statusEl) statusEl.textContent = 'Loading TensorFlow.js...';
@@ -181,7 +182,7 @@ function setupAILabLazyLoad() {
             // Load TensorFlow.js dynamically if not already loaded
             await loadTensorFlow();
             
-            if (statusEl) statusEl.textContent = 'Initializing AI modules...';
+            if (statusEl) statusEl.textContent = 'Initializing RL Bot...';
             
             // Initialize Smart Predictor now if not already done
             const { getSmartPredictor } = await import('./modules/achievements.js');
@@ -193,20 +194,18 @@ function setupAILabLazyLoad() {
                 predictor = await initializeSmartPredictor(window.game);
             }
             
-            // Dynamically import AI modules
-            const { AILabUI } = await import('./ui/ai-lab-ui.js');
+            // Load RL Bot UI
+            const { initializeRLBot } = await import('./ui/rl-bot-loader.js');
+            window.rlBotUI = await initializeRLBot(window.game);
             
-            window.aiLab = new AILabUI(window.game);
-            await window.aiLab.init();
-            
-            console.log('✅ AI Lab loaded successfully!');
+            console.log('✅ RL Bot loaded successfully!');
         } catch (error) {
-            console.error('❌ Failed to load AI Lab:', error);
+            console.error('❌ Failed to load RL Bot:', error);
             const content = document.getElementById('ai-lab-content');
             if (content) {
                 content.innerHTML = `
                     <div style="text-align: center; padding: 2rem; color: #e63946;">
-                        <h3>⚠️ Failed to load AI Lab</h3>
+                        <h3>⚠️ Failed to load RL Bot</h3>
                         <p>${error.message}</p>
                         <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 1rem;">
                             ${error.stack ? error.stack.split('\n').slice(0, 3).join('<br>') : ''}
@@ -301,6 +300,7 @@ function startGameLoops() {
             if (window.queueUI) window.queueUI.update();
             if (window.bulkPurchaseUI) window.bulkPurchaseUI.update();
             if (window.deploymentUI) window.deploymentUI.update();
+            if (window.rlBotUI) window.rlBotUI.update();
             
         } catch (error) {
             console.error('💥 Error in render loop:', error);
@@ -366,7 +366,7 @@ function showAchievementUnlock(achievement) {
     
     if (window.game.settings.get('notifications', 'sound')) {
         try {
-            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZRQ0PVqzn77BdGAg+ltryxnMpBSh+zPLaizsIGGS57OihUBELTKXh8bllHAU2jtXzzn0uBSd7yvLekDcJGGe+7ueXRA0PU6nm8bllHQU4kdXzzn4vBSh9y/LfkjgJGWm/7+aXRA8OU6vl8bplHgU4ktXzzn8wBSl+y/LgkzgKGWm/7+aXRQ8RUqrl8bplHgU4ktXzzoAwBil+y/LgkzkKGWnA7+aXRQ8RUqrl8bpmHgU4ktX0zoAwBil+y/LhlDoKGWnA7+aYRQ8RUqrl8bpmHgU4ktX0z4AwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4E');
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZRQ0PVqzn77BdGAg+ltryxnMpBSh+zPLaizsIGGS57OihUBELTKXh8bllHAU2jtXzzn0uBSd7yvLekDcJGGe+7ueXRA0PU6nm8bllHQU4kdXzzn4vBSh9y/LfkjgJGWm/7+aXRA8OU6vl8bplHgU4ktXzzn8wBSl+y/LgkzgKGWm/7+aXRQ8RUqrl8bplHgU4ktXzzoAwBil+y/LgkzkKGWnA7+aXRQ8RUqrl8bpmHgU4ktX0zoAwBil+y/LhlDoKGWnA7+aYRQ8RUqrl8bpmHgU4ktX0z4AwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhlzwLGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4EwBil+y/LhmD0LGWnA7+aYRg8RUqrl8bpmHgU4ktX0z4E');
             audio.volume = 0.3;
             audio.play().catch(() => {});
         } catch (e) {}
@@ -494,6 +494,7 @@ document.addEventListener('visibilitychange', () => {
             if (window.queueUI) window.queueUI.update();
             if (window.bulkPurchaseUI) window.bulkPurchaseUI.update();
             if (window.deploymentUI) window.deploymentUI.update();
+            if (window.rlBotUI) window.rlBotUI.update();
         }
         wasHidden = false;
     }
@@ -506,6 +507,10 @@ window.addEventListener('beforeunload', () => {
         // Clean up intervals
         if (gameLoopInterval) clearInterval(gameLoopInterval);
         if (renderLoopInterval) clearInterval(renderLoopInterval);
+        // Clean up RL Bot
+        if (window.rlBotUI && window.rlBotUI.destroy) {
+            window.rlBotUI.destroy();
+        }
     } catch (e) {
         console.error('Failed to save on unload:', e);
     }
@@ -518,7 +523,7 @@ if (document.readyState === 'loading') {
     init();
 }
 
-console.log('📋 main.js loaded (optimized)');
+console.log('📋 main.js loaded (optimized with RL Bot)');
 
 // Add styles
 const style = document.createElement('style');
