@@ -253,6 +253,10 @@ export function getActionId(type, target) {
 
 /**
  * Check if action is valid given current game state
+ * 
+ * RELAXED VALIDATION: We allow actions even if they might fail.
+ * The bot will learn from negative rewards which actions work.
+ * 
  * @param {object} gameState - Current game state
  * @param {number} actionId - Action to validate
  * @returns {boolean} Whether action is valid
@@ -265,51 +269,53 @@ export function isActionValid(gameState, actionId) {
         return true;
     }
     
-    // Building purchase
+    // Building purchase - check if unlocked (we let the bot try even if can't afford)
     if (action.type === ActionType.BUILD) {
-        const building = gameState.buildings[action.target];
-        if (!building || !building.unlocked) return false;
+        const building = gameState.buildings?.[action.target];
+        if (!building) return false;
         
-        // Check if we can afford it
-        const cost = gameState.getBuildingCost?.(action.target);
-        if (!cost) return false;
-        
-        return gameState.canAfford(cost);
+        // Only check if unlocked - bot will learn from failed purchase attempts
+        return building.unlocked === true;
     }
     
-    // Model training
+    // Model training - check if unlocked and not currently training
     if (action.type === ActionType.TRAIN) {
         // Can't train if already training
         if (gameState.currentTraining) return false;
         
-        const model = gameState.models[action.target];
-        if (!model || !model.unlocked) return false;
+        const model = gameState.models?.[action.target];
+        if (!model) return false;
         
-        // Check requirements
-        return gameState.canAfford(model.requirements);
+        // Only check if unlocked - bot will learn from failed training attempts
+        return model.unlocked === true;
     }
     
-    // Research
+    // Research - check if unlocked and not already researched
     if (action.type === ActionType.RESEARCH) {
-        const research = gameState.research[action.target];
-        if (!research || !research.unlocked || research.researched) return false;
+        const research = gameState.research?.[action.target];
+        if (!research) return false;
         
-        return gameState.canAfford(research.cost);
+        // Must be unlocked and not already researched
+        return research.unlocked === true && research.researched !== true;
     }
     
     // Deployment - THE ULTIMATE ACTION!
     if (action.type === ActionType.DEPLOY) {
         // Check if we have enough lifetime accuracy
-        const deployInfo = gameState.getDeploymentInfo?.();
-        if (!deployInfo || !deployInfo.canDeploy) return false;
-        
-        // Check if strategy is unlocked
-        if (action.target === 'complete') {
-            const deployments = gameState.deployment?.deployments ?? 0;
-            if (deployments < 3) return false; // Complete requires 3+ deployments
+        try {
+            const deployInfo = gameState.getDeploymentInfo?.();
+            if (!deployInfo || !deployInfo.canDeploy) return false;
+            
+            // Check if strategy is unlocked
+            if (action.target === 'complete') {
+                const deployments = gameState.deployment?.deployments ?? 0;
+                if (deployments < 3) return false; // Complete requires 3+ deployments
+            }
+            
+            return true;
+        } catch (error) {
+            return false;
         }
-        
-        return true;
     }
     
     return false;
@@ -327,6 +333,11 @@ export function getValidActions(gameState) {
         if (isActionValid(gameState, i)) {
             validActions.push(i);
         }
+    }
+    
+    // Always include Wait as fallback
+    if (validActions.length === 0) {
+        validActions.push(0); // Wait
     }
     
     return validActions;
