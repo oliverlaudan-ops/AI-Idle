@@ -4,7 +4,7 @@
  * Defines all possible actions the bot can take in the game.
  * Each action has an ID, type, and target.
  * 
- * IMPORTANT: Uses actual game IDs from AI-Idle (not generic names)
+ * IMPORTANT: Uses actual game IDs from AI-Idle (verified from debug output)
  */
 
 /**
@@ -19,7 +19,7 @@ export const ActionType = {
 };
 
 /**
- * Complete action space - using ACTUAL game IDs!
+ * Complete action space - using ACTUAL game IDs from debug output!
  */
 export const ACTION_SPACE = [
     // 0. Do nothing (always valid)
@@ -86,7 +86,7 @@ export const ACTION_SPACE = [
         name: 'Build Quantum Processor'
     },
     
-    // 10-13. Model training (4 models from actual game)
+    // 10-15. Model training (6 models from actual game - includes rlagent and llm!)
     {
         id: 10,
         type: ActionType.TRAIN,
@@ -111,66 +111,126 @@ export const ACTION_SPACE = [
         target: 'nlpmodel',
         name: 'Train NLP Model'
     },
-    
-    // 14-22. Research items (9 research from actual game)
     {
         id: 14,
+        type: ActionType.TRAIN,
+        target: 'rlagent',
+        name: 'Train RL Agent'
+    },
+    {
+        id: 15,
+        type: ActionType.TRAIN,
+        target: 'llm',
+        name: 'Train LLM'
+    },
+    
+    // 16-33. Research items (18 research from actual game - complete list!)
+    {
+        id: 16,
         type: ActionType.RESEARCH,
         target: 'momentum',
         name: 'Research Momentum'
     },
     {
-        id: 15,
+        id: 17,
         type: ActionType.RESEARCH,
         target: 'leakyrelu',
         name: 'Research Leaky ReLU'
     },
     {
-        id: 16,
+        id: 18,
         type: ActionType.RESEARCH,
         target: 'cnn',
         name: 'Research CNN'
     },
     {
-        id: 17,
+        id: 19,
         type: ActionType.RESEARCH,
         target: 'batchnorm',
         name: 'Research Batch Normalization'
     },
     {
-        id: 18,
+        id: 20,
         type: ActionType.RESEARCH,
         target: 'weightdecay',
         name: 'Research Weight Decay'
     },
     {
-        id: 19,
+        id: 21,
         type: ActionType.RESEARCH,
         target: 'gpu_acceleration',
         name: 'Research GPU Acceleration'
     },
     {
-        id: 20,
+        id: 22,
         type: ActionType.RESEARCH,
         target: 'data_augmentation',
         name: 'Research Data Augmentation'
     },
     {
-        id: 21,
+        id: 23,
         type: ActionType.RESEARCH,
         target: 'hyperparameter_search',
         name: 'Research Hyperparameter Search'
     },
     {
-        id: 22,
+        id: 24,
         type: ActionType.RESEARCH,
         target: 'bias_detection',
         name: 'Research Bias Detection'
     },
-    
-    // 23-25. Deployment actions (3 strategies)
     {
-        id: 23,
+        id: 25,
+        type: ActionType.RESEARCH,
+        target: 'adam',
+        name: 'Research Adam'
+    },
+    {
+        id: 26,
+        type: ActionType.RESEARCH,
+        target: 'gelu',
+        name: 'Research GELU'
+    },
+    {
+        id: 27,
+        type: ActionType.RESEARCH,
+        target: 'rnn',
+        name: 'Research RNN'
+    },
+    {
+        id: 28,
+        type: ActionType.RESEARCH,
+        target: 'layernorm',
+        name: 'Research Layer Normalization'
+    },
+    {
+        id: 29,
+        type: ActionType.RESEARCH,
+        target: 'mixed_precision',
+        name: 'Research Mixed Precision'
+    },
+    {
+        id: 30,
+        type: ActionType.RESEARCH,
+        target: 'transfer_learning',
+        name: 'Research Transfer Learning'
+    },
+    {
+        id: 31,
+        type: ActionType.RESEARCH,
+        target: 'nas',
+        name: 'Research Neural Architecture Search'
+    },
+    {
+        id: 32,
+        type: ActionType.RESEARCH,
+        target: 'interpretability',
+        name: 'Research Interpretability'
+    },
+    
+    // 33-35. Deployment actions (3 strategies)
+    {
+        id: 33,
         type: ActionType.DEPLOY,
         target: 'fast',
         name: 'Deploy (Fast Strategy)',
@@ -178,7 +238,7 @@ export const ACTION_SPACE = [
         description: 'Quick deployment for fast iteration'
     },
     {
-        id: 24,
+        id: 34,
         type: ActionType.DEPLOY,
         target: 'standard',
         name: 'Deploy (Standard Strategy)',
@@ -186,7 +246,7 @@ export const ACTION_SPACE = [
         description: 'Balanced deployment strategy'
     },
     {
-        id: 25,
+        id: 35,
         type: ActionType.DEPLOY,
         target: 'complete',
         name: 'Deploy (Complete Strategy)',
@@ -212,7 +272,7 @@ export function getAction(actionId) {
  * @returns {number} Action space size
  */
 export function getActionSpaceSize() {
-    return ACTION_SPACE.length; // Now 26 actions (was 29)
+    return ACTION_SPACE.length; // Now 36 actions!
 }
 
 /**
