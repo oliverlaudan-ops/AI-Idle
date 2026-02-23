@@ -12,11 +12,12 @@ export const ActionType = {
     WAIT: 'wait',
     BUILD: 'build',
     TRAIN: 'train',
-    RESEARCH: 'research'
+    RESEARCH: 'research',
+    DEPLOY: 'deploy'        // NEW: Deployment/Prestige action
 };
 
 /**
- * Complete action space (26 actions)
+ * Complete action space (29 actions)
  */
 export const ACTION_SPACE = [
     // 0. Do nothing (always valid)
@@ -181,12 +182,38 @@ export const ACTION_SPACE = [
         type: ActionType.RESEARCH,
         target: 'dataAugmentation',
         name: 'Research Data Augmentation'
+    },
+    
+    // 26-28. Deployment actions (3 actions) - THE ULTIMATE GOAL!
+    {
+        id: 26,
+        type: ActionType.DEPLOY,
+        target: 'fast',
+        name: 'Deploy (Fast Strategy)',
+        tokenMultiplier: 0.75,
+        description: 'Quick deployment for fast iteration'
+    },
+    {
+        id: 27,
+        type: ActionType.DEPLOY,
+        target: 'standard',
+        name: 'Deploy (Standard Strategy)',
+        tokenMultiplier: 1.0,
+        description: 'Balanced deployment strategy'
+    },
+    {
+        id: 28,
+        type: ActionType.DEPLOY,
+        target: 'complete',
+        name: 'Deploy (Complete Strategy)',
+        tokenMultiplier: 1.5,
+        description: 'Maximum tokens, requires 3+ deployments'
     }
 ];
 
 /**
  * Get action by ID
- * @param {number} actionId - Action ID (0-25)
+ * @param {number} actionId - Action ID (0-28)
  * @returns {object} Action definition
  */
 export function getAction(actionId) {
@@ -270,6 +297,21 @@ export function isActionValid(gameState, actionId) {
         return gameState.canAfford(research.cost);
     }
     
+    // Deployment - THE ULTIMATE ACTION!
+    if (action.type === ActionType.DEPLOY) {
+        // Check if we have enough lifetime accuracy
+        const deployInfo = gameState.getDeploymentInfo?.();
+        if (!deployInfo || !deployInfo.canDeploy) return false;
+        
+        // Check if strategy is unlocked
+        if (action.target === 'complete') {
+            const deployments = gameState.deployment?.deployments ?? 0;
+            if (deployments < 3) return false; // Complete requires 3+ deployments
+        }
+        
+        return true;
+    }
+    
     return false;
 }
 
@@ -304,4 +346,25 @@ export function getActionMask(gameState) {
     }
     
     return mask;
+}
+
+/**
+ * Check if action is a deployment action
+ * @param {number} actionId - Action ID
+ * @returns {boolean} Whether this is a deployment action
+ */
+export function isDeploymentAction(actionId) {
+    const action = getAction(actionId);
+    return action.type === ActionType.DEPLOY;
+}
+
+/**
+ * Get deployment strategy from action ID
+ * @param {number} actionId - Action ID
+ * @returns {string|null} Strategy name or null if not a deployment action
+ */
+export function getDeploymentStrategy(actionId) {
+    if (!isDeploymentAction(actionId)) return null;
+    const action = getAction(actionId);
+    return action.target;
 }
