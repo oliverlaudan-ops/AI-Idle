@@ -177,6 +177,11 @@ export class DQNAgent {
     
     /**
      * Train the agent on a mini-batch from replay buffer
+     * Uses proper DQN algorithm:
+     * 1. Get current Q-values for all actions
+     * 2. For action taken, update: Q(s,a) ← r + γ * max(Q(s',a'))
+     * 3. Train network to predict updated Q-values
+     * 
      * @returns {number} Loss value (or null if not enough experiences)
      */
     async train() {
@@ -189,56 +194,82 @@ export class DQNAgent {
         // Sample mini-batch
         const batch = this.replayBuffer.sample(this.config.batchSize);
         
-        // Train on batch
-        const loss = await tf.tidy(async () => {
-            // Convert batch to tensors
-            const states = tf.tensor2d(batch.states);
-            const nextStates = tf.tensor2d(batch.nextStates);
-            const actions = tf.tensor1d(batch.actions, 'int32');
-            const rewards = tf.tensor1d(batch.rewards);
-            const dones = tf.tensor1d(batch.dones);
+        // Prepare tensors (outside of tidy for async operations)
+        let states, nextStates, actions, rewards, dones;
+        let currentQs, nextQs, targetQs;
+        
+        try {
+            // Create tensors from batch
+            states = tf.tensor2d(batch.states, [this.config.batchSize, this.stateDim]);
+            nextStates = tf.tensor2d(batch.nextStates, [this.config.batchSize, this.stateDim]);
+            actions = batch.actions; // Keep as array for indexing
+            rewards = batch.rewards; // Keep as array
+            dones = batch.dones;     // Keep as array
             
-            // Compute target Q-values using target network
-            const nextQValues = this.targetModel.predict(nextStates);
-            const maxNextQ = nextQValues.max(1);
+            // Get current Q-values for all actions (from main network)
+            currentQs = this.model.predict(states);
+            const currentQsData = await currentQs.array(); // [batchSize, actionDim]
             
-            // Q-learning target: r + γ * max(Q(s',a')) * (1 - done)
-            const targets = rewards.add(
-                maxNextQ.mul(tf.scalar(this.config.gamma)).mul(tf.scalar(1).sub(dones))
-            );
+            // Get next Q-values (from target network for stability)
+            nextQs = this.targetModel.predict(nextStates);
+            const nextQsData = await nextQs.array(); // [batchSize, actionDim]
             
-            // Train
-            const result = await this.model.fit(states, targets, {
-                epochs: 1,
-                verbose: 0,
-                callbacks: {
-                    onBatchEnd: async (batch, logs) => {
-                        // Clip gradients
-                        if (this.config.gradientClipValue) {
-                            const grads = tf.variableGrads(() => this.model.loss);
-                            for (const name in grads.grads) {
-                                grads.grads[name] = grads.grads[name].clipByValue(
-                                    -this.config.gradientClipValue,
-                                    this.config.gradientClipValue
-                                );
-                            }
-                        }
-                    }
-                }
+            // Build target Q-values
+            // Start with current Q-values, then update only the action taken
+            const targetQsData = currentQsData.map((qValues, i) => {
+                const newQValues = [...qValues];
+                
+                // DQN update rule: Q(s,a) ← r + γ * max(Q(s',a')) * (1 - done)
+                const maxNextQ = Math.max(...nextQsData[i]);
+                const target = rewards[i] + this.config.gamma * maxNextQ * (1 - dones[i]);
+                
+                // Update only the Q-value for the action that was taken
+                newQValues[actions[i]] = target;
+                
+                return newQValues;
             });
             
-            return result.history.loss[0];
-        });
-        
-        // Update target network periodically
-        if (this.stepCount % this.config.targetUpdateFreq === 0) {
-            this._updateTargetModel();
+            // Create target tensor
+            targetQs = tf.tensor2d(targetQsData, [this.config.batchSize, this.actionDim]);
+            
+            // Train the network (this is async, so outside of tidy)
+            const result = await this.model.fit(states, targetQs, {
+                epochs: 1,
+                verbose: 0,
+                batchSize: this.config.batchSize
+            });
+            
+            const loss = result.history.loss[0];
+            
+            // Clean up tensors
+            states.dispose();
+            nextStates.dispose();
+            currentQs.dispose();
+            nextQs.dispose();
+            targetQs.dispose();
+            
+            // Update target network periodically
+            if (this.stepCount % this.config.targetUpdateFreq === 0) {
+                this._updateTargetModel();
+            }
+            
+            // Record loss
+            this.lossHistory.push(loss);
+            
+            return loss;
+            
+        } catch (error) {
+            console.error('[DQN Agent] Training error:', error);
+            
+            // Clean up any tensors that were created
+            if (states) states.dispose();
+            if (nextStates) nextStates.dispose();
+            if (currentQs) currentQs.dispose();
+            if (nextQs) nextQs.dispose();
+            if (targetQs) targetQs.dispose();
+            
+            return null;
         }
-        
-        // Record loss
-        this.lossHistory.push(loss);
-        
-        return loss;
     }
     
     /**
