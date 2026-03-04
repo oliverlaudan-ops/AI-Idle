@@ -347,28 +347,64 @@ export class DQNAgent {
     }
     
     /**
-     * Save model to IndexedDB
+     * Save model AND metadata to storage
      * @param {string} name - Model name
      */
     async saveModel(name = 'ai-idle-dqn') {
+        // Save neural network weights to IndexedDB
         await this.model.save(`indexeddb://${name}`);
-        console.log(`💾 Model saved as ${name}`);
+        
+        // Save metadata to localStorage (small, fast)
+        const metadata = {
+            episodeCount: this.episodeCount,
+            stepCount: this.stepCount,
+            epsilon: this.epsilon,
+            totalReward: this.totalReward,
+            lossHistory: this.lossHistory.slice(-100),  // Last 100
+            rewardHistory: this.rewardHistory.slice(-100),  // Last 100
+            epsilonHistory: this.epsilonHistory.slice(-100),  // Last 100
+            timestamp: Date.now()
+        };
+        
+        localStorage.setItem(`${name}-metadata`, JSON.stringify(metadata));
+        
+        console.log(`💾 Model saved as ${name} (with metadata)`);
     }
     
     /**
-     * Load model from IndexedDB
+     * Load model AND metadata from storage
      * @param {string} name - Model name
      */
     async loadModel(name = 'ai-idle-dqn') {
         try {
+            // Load neural network weights from IndexedDB
             this.model = await tf.loadLayersModel(`indexeddb://${name}`);
             
             // IMPORTANT: Recompile the model after loading!
-            // Loaded models are not compiled by default
             this._compileModel(this.model);
             
             this._updateTargetModel();
-            console.log(`💾 Model loaded from ${name}`);
+            
+            // Load metadata from localStorage
+            const metadataJson = localStorage.getItem(`${name}-metadata`);
+            if (metadataJson) {
+                const metadata = JSON.parse(metadataJson);
+                
+                // Restore training state
+                this.episodeCount = metadata.episodeCount || 0;
+                this.stepCount = metadata.stepCount || 0;
+                this.epsilon = metadata.epsilon || this.config.epsilonStart;
+                this.totalReward = metadata.totalReward || 0;
+                this.lossHistory = metadata.lossHistory || [];
+                this.rewardHistory = metadata.rewardHistory || [];
+                this.epsilonHistory = metadata.epsilonHistory || [];
+                
+                console.log(`💾 Model loaded from ${name}`);
+                console.log(`  📊 Restored state: Episode ${this.episodeCount}, ε: ${this.epsilon.toFixed(3)}, Total Reward: ${this.totalReward.toFixed(0)}`);
+            } else {
+                console.log(`💾 Model loaded from ${name} (no metadata found, starting fresh)`);
+            }
+            
             return true;
         } catch (error) {
             console.warn(`Failed to load model: ${error.message}`);
