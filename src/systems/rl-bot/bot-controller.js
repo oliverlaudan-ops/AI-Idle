@@ -22,8 +22,8 @@ export const BotState = {
  * Bot Controller Configuration
  */
 const DEFAULT_CONFIG = {
-    stepsPerTick: 1,        // How many actions per tick
-    tickInterval: 1000,     // Milliseconds between ticks (1 = 1 second)
+    stepsPerTick: 1,        // Base steps per tick (at 1x speed)
+    targetFPS: 60,          // Target frames per second
     trainInterval: 50,      // Train every N steps (50 for performance!)
     maxStepsPerEpisode: 1000, // Safety limit
     autoSaveInterval: 10,   // Auto-save model every N episodes
@@ -48,7 +48,8 @@ export class BotController {
         this.speed = 1.0; // Speed multiplier (1x, 2x, 5x, 10x)
         
         // Training loop
-        this.intervalId = null;
+        this.animationFrameId = null;
+        this.lastFrameTime = 0;
         this.currentEpisode = 0;
         this.totalSteps = 0;
         this.episodeSteps = 0;
@@ -72,7 +73,6 @@ export class BotController {
         this.episodeActionSuccesses = {};
         
         // Timing
-        this.lastTickTime = Date.now();
         this.performanceCheckTime = Date.now();
         this.performanceCheckSteps = 0;
         
@@ -93,12 +93,13 @@ export class BotController {
         console.log('\n🚀 Bot starting training...');
         this.state = BotState.TRAINING;
         this.episodeSteps = 0;
+        this.lastFrameTime = performance.now();
         
         // Reset episode tracking
         this.episodeActionCounts = {};
         this.episodeActionSuccesses = {};
         
-        // Start training loop
+        // Start training loop with requestAnimationFrame
         this._startTrainingLoop();
     }
     
@@ -113,9 +114,9 @@ export class BotController {
         console.log('\n⏸️ Bot stopped');
         this.state = BotState.IDLE;
         
-        if (this.intervalId) {
-            clearInterval(this.intervalId);
-            this.intervalId = null;
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
         }
         
         // Print final action statistics
@@ -144,6 +145,7 @@ export class BotController {
         
         console.log('▶️ Bot resumed');
         this.state = BotState.TRAINING;
+        this.lastFrameTime = performance.now(); // Reset timing
     }
     
     /**
@@ -152,13 +154,6 @@ export class BotController {
      */
     setSpeed(speed) {
         this.speed = speed;
-        
-        // Restart loop with new speed if running
-        if (this.state === BotState.TRAINING) {
-            this.stop();
-            this.start();
-        }
-        
         console.log(`⏩ Speed set to ${speed}x`);
     }
     
@@ -171,37 +166,54 @@ export class BotController {
     }
     
     /**
-     * Start the training loop
+     * Start the training loop with requestAnimationFrame
      */
     _startTrainingLoop() {
-        const tickInterval = this.config.tickInterval / this.speed;
+        const loop = async (timestamp) => {
+            if (this.state !== BotState.TRAINING) {
+                // Continue loop but don't execute steps when paused
+                if (this.state === BotState.PAUSED) {
+                    this.animationFrameId = requestAnimationFrame(loop);
+                }
+                return;
+            }
+            
+            try {
+                // Calculate time delta
+                const deltaTime = timestamp - this.lastFrameTime;
+                this.lastFrameTime = timestamp;
+                
+                // Calculate how many steps to execute this frame
+                // Base: 1 step per frame at 60 FPS = 60 steps/sec
+                // With speed multiplier: steps = speed * (deltaTime / frameTime)
+                const targetFrameTime = 1000 / this.config.targetFPS; // ~16.67ms
+                const stepsThisFrame = Math.floor(
+                    this.speed * (deltaTime / targetFrameTime)
+                );
+                
+                // Execute steps (limit to prevent freezing)
+                const maxStepsPerFrame = Math.ceil(this.speed * 2); // Safety limit
+                const actualSteps = Math.min(stepsThisFrame, maxStepsPerFrame);
+                
+                for (let i = 0; i < actualSteps; i++) {
+                    await this._step();
+                }
+                
+                // Update performance metrics
+                this._updatePerformanceMetrics();
+                
+            } catch (error) {
+                console.error('Error in training loop:', error);
+                this.stop();
+                return;
+            }
+            
+            // Schedule next frame
+            this.animationFrameId = requestAnimationFrame(loop);
+        };
         
-        this.intervalId = setInterval(() => {
-            if (this.state === BotState.TRAINING) {
-                this._tick();
-            }
-        }, tickInterval);
-    }
-    
-    /**
-     * Execute one training tick
-     */
-    async _tick() {
-        try {
-            // Execute multiple steps per tick for higher speeds
-            const stepsThisTick = Math.floor(this.config.stepsPerTick * this.speed);
-            
-            for (let i = 0; i < stepsThisTick; i++) {
-                await this._step();
-            }
-            
-            // Update performance metrics
-            this._updatePerformanceMetrics();
-            
-        } catch (error) {
-            console.error('Error in training tick:', error);
-            this.stop();
-        }
+        // Start the loop
+        this.animationFrameId = requestAnimationFrame(loop);
     }
     
     /**
