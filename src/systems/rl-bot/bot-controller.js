@@ -24,10 +24,10 @@ export const BotState = {
 const DEFAULT_CONFIG = {
     stepsPerTick: 1,        // How many actions per tick
     tickInterval: 1000,     // Milliseconds between ticks (1 = 1 second)
-    trainInterval: 50,      // Train every N steps (was 1, now 50 for performance!)
+    trainInterval: 50,      // Train every N steps (50 for performance!)
     maxStepsPerEpisode: 1000, // Safety limit
     autoSaveInterval: 10,   // Auto-save model every N episodes
-    verboseLogging: true    // Log every action (for debugging)
+    verboseLogging: false   // Verbose step logging (disabled for clean console)
 };
 
 export class BotController {
@@ -67,6 +67,10 @@ export class BotController {
         this.actionCounts = {};
         this.actionSuccesses = {};
         
+        // Episode tracking (for summary)
+        this.episodeActionCounts = {};
+        this.episodeActionSuccesses = {};
+        
         // Timing
         this.lastTickTime = Date.now();
         this.performanceCheckTime = Date.now();
@@ -74,6 +78,7 @@ export class BotController {
         
         console.log('🤖 Bot Controller initialized');
         console.log(`⏱️ Training frequency: every ${this.config.trainInterval} steps`);
+        console.log(`📢 Verbose logging: ${this.config.verboseLogging ? 'ON' : 'OFF (clean mode)'}`);
     }
     
     /**
@@ -85,13 +90,13 @@ export class BotController {
             return;
         }
         
-        console.log('🚀 Bot starting training...');
+        console.log('\n🚀 Bot starting training...');
         this.state = BotState.TRAINING;
         this.episodeSteps = 0;
         
-        // Reset action tracking for new run
-        this.actionCounts = {};
-        this.actionSuccesses = {};
+        // Reset episode tracking
+        this.episodeActionCounts = {};
+        this.episodeActionSuccesses = {};
         
         // Start training loop
         this._startTrainingLoop();
@@ -105,7 +110,7 @@ export class BotController {
             return;
         }
         
-        console.log('⏸️ Bot stopped');
+        console.log('\n⏸️ Bot stopped');
         this.state = BotState.IDLE;
         
         if (this.intervalId) {
@@ -113,7 +118,7 @@ export class BotController {
             this.intervalId = null;
         }
         
-        // Print action statistics
+        // Print final action statistics
         this._printActionStats();
     }
     
@@ -220,8 +225,9 @@ export class BotController {
         
         // Track action attempts
         this.actionCounts[action.name] = (this.actionCounts[action.name] || 0) + 1;
+        this.episodeActionCounts[action.name] = (this.episodeActionCounts[action.name] || 0) + 1;
         
-        // Verbose logging (only first 20 steps to avoid spam)
+        // Verbose logging (ONLY if enabled)
         if (this.config.verboseLogging && this.episodeSteps < 20) {
             console.log(`  Step ${this.episodeSteps + 1}: Trying "${action.name}"...`);
         }
@@ -232,9 +238,10 @@ export class BotController {
         // Track action results
         if (info.success) {
             this.actionSuccesses[action.name] = (this.actionSuccesses[action.name] || 0) + 1;
+            this.episodeActionSuccesses[action.name] = (this.episodeActionSuccesses[action.name] || 0) + 1;
         }
         
-        // Verbose logging
+        // Verbose logging (ONLY if enabled)
         if (this.config.verboseLogging && this.episodeSteps < 20) {
             const status = info.success ? '✅ Success' : '❌ Failed';
             const reason = info.message ? ` (${info.message})` : '';
@@ -295,16 +302,22 @@ export class BotController {
         
         this.currentEpisode++;
         
+        // Print episode summary
+        this._printEpisodeSummary(episodeStats, info);
+        
         // Auto-save model
         if (this.currentEpisode % this.config.autoSaveInterval === 0) {
             await this.agent.saveModel();
+            console.log(`💾 Model auto-saved`);
         }
         
         // Reset environment for next episode
         this.environment.reset();
         this.episodeSteps = 0;
         
-        console.log(`🏆 Episode ${this.currentEpisode} complete! Reward: ${episodeStats.reward.toFixed(0)}, Steps: ${episodeStats.steps}, Tokens: ${info.tokensEarned || 0}`);
+        // Reset episode tracking
+        this.episodeActionCounts = {};
+        this.episodeActionSuccesses = {};
         
         // Print action stats every 10 episodes
         if (this.currentEpisode % 10 === 0) {
@@ -313,10 +326,40 @@ export class BotController {
     }
     
     /**
+     * Print episode summary (clean format)
+     * @param {object} episodeStats - Episode statistics
+     * @param {object} info - Step info
+     */
+    _printEpisodeSummary(episodeStats, info) {
+        const agentStats = this.agent.getStats();
+        
+        console.log(`\n🏆 Episode ${this.currentEpisode} complete!`);
+        console.log(`  Reward: ${episodeStats.reward.toFixed(0)} | Steps: ${episodeStats.steps} | Duration: ${episodeStats.duration.toFixed(1)}s | ε: ${agentStats.epsilon.toFixed(3)}`);
+        
+        if (info.deployed) {
+            console.log(`  🚀 DEPLOYED! Tokens earned: ${info.tokensEarned}`);
+        }
+        
+        // Show key successes from this episode
+        const keySuccesses = [];
+        for (const [action, count] of Object.entries(this.episodeActionSuccesses)) {
+            if (count > 0 && action !== 'Wait') {
+                keySuccesses.push(`${action} (${count}x)`);
+            }
+        }
+        
+        if (keySuccesses.length > 0) {
+            console.log(`  ✅ Successes: ${keySuccesses.slice(0, 5).join(', ')}${keySuccesses.length > 5 ? '...' : ''}`);
+        }
+        
+        console.log(`  📊 Steps/s: ${this.performanceMetrics.stepsPerSecond.toFixed(1)} | Avg Reward: ${this.performanceMetrics.avgReward.toFixed(0)}`);
+    }
+    
+    /**
      * Print action statistics (for debugging)
      */
     _printActionStats() {
-        console.log('\n📊 Action Statistics:');
+        console.log('\n📊 Action Statistics (All Episodes):');
         console.log('Action Name | Attempts | Successes | Success Rate');
         console.log('------------|----------|-----------|-------------');
         
@@ -399,6 +442,8 @@ export class BotController {
         this.episodeHistory = [];
         this.actionCounts = {};
         this.actionSuccesses = {};
+        this.episodeActionCounts = {};
+        this.episodeActionSuccesses = {};
         
         this.performanceMetrics = {
             stepsPerSecond: 0,
