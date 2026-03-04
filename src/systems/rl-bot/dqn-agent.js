@@ -57,7 +57,7 @@ export class DQNAgent {
         
         // State and action spaces
         this.stateDim = getStateDimensions();   // 27 dimensions (with deployment features)
-        this.actionDim = getActionSpaceSize();  // 29 actions (with deployment actions)
+        this.actionDim = getActionSpaceSize();  // 36 actions (updated!)
         
         console.log(`🤖 DQN Agent initialized: ${this.stateDim}D state → ${this.actionDim} actions`);
         
@@ -85,7 +85,7 @@ export class DQNAgent {
     
     /**
      * Build the Q-network
-     * Architecture: 27 → 128 → 64 → 29
+     * Architecture: 27 → 128 → 64 → 36
      * @returns {tf.Sequential} TensorFlow model
      */
     _buildModel() {
@@ -113,12 +113,20 @@ export class DQNAgent {
         }));
         
         // Compile model
+        this._compileModel(model);
+        
+        return model;
+    }
+    
+    /**
+     * Compile a model with optimizer and loss
+     * @param {tf.Sequential} model - Model to compile
+     */
+    _compileModel(model) {
         model.compile({
             optimizer: tf.train.adam(this.config.learningRate),
             loss: 'meanSquaredError'
         });
-        
-        return model;
     }
     
     /**
@@ -189,6 +197,12 @@ export class DQNAgent {
         if (!this.replayBuffer.canSample(this.config.batchSize) ||
             this.replayBuffer.length() < this.config.minReplaySize) {
             return null;
+        }
+        
+        // Safety check: Ensure model is compiled
+        if (!this.model.optimizer) {
+            console.warn('[DQN Agent] Model not compiled! Recompiling...');
+            this._compileModel(this.model);
         }
         
         // Sample mini-batch
@@ -348,6 +362,11 @@ export class DQNAgent {
     async loadModel(name = 'ai-idle-dqn') {
         try {
             this.model = await tf.loadLayersModel(`indexeddb://${name}`);
+            
+            // IMPORTANT: Recompile the model after loading!
+            // Loaded models are not compiled by default
+            this._compileModel(this.model);
+            
             this._updateTargetModel();
             console.log(`💾 Model loaded from ${name}`);
             return true;
