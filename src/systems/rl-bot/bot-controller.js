@@ -24,7 +24,7 @@ export const BotState = {
 const DEFAULT_CONFIG = {
     stepsPerTick: 1,        // How many actions per tick
     tickInterval: 1000,     // Milliseconds between ticks (1 = 1 second)
-    trainInterval: 1,       // Train every N steps
+    trainInterval: 50,      // Train every N steps (was 1, now 50 for performance!)
     maxStepsPerEpisode: 1000, // Safety limit
     autoSaveInterval: 10,   // Auto-save model every N episodes
     verboseLogging: true    // Log every action (for debugging)
@@ -73,6 +73,7 @@ export class BotController {
         this.performanceCheckSteps = 0;
         
         console.log('🤖 Bot Controller initialized');
+        console.log(`⏱️ Training frequency: every ${this.config.trainInterval} steps`);
     }
     
     /**
@@ -244,7 +245,7 @@ export class BotController {
         // Store experience
         this.agent.remember(state, actionId, reward, nextState, done);
         
-        // Train agent
+        // Train agent (only every N steps for performance!)
         if (this.totalSteps % this.config.trainInterval === 0) {
             await this.agent.train();
         }
