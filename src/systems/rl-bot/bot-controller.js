@@ -413,11 +413,27 @@ export class BotController {
     }
     
     /**
-     * Load a saved model
+     * Load a saved model and sync controller state
      * @param {string} name - Model name
      */
     async loadModel(name) {
-        return await this.agent.loadModel(name);
+        const success = await this.agent.loadModel(name);
+        
+        if (success) {
+            // Sync controller state with loaded agent state
+            const agentStats = this.agent.getStats();
+            
+            this.currentEpisode = agentStats.episodeCount;
+            this.totalSteps = agentStats.stepCount;
+            this.performanceMetrics.totalReward = agentStats.totalReward;
+            this.performanceMetrics.episodesCompleted = agentStats.episodeCount;
+            this.performanceMetrics.avgReward = agentStats.avgReward;
+            
+            console.log(`✅ Controller synced with loaded state`);
+            console.log(`  📊 Episode: ${this.currentEpisode}, Steps: ${this.totalSteps}, Total Reward: ${this.performanceMetrics.totalReward.toFixed(0)}`);
+        }
+        
+        return success;
     }
     
     /**
