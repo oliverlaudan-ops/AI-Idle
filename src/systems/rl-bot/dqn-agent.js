@@ -76,6 +76,7 @@ export class DQNAgent {
         this.stepCount = 0;
         this.episodeCount = 0;
         this.totalReward = 0;
+        this.isTraining = false;  // Prevent concurrent training calls
         
         // Metrics
         this.lossHistory = [];
@@ -193,6 +194,12 @@ export class DQNAgent {
      * @returns {number} Loss value (or null if not enough experiences)
      */
     async train() {
+        // Check if already training (prevent concurrent fit() calls)
+        if (this.isTraining) {
+            console.log('[DQN Agent] Training already in progress, skipping...');
+            return null;
+        }
+        
         // Wait until we have enough experiences
         if (!this.replayBuffer.canSample(this.config.batchSize) ||
             this.replayBuffer.length() < this.config.minReplaySize) {
@@ -204,6 +211,9 @@ export class DQNAgent {
             console.warn('[DQN Agent] Model not compiled! Recompiling...');
             this._compileModel(this.model);
         }
+        
+        // Set training lock
+        this.isTraining = true;
         
         // Sample mini-batch
         const batch = this.replayBuffer.sample(this.config.batchSize);
@@ -283,6 +293,9 @@ export class DQNAgent {
             if (targetQs) targetQs.dispose();
             
             return null;
+        } finally {
+            // Always release training lock
+            this.isTraining = false;
         }
     }
     
@@ -428,6 +441,7 @@ export class DQNAgent {
         this.stepCount = 0;
         this.episodeCount = 0;
         this.totalReward = 0;
+        this.isTraining = false;
         
         this.lossHistory = [];
         this.rewardHistory = [];
