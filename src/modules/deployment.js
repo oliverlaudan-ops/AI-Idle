@@ -3,24 +3,24 @@
 
 /**
  * Calculate how many deployment tokens player would earn from current total accuracy
- * Formula: tokens = floor(sqrt(totalAccuracy / 250000))
+ * Formula: tokens = floor(sqrt(totalAccuracy / 60000))
  * 
  * Adjusted for better early game:
- * - 250K accuracy = 1 token (first deployment!)
- * - 1M accuracy = 2 tokens
- * - 4M accuracy = 4 tokens
- * - 10M accuracy = 6 tokens
- * - 100M accuracy = 20 tokens
+ * - 60K accuracy = 1 token (first deployment!)
+ * - 240K accuracy = 2 tokens
+ * - 540K accuracy = 3 tokens
+ * - 960K accuracy = 4 tokens
+ * - 2.4M accuracy = 6 tokens
  * 
  * @param {number} totalAccuracy - Lifetime total accuracy earned
  * @returns {number} Number of deployment tokens earned
  */
 export function calculateDeploymentTokens(totalAccuracy) {
-    if (totalAccuracy < 250000) {
-        return 0; // Need at least 250K accuracy to deploy
+    if (totalAccuracy < 60000) {
+        return 0; // Need at least 60K accuracy to deploy
     }
     
-    return Math.floor(Math.sqrt(totalAccuracy / 250000));
+    return Math.floor(Math.sqrt(totalAccuracy / 60000));
 }
 
 /**
@@ -30,7 +30,7 @@ export function calculateDeploymentTokens(totalAccuracy) {
  */
 export function getNextTokenMilestone(currentTokens) {
     const nextTokens = currentTokens + 1;
-    return Math.pow(nextTokens, 2) * 250000;
+    return Math.pow(nextTokens, 2) * 60000;
 }
 
 /**
@@ -94,7 +94,7 @@ export function getDeploymentInfo(totalAccuracy, currentTokens) {
     const potentialTokens = calculateDeploymentTokens(totalAccuracy);
     const tokensOnDeploy = potentialTokens - currentTokens;
     const nextMilestone = getNextTokenMilestone(potentialTokens);
-    const progressToNext = totalAccuracy - (Math.pow(potentialTokens, 2) * 250000);
+    const progressToNext = totalAccuracy - (Math.pow(potentialTokens, 2) * 60000);
     const requiredForNext = nextMilestone - totalAccuracy;
     
     return {
@@ -105,6 +105,6 @@ export function getDeploymentInfo(totalAccuracy, currentTokens) {
         nextMilestone: nextMilestone,
         progressToNext: progressToNext,
         requiredForNext: requiredForNext,
-        percentToNext: progressToNext > 0 ? (progressToNext / (nextMilestone - (Math.pow(potentialTokens, 2) * 250000))) * 100 : 0
+        percentToNext: progressToNext > 0 ? (progressToNext / (nextMilestone - (Math.pow(potentialTokens, 2) * 60000))) * 100 : 0
     };
 }
