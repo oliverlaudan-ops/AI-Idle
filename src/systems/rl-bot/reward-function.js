@@ -21,19 +21,19 @@ import { isDeploymentAction, getDeploymentStrategy, ActionType, getAction } from
  */
 const REWARD_WEIGHTS = {
     // Primary objective: TOKENS!
-    tokensEarned: 100.0,         // Huge reward per token (was 50)
+    tokensEarned: 100.0,         // Huge reward per token (deployment = 100K-150K reward!)
     deploymentBonus: 50.0,       // Extra for using Complete strategy
     timeEfficiency: 20.0,        // Reward for fast runs
     
     // Secondary objectives (help reach deployment)
-    // Buildings: Now cost-based!
-    buildingTier1Multiplier: 0.5,    // Small buildings = small reward
-    buildingTier2Multiplier: 2.5,    // Medium buildings = medium reward
-    buildingTier3Multiplier: 12.5,   // Big buildings = big reward!
+    // Buildings: Cost-based but MUCH smaller than deployment
+    buildingTier1Multiplier: 0.05,   // Small buildings = tiny reward (0.2-0.5 tokens)
+    buildingTier2Multiplier: 0.25,   // Medium buildings = small reward (1-5 tokens)
+    buildingTier3Multiplier: 1.25,   // Big buildings = medium reward (5-200 tokens)
     
-    // Training: Now cost-based + accuracy!
-    trainingCostScale: 0.00002,      // Scale by data+compute cost
-    trainingAccuracyBonus: 20.0,     // Bonus scaled by accuracy (unchanged)
+    // Training: Cost-based + accuracy but smaller than deployment
+    trainingCostScale: 0.00001,      // Scale by data+compute cost (halved)
+    trainingAccuracyBonus: 10.0,     // Bonus scaled by accuracy (halved from 20)
     
     researchSuccess: 10.0,       // Successful research completion
     accuracy: 0.1,               // Per point of accuracy
@@ -150,12 +150,12 @@ export function calculateReward(previousState, actionId, newState, actionSucceed
             const totalCost = dataCost + computeCost;
             
             // Base reward from cost (logarithmic scaling)
-            const costReward = Math.log10(totalCost + 1) * 10 * REWARD_WEIGHTS.trainingCostScale / 0.00002;
+            const costReward = Math.log10(totalCost + 1) * 10 * REWARD_WEIGHTS.trainingCostScale / 0.00001;
             
             // Get accuracy from the action result
             const trainingAccuracy = newState._lastTrainingAccuracy || model.accuracy || 50;
             
-            // Accuracy bonus (0-20 tokens based on accuracy)
+            // Accuracy bonus (0-10 tokens based on accuracy)
             const accuracyBonus = (trainingAccuracy / 100) * REWARD_WEIGHTS.trainingAccuracyBonus;
             
             reward += costReward + accuracyBonus;
