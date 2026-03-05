@@ -26,7 +26,8 @@ const REWARD_WEIGHTS = {
     
     // Secondary objectives (help reach deployment)
     buildingSuccess: 5.0,        // Successful building purchase
-    trainingSuccess: 50.0,       // Successful training start (increased from 10 for better prioritization!)
+    trainingBaseReward: 5.0,     // Base reward for training (NEW!)
+    trainingAccuracyBonus: 20.0, // Bonus scaled by accuracy (NEW!)
     researchSuccess: 10.0,       // Successful research completion
     accuracy: 0.1,               // Per point of accuracy
     efficiency: 0.5,             // Resource balance bonus
@@ -108,9 +109,21 @@ export function calculateReward(previousState, actionId, newState, actionSucceed
         reward += REWARD_WEIGHTS.buildingSuccess; // +5.0
     }
     
-    // Training Start Success
+    // Training Start Success - NOW ACCURACY-BASED!
     if (action.type === ActionType.TRAIN) {
-        reward += REWARD_WEIGHTS.trainingSuccess; // +50.0
+        // Get accuracy from the action result
+        // The state should have info about the last training accuracy
+        const trainingAccuracy = newState._lastTrainingAccuracy || 50; // Default to 50% if not available
+        
+        // Base reward (small)
+        reward += REWARD_WEIGHTS.trainingBaseReward;
+        
+        // Accuracy bonus (0-20 tokens based on accuracy)
+        const accuracyBonus = (trainingAccuracy / 100) * REWARD_WEIGHTS.trainingAccuracyBonus;
+        reward += accuracyBonus;
+        
+        // Log the reward breakdown for debugging
+        console.log(`🎓 Training reward: ${(REWARD_WEIGHTS.trainingBaseReward + accuracyBonus).toFixed(1)} tokens (accuracy: ${trainingAccuracy.toFixed(1)}%)`);
     }
     
     // Research Completion Success
