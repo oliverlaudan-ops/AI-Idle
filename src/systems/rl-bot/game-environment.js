@@ -101,11 +101,16 @@ export class GameEnvironment {
         // Execute action
         const actionResult = await this._executeAction(actionId);
         
-        // IMPORTANT: Store action result message in gameState for reward function
+        // IMPORTANT: Store action result info in gameState for reward function
         this.gameState._lastActionInfo = {
             message: actionResult.message,
             success: actionResult.success
         };
+        
+        // Store training accuracy if this was a training action
+        if (actionResult.accuracy !== undefined) {
+            this.gameState._lastTrainingAccuracy = actionResult.accuracy;
+        }
         
         // Get new state
         const newState = this.observe();
@@ -117,7 +122,7 @@ export class GameEnvironment {
         const reward = calculateReward(
             previousState,
             actionId,
-            this.gameState, // Pass gameState with _lastActionInfo!
+            this.gameState, // Pass gameState with _lastActionInfo and _lastTrainingAccuracy!
             actionResult.success,
             actionResult.deploymentResult
         );
@@ -135,7 +140,8 @@ export class GameEnvironment {
             validActions: this.getValidActions().length,
             deploymentReadiness: getDeploymentReadiness(this.gameState),
             episodeSteps: this.episodeSteps,
-            message: actionResult.message
+            message: actionResult.message,
+            trainingAccuracy: actionResult.accuracy // Include in info for debugging
         };
         
         return {
@@ -172,9 +178,12 @@ export class GameEnvironment {
         this.previousState = null;
         this.debugValidActions = true; // Enable debug logging for new episode
         
-        // Clear last action info
+        // Clear last action info and training accuracy
         if (this.gameState._lastActionInfo) {
             delete this.gameState._lastActionInfo;
+        }
+        if (this.gameState._lastTrainingAccuracy) {
+            delete this.gameState._lastTrainingAccuracy;
         }
         
         return this.observe();
