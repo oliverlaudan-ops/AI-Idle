@@ -11,7 +11,7 @@ import { ActionType } from './action-space.js';
  * Execute an action on the game state
  * @param {object} gameState - Game state object
  * @param {object} action - Action definition from action space
- * @returns {object} Result {success, deployed, tokensEarned, deploymentResult}
+ * @returns {object} Result {success, deployed, tokensEarned, deploymentResult, accuracy}
  */
 export async function executeAction(gameState, action) {
     try {
@@ -106,7 +106,7 @@ function executeBuilding(gameState, buildingId) {
  * Execute model training
  * @param {object} gameState - Game state
  * @param {string} modelId - Model identifier
- * @returns {object} Result
+ * @returns {object} Result with accuracy
  */
 function executeTraining(gameState, modelId) {
     try {
@@ -134,10 +134,14 @@ function executeTraining(gameState, modelId) {
             const success = gameState.startTraining(modelId);
             
             if (success) {
+                // Extract model accuracy for reward calculation
+                const modelAccuracy = model.accuracy || 50; // Default to 50% if not available
+                
                 return {
                     success: true,
                     deployed: false,
-                    message: `Started training ${modelId}`
+                    accuracy: modelAccuracy, // Add accuracy to result
+                    message: `Started training ${modelId} (${modelAccuracy.toFixed(1)}% accuracy)`
                 };
             }
             
