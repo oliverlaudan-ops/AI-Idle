@@ -11,6 +11,7 @@
  * - Efficient resource management
  * - Research progress
  * - Optimal deployment timing
+ * - SAVING for big buildings and quality trainings
  */
 
 import { isDeploymentAction, getDeploymentStrategy, ActionType, getAction } from './action-space.js';
@@ -25,9 +26,15 @@ const REWARD_WEIGHTS = {
     timeEfficiency: 20.0,        // Reward for fast runs
     
     // Secondary objectives (help reach deployment)
-    buildingSuccess: 5.0,        // Successful building purchase
-    trainingBaseReward: 5.0,     // Base reward for training (NEW!)
-    trainingAccuracyBonus: 20.0, // Bonus scaled by accuracy (NEW!)
+    // Buildings: Now cost-based!
+    buildingTier1Multiplier: 0.5,    // Small buildings = small reward
+    buildingTier2Multiplier: 2.5,    // Medium buildings = medium reward
+    buildingTier3Multiplier: 12.5,   // Big buildings = big reward!
+    
+    // Training: Now cost-based + accuracy!
+    trainingCostScale: 0.00002,      // Scale by data+compute cost
+    trainingAccuracyBonus: 20.0,     // Bonus scaled by accuracy (unchanged)
+    
     researchSuccess: 10.0,       // Successful research completion
     accuracy: 0.1,               // Per point of accuracy
     efficiency: 0.5,             // Resource balance bonus
@@ -102,28 +109,60 @@ export function calculateReward(previousState, actionId, newState, actionSucceed
         }
     }
     
-    // ========== SUCCESS REWARDS (MUCH HIGHER!) ==========
+    // ========== SUCCESS REWARDS ==========
     
-    // Building Purchase Success
+    // Building Purchase Success - NOW COST-BASED!
     if (action.type === ActionType.BUILD) {
-        reward += REWARD_WEIGHTS.buildingSuccess; // +5.0
+        const buildingId = action.target;
+        const building = newState.buildings[buildingId];
+        
+        if (building) {
+            const tier = building.tier || 1;
+            const baseCost = building.baseCost || {};
+            
+            // Calculate total base cost (data + compute)
+            const totalBaseCost = (baseCost.data || 0) + (baseCost.compute || 0);
+            
+            // Apply tier multiplier
+            let multiplier = REWARD_WEIGHTS.buildingTier1Multiplier;
+            if (tier === 2) multiplier = REWARD_WEIGHTS.buildingTier2Multiplier;
+            if (tier === 3) multiplier = REWARD_WEIGHTS.buildingTier3Multiplier;
+            
+            // Reward = sqrt(cost) * tier_multiplier
+            // This gives bigger rewards for expensive buildings!
+            const buildingReward = Math.sqrt(totalBaseCost) * multiplier;
+            reward += buildingReward;
+            
+            console.log(`🏗️ Building reward: ${buildingReward.toFixed(1)} tokens (${buildingId}, tier ${tier}, cost ${totalBaseCost})`);
+        }
     }
     
-    // Training Start Success - NOW ACCURACY-BASED!
+    // Training Start Success - NOW COST + ACCURACY BASED!
     if (action.type === ActionType.TRAIN) {
-        // Get accuracy from the action result
-        // The state should have info about the last training accuracy
-        const trainingAccuracy = newState._lastTrainingAccuracy || 50; // Default to 50% if not available
+        const modelId = action.target;
+        const model = newState.models[modelId];
         
-        // Base reward (small)
-        reward += REWARD_WEIGHTS.trainingBaseReward;
-        
-        // Accuracy bonus (0-20 tokens based on accuracy)
-        const accuracyBonus = (trainingAccuracy / 100) * REWARD_WEIGHTS.trainingAccuracyBonus;
-        reward += accuracyBonus;
-        
-        // Log the reward breakdown for debugging
-        console.log(`🎓 Training reward: ${(REWARD_WEIGHTS.trainingBaseReward + accuracyBonus).toFixed(1)} tokens (accuracy: ${trainingAccuracy.toFixed(1)}%)`);
+        if (model) {
+            // Get training cost
+            const requirements = model.requirements || {};
+            const dataCost = requirements.data || 0;
+            const computeCost = requirements.compute || 0;
+            const totalCost = dataCost + computeCost;
+            
+            // Base reward from cost (logarithmic scaling)
+            const costReward = Math.log10(totalCost + 1) * 10 * REWARD_WEIGHTS.trainingCostScale / 0.00002;
+            
+            // Get accuracy from the action result
+            const trainingAccuracy = newState._lastTrainingAccuracy || model.accuracy || 50;
+            
+            // Accuracy bonus (0-20 tokens based on accuracy)
+            const accuracyBonus = (trainingAccuracy / 100) * REWARD_WEIGHTS.trainingAccuracyBonus;
+            
+            reward += costReward + accuracyBonus;
+            
+            // Log the reward breakdown for debugging
+            console.log(`🎓 Training reward: ${(costReward + accuracyBonus).toFixed(1)} tokens (${modelId}, cost ${totalCost}, accuracy ${trainingAccuracy.toFixed(1)}%)`);
+        }
     }
     
     // Research Completion Success
