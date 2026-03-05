@@ -26,7 +26,7 @@ const REWARD_WEIGHTS = {
     
     // Secondary objectives (help reach deployment)
     buildingSuccess: 5.0,        // Successful building purchase
-    trainingSuccess: 10.0,       // Successful training start
+    trainingSuccess: 50.0,       // Successful training start (increased from 10 for better prioritization!)
     researchSuccess: 10.0,       // Successful research completion
     accuracy: 0.1,               // Per point of accuracy
     efficiency: 0.5,             // Resource balance bonus
@@ -96,7 +96,7 @@ export function calculateReward(previousState, actionId, newState, actionSucceed
     if (isDeploymentAction(actionId)) {
         // If we tried to deploy but couldn't (not enough accuracy)
         const lifetimeAccuracy = previousState.deployment?.lifetimeStats?.totalAccuracy ?? 0;
-        if (lifetimeAccuracy < 250000) {
+        if (lifetimeAccuracy < 60000) {
             return REWARD_WEIGHTS.prematureDeployment;
         }
     }
@@ -110,7 +110,7 @@ export function calculateReward(previousState, actionId, newState, actionSucceed
     
     // Training Start Success
     if (action.type === ActionType.TRAIN) {
-        reward += REWARD_WEIGHTS.trainingSuccess; // +10.0
+        reward += REWARD_WEIGHTS.trainingSuccess; // +50.0
     }
     
     // Research Completion Success
@@ -232,7 +232,7 @@ function estimatePotential(state) {
     
     // PRIMARY: Accuracy progress toward deployment (most important!)
     const lifetimeAccuracy = state.deployment?.lifetimeStats?.totalAccuracy ?? state.stats.totalAccuracy;
-    const accuracyProgress = lifetimeAccuracy / 250000; // First deployment at 250K
+    const accuracyProgress = lifetimeAccuracy / 60000; // First deployment at 60K
     potential += Math.min(accuracyProgress, 1.0) * 50; // Huge potential weight!
     
     // Production capacity (helps reach deployment faster)
