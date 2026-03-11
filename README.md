@@ -6,7 +6,7 @@ Trainiere neuronale Netzwerke, optimiere Algorithmen und skaliere deine KI-Infra
 
 [![Tests](https://github.com/oliverlaudan-ops/AI-Idle/actions/workflows/test.yml/badge.svg)](https://github.com/oliverlaudan-ops/AI-Idle/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)](https://github.com/oliverlaudan-ops/AI-Idle)
+[![Version](https://img.shields.io/badge/version-0.7.0-blue.svg)](https://github.com/oliverlaudan-ops/AI-Idle)
 
 ## 🎮 Features
 
@@ -26,12 +26,14 @@ Trainiere neuronale Netzwerke, optimiere Algorithmen und skaliere deine KI-Infra
 - **Lifetime Stats**: Persistente Fortschrittsverfolgung über alle Runs
 - **Strategy Unlocks**: Schalte bessere Strategien durch Deployments frei
 
-### 🤖 Coming Soon: Reinforcement Learning Bot (v0.7.0)
+### 🤖 Reinforcement Learning Bot (v0.7.0) ✅
 - **DQN Agent**: Deep Q-Network trainiert mit TensorFlow.js
 - **Auto-Pilot Mode**: Bot übernimmt und spielt optimal
 - **Live Training**: Zusehen wie der Bot durch Trial & Error lernt
 - **Performance Metrics**: Rewards, Loss, Success Rate visualisiert
 - **Deployment Strategy**: Bot lernt optimale Deployment-Strategien
+- **Accuracy-Based Rewards**: Training Rewards skaliert mit Model Accuracy
+- **Cost-Based Scaling**: Building/Training Rewards basieren auf Kosten
 
 ## 🏭 Architektur
 
@@ -66,7 +68,7 @@ ai-idle/
 │   │   │   ├── definitions.js
 │   │   │   ├── effects.js
 │   │   │   └── index.js
-│   │   └── rl-bot/           # 🔜 Coming in v0.7.0
+│   │   └── rl-bot/           # ✅ v0.7.0 - RL Bot with TensorFlow.js
 │   │       ├── dqn-agent.js
 │   │       ├── game-environment.js
 │   │       ├── replay-buffer.js
@@ -320,13 +322,14 @@ Wir verwenden [Conventional Commits](https://www.conventionalcommits.org/):
 - ✅ Lifetime Stats über alle Runs hinweg
 - ✅ Deployment UI mit 3-Tab Modal
 
-### 🔴 v0.7.0 - Reinforcement Learning Bot (In Development)
-- 🔴 DQN Agent mit TensorFlow.js
-- 🔴 Auto-Pilot Mode
-- 🔴 Live Training Visualisierung
-- 🔴 Performance Metrics Dashboard
-- 🔴 Deployment Strategy Optimization
-- 🔴 Bot vs Human Leaderboard
+### ✅ v0.7.0 - Reinforcement Learning Bot (Released 2026-03-11)
+- ✅ DQN Agent mit TensorFlow.js
+- ✅ Auto-Pilot Mode
+- ✅ Live Training Visualisierung
+- ✅ Performance Metrics Dashboard
+- ✅ Deployment Strategy Optimization
+- ✅ Accuracy-Based Training Rewards
+- ✅ Cost-Based Building & Training Rewards
 
 ### 🔵 v0.8.0 - UI Refactoring
 - [ ] Komponenten-basierte UI-Architektur
