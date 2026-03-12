@@ -548,9 +548,10 @@ export class SmartAchievementPredictor {
      */
     loadTrainingHistory() {
         try {
+            // loadFromStorage already parses JSON
             const stored = loadFromStorage('achievement-training-history', null);
             if (stored) {
-                this.trainingHistory = JSON.parse(stored);
+                this.trainingHistory = stored;
                 console.log('[SmartPredictor] Loaded', this.trainingHistory.length, 'historical unlocks');
             }
         } catch (error) {

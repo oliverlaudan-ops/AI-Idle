@@ -25,8 +25,8 @@ const LOOP_CONSTANTS = {
     PERFORMANCE_WARNING_THRESHOLD: 200 // Warn if frame takes >200ms
 };
 
-// Storage keys
-const STORAGE_KEY = 'ai-idle-save';
+// Storage keys (must match save-system.js)
+const STORAGE_KEY = 'ai_idle_save';
 
 // Global game instance
 window.game = null;
@@ -59,12 +59,11 @@ async function init() {
         let hasOfflineProgress = false;
         let offlineGains = null;
         
-        // Try to load saved game
-        const savedGame = safeGetItem(STORAGE_KEY);
-        if (savedGame) {
+        // Try to load saved game (safeGetItem already parses JSON)
+        const saveData = safeGetItem(STORAGE_KEY);
+        if (saveData) {
             console.log('📂 Loading saved game...');
             try {
-                const saveData = JSON.parse(savedGame);
                 const loaded = window.game.load(saveData);
                 
                 if (!loaded) {
@@ -397,6 +396,7 @@ function showAchievementUnlock(achievement) {
 function saveGame(isAutoSave = false) {
     try {
         const saveData = window.game.save();
+        // safeSetItem already JSON.stringifies the data
         safeSetItem(STORAGE_KEY, saveData);
         
         const lastSaveElement = document.getElementById('last-save-time');

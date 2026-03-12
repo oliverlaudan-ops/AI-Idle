@@ -73,11 +73,11 @@ export class Settings {
      */
     load() {
         try {
+            // loadFromStorage already parses JSON
             const saved = loadFromStorage('ai-idle-settings', null);
             if (saved) {
-                const parsed = JSON.parse(saved);
                 // Merge with defaults to handle new settings
-                this.data = this.mergeSettings(this.getDefaultSettings(), parsed);
+                this.data = this.mergeSettings(this.getDefaultSettings(), saved);
                 console.log('✅ Settings loaded');
                 return true;
             }
