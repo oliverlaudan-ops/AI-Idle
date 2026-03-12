@@ -269,6 +269,9 @@ export class Settings {
         // Apply gameplay settings
         this.applyGameplaySettings(game);
         
+        // Apply accessibility settings
+        this.applyAccessibilitySettings();
+        
         console.log('⚙️ Settings applied');
     }
     
@@ -340,6 +343,42 @@ export class Settings {
     applyGameplaySettings(game) {
         // Auto-save interval will be checked in main game loop
         // Other gameplay settings are checked as needed
+    }
+    
+    /**
+     * Apply accessibility settings (WCAG 2.1)
+     */
+    applyAccessibilitySettings() {
+        const a11y = this.data.accessibility;
+        const visual = this.data.visual;
+        
+        // High contrast mode
+        if (a11y.highContrast) {
+            document.documentElement.setAttribute('data-high-contrast', 'true');
+        } else {
+            document.documentElement.removeAttribute('data-high-contrast');
+        }
+        
+        // Large text mode
+        if (a11y.largeText) {
+            document.documentElement.setAttribute('data-large-text', 'true');
+        } else {
+            document.documentElement.removeAttribute('data-large-text');
+        }
+        
+        // Reduced motion
+        if (visual.reducedMotion) {
+            document.documentElement.setAttribute('data-reduced-motion', 'true');
+        } else {
+            document.documentElement.removeAttribute('data-reduced-motion');
+        }
+        
+        // Screen reader optimizations
+        if (a11y.screenReaderMode) {
+            document.body.classList.add('screen-reader-mode');
+        } else {
+            document.body.classList.remove('screen-reader-mode');
+        }
     }
     
     /**

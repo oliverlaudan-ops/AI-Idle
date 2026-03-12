@@ -60,20 +60,20 @@
         </header>
 
         <!-- Tab Navigation -->
-        <nav class="tab-nav">
-            <button class="tab-btn active" data-tab="infrastructure">🏭️ Infrastructure</button>
-            <button class="tab-btn" data-tab="training">🧠 Training</button>
-            <button class="tab-btn" data-tab="research">🔬 Research</button>
-            <button class="tab-btn" data-tab="deployment">🚀 Deployment</button>
-            <button class="tab-btn" data-tab="achievements">🏆 Achievements</button>
-            <button class="tab-btn" data-tab="statistics">📈 Statistics</button>
-            <button class="tab-btn" data-tab="ai-lab">🤖 AI Lab</button>
+        <nav class="tab-nav" role="tablist" aria-label="Game navigation">
+            <button class="tab-btn active" data-tab="infrastructure" role="tab" aria-selected="true" aria-controls="tab-infrastructure" id="tab-btn-infrastructure">🏭️ Infrastructure</button>
+            <button class="tab-btn" data-tab="training" role="tab" aria-selected="false" aria-controls="tab-training" id="tab-btn-training">🧠 Training</button>
+            <button class="tab-btn" data-tab="research" role="tab" aria-selected="false" aria-controls="tab-research" id="tab-btn-research">🔬 Research</button>
+            <button class="tab-btn" data-tab="deployment" role="tab" aria-selected="false" aria-controls="tab-deployment" id="tab-btn-deployment">🚀 Deployment</button>
+            <button class="tab-btn" data-tab="achievements" role="tab" aria-selected="false" aria-controls="tab-achievements" id="tab-btn-achievements">🏆 Achievements</button>
+            <button class="tab-btn" data-tab="statistics" role="tab" aria-selected="false" aria-controls="tab-statistics" id="tab-btn-statistics">📈 Statistics</button>
+            <button class="tab-btn" data-tab="ai-lab" role="tab" aria-selected="false" aria-controls="tab-ai-lab" id="tab-btn-ai-lab">🤖 AI Lab</button>
         </nav>
 
         <!-- Main Content Area -->
         <main class="content">
             <!-- Infrastructure Tab -->
-            <div class="tab-content active" id="tab-infrastructure">
+            <div class="tab-content active" id="tab-infrastructure" role="tabpanel" aria-labelledby="tab-btn-infrastructure">
                 <div class="tab-header">
                     <h2>Infrastructure</h2>
                     <p class="tab-description">Build data centers, compute clusters, and processing infrastructure</p>
@@ -106,7 +106,7 @@
             </div>
 
             <!-- Training Tab -->
-            <div class="tab-content" id="tab-training">
+            <div class="tab-content" id="tab-training" role="tabpanel" aria-labelledby="tab-btn-training">
                 <div class="tab-header">
                     <h2>Model Training</h2>
                     <p class="tab-description">Train neural networks on various machine learning tasks</p>
@@ -185,7 +185,7 @@
             </div>
 
             <!-- Research Tab -->
-            <div class="tab-content" id="tab-research">
+            <div class="tab-content" id="tab-research" role="tabpanel" aria-labelledby="tab-btn-research">
                 <div class="tab-header">
                     <h2>Research & Development</h2>
                     <p class="tab-description">Unlock new algorithms, architectures, and optimization techniques</p>
@@ -227,7 +227,7 @@
             </div>
 
             <!-- Deployment Tab -->
-            <div class="tab-content" id="tab-deployment">
+            <div class="tab-content" id="tab-deployment" role="tabpanel" aria-labelledby="tab-btn-deployment">
                 <div class="tab-header">
                     <h2>Model Deployment</h2>
                     <p class="tab-description">Deploy your trained models to gain permanent bonuses</p>
@@ -268,7 +268,7 @@
             </div>
 
             <!-- Achievements Tab -->
-            <div class="tab-content" id="tab-achievements">
+            <div class="tab-content" id="tab-achievements" role="tabpanel" aria-labelledby="tab-btn-achievements">
                 <div class="tab-header">
                     <h2>Achievements</h2>
                     <p class="tab-description">Track your milestones and unlock special rewards</p>
@@ -300,7 +300,7 @@
             </div>
 
             <!-- Statistics Tab -->
-            <div class="tab-content" id="tab-statistics">
+            <div class="tab-content" id="tab-statistics" role="tabpanel" aria-labelledby="tab-btn-statistics">
                 <div class="tab-header">
                     <h2>Statistics & Analytics</h2>
                     <p class="tab-description">Detailed performance metrics and progression data</p>
@@ -326,7 +326,7 @@
             </div>
 
             <!-- AI Lab Tab (RL BOT INTEGRATION!) -->
-            <div class="tab-content" id="tab-ai-lab">
+            <div class="tab-content" id="tab-ai-lab" role="tabpanel" aria-labelledby="tab-btn-ai-lab">
                 <div class="tab-header">
                     <h2>🤖 AI Lab - Reinforcement Learning Bot</h2>
                     <p class="tab-description">Watch an AI agent learn to play AI-Idle optimally through deep reinforcement learning!</p>
