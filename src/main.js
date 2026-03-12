@@ -9,6 +9,8 @@ import { BulkPurchaseUI } from './ui/bulk-purchase-ui.js';
 import { SettingsUI } from './ui/settings-ui.js';
 import { HotkeySystem } from './modules/hotkeys.js';
 import { initializeSmartPredictor } from './modules/achievements.js';
+import { safeGetItem, safeSetItem } from './utils/storage.js';
+import { errorHandler, safeExecute } from './utils/error-boundary.js';
 
 // Game loop constants - OPTIMIZED
 const LOOP_CONSTANTS = {
@@ -47,6 +49,9 @@ let performanceWarningCount = 0;
 async function init() {
     console.log('🤖 AI-Idle starting...');
     
+    // Initialize error handler FIRST
+    errorHandler.init();
+    
     try {
         // Create game state
         window.game = new GameState();
@@ -55,7 +60,7 @@ async function init() {
         let offlineGains = null;
         
         // Try to load saved game
-        const savedGame = localStorage.getItem(STORAGE_KEY);
+        const savedGame = safeGetItem(STORAGE_KEY);
         if (savedGame) {
             console.log('📂 Loading saved game...');
             try {
@@ -93,8 +98,8 @@ async function init() {
             }
         } else {
             console.log('✨ Starting new game');
-            const shouldShowWelcome = localStorage.getItem('ai-idle-tutorial-completed') === 'true' || 
-                                     localStorage.getItem('ai-idle-tutorial-skipped') === 'true';
+            const shouldShowWelcome = safeGetItem('ai-idle-tutorial-completed') === 'true' || 
+                                     safeGetItem('ai-idle-tutorial-skipped') === 'true';
             if (shouldShowWelcome) {
                 showToast('Welcome to AI-Idle! Click "Collect Data" to begin.', 'success');
             }
@@ -295,12 +300,21 @@ function startGameLoops() {
     // Render loop (10Hz - every 100ms, matches game loop for now)
     renderLoopInterval = setInterval(() => {
         try {
-            renderAll(window.game);
+            // Wrap each render call individually to prevent one failure from blocking others
+            safeExecute(() => renderAll(window.game), 'renderAll', { log: true, notify: false });
             
-            if (window.queueUI) window.queueUI.update();
-            if (window.bulkPurchaseUI) window.bulkPurchaseUI.update();
-            if (window.deploymentUI) window.deploymentUI.update();
-            if (window.rlBotUI) window.rlBotUI.update();
+            if (window.queueUI) {
+                safeExecute(() => window.queueUI.update(), 'queueUI.update', { log: true, notify: false });
+            }
+            if (window.bulkPurchaseUI) {
+                safeExecute(() => window.bulkPurchaseUI.update(), 'bulkPurchaseUI.update', { log: true, notify: false });
+            }
+            if (window.deploymentUI) {
+                safeExecute(() => window.deploymentUI.update(), 'deploymentUI.update', { log: true, notify: false });
+            }
+            if (window.rlBotUI) {
+                safeExecute(() => window.rlBotUI.update(), 'rlBotUI.update', { log: true, notify: false });
+            }
             
         } catch (error) {
             console.error('💥 Error in render loop:', error);
@@ -335,7 +349,7 @@ function showCriticalError(error) {
             <p>Failed to start AI-Idle. Check console for details.</p>
             <pre style="text-align: left; max-width: 800px; margin: 20px auto; background: #1a1a1a; padding: 20px; border-radius: 10px; overflow: auto;">${error.stack || error.message || 'Unknown error'}</pre>
             <button onclick="location.reload()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background: #667eea; color: white; border: none; border-radius: 8px; margin: 10px;">Reload Page</button>
-            <button onclick="localStorage.removeItem('${STORAGE_KEY}'); location.reload();" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background: #e63946; color: white; border: none; border-radius: 8px; margin: 10px;">Reset Save & Reload</button>
+            <button onclick="try { localStorage.removeItem('${STORAGE_KEY}'); } catch(e) { console.warn('Reset failed:', e); } location.reload();" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background: #e63946; color: white; border: none; border-radius: 8px; margin: 10px;">Reset Save & Reload</button>
         </div>
     `;
 }
@@ -383,7 +397,7 @@ function showAchievementUnlock(achievement) {
 function saveGame(isAutoSave = false) {
     try {
         const saveData = window.game.save();
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
+        safeSetItem(STORAGE_KEY, saveData);
         
         const lastSaveElement = document.getElementById('last-save-time');
         if (lastSaveElement) {

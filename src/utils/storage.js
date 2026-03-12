@@ -166,3 +166,8 @@ export function hasKey(key) {
     }
     return localStorage.getItem(key) !== null;
 }
+
+// Alias functions for safe localStorage access (matching task requirements)
+export const safeGetItem = (key, defaultValue = null) => loadFromStorage(key, defaultValue);
+export const safeSetItem = (key, value) => saveToStorage(key, value);
+export const safeRemoveItem = (key) => removeFromStorage(key);

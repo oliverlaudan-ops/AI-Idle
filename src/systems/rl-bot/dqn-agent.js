@@ -12,6 +12,12 @@
 import { ReplayBuffer } from './replay-buffer.js';
 import { getActionSpaceSize, isDeploymentAction } from './action-space.js';
 import { getStateDimensions } from './state-encoder.js';
+import { saveToStorage, loadFromStorage } from '../utils/storage.js';
+import { logMemoryStatus, checkMemoryThreshold, forceTensorCleanup } from './tf-memory-monitor.js';
+
+// Memory monitoring config
+const MEMORY_CHECK_FREQUENCY = 100;  // Check every N steps
+const MEMORY_CLEANUP_THRESHOLD_MB = 400;  // Force cleanup above this
 
 /**
  * DQN Hyperparameters
@@ -280,6 +286,18 @@ export class DQNAgent {
             // Record loss
             this.lossHistory.push(loss);
             
+            // Memory monitoring: periodic check and cleanup
+            if (this.stepCount % MEMORY_CHECK_FREQUENCY === 0) {
+                const memCheck = checkMemoryThreshold(MEMORY_CLEANUP_THRESHOLD_MB * 1024 * 1024);
+                logMemoryStatus(`Step ${this.stepCount}`, memCheck.stats);
+                
+                // Force cleanup if memory is getting high
+                if (!memCheck.ok) {
+                    console.warn(`[DQN] High memory (${memCheck.percentUsed}% of threshold), forcing cleanup...`);
+                    forceTensorCleanup();
+                }
+            }
+            
             return loss;
             
         } catch (error) {
@@ -328,6 +346,9 @@ export class DQNAgent {
         this.totalReward += episodeReward;
         this.rewardHistory.push(episodeReward);
         this.decayEpsilon();
+        
+        // Log memory at end of each episode
+        logMemoryStatus(`Episode ${this.episodeCount} end`);
         
         console.log(`🏁 Episode ${this.episodeCount} complete! Reward: ${episodeReward.toFixed(0)}, ε: ${this.epsilon.toFixed(3)}`);
     }
@@ -379,7 +400,7 @@ export class DQNAgent {
             timestamp: Date.now()
         };
         
-        localStorage.setItem(`${name}-metadata`, JSON.stringify(metadata));
+        saveToStorage(`${name}-metadata`, metadata);
         
         console.log(`💾 Model saved as ${name} (with metadata)`);
     }
@@ -399,9 +420,8 @@ export class DQNAgent {
             this._updateTargetModel();
             
             // Load metadata from localStorage
-            const metadataJson = localStorage.getItem(`${name}-metadata`);
-            if (metadataJson) {
-                const metadata = JSON.parse(metadataJson);
+            const metadata = loadFromStorage(`${name}-metadata`, null);
+            if (metadata) {
                 
                 // Restore training state
                 this.episodeCount = metadata.episodeCount || 0;

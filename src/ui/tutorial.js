@@ -23,6 +23,8 @@
  *   Upgrades tab btn → button.tab-btn[data-tab="deployment"]
  */
 
+import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/storage.js';
+
 class TutorialSystem {
     constructor(game) {
         this.game = game;
@@ -106,7 +108,7 @@ class TutorialSystem {
     }
 
     init() {
-        if (localStorage.getItem('ai-idle-tutorial-completed') === 'true') {
+        if (safeGetItem('ai-idle-tutorial-completed') === 'true') {
             this.isCompleted = true;
             return;
         }
@@ -500,7 +502,7 @@ class TutorialSystem {
         this.cleanupListeners();
         this.isActive = false;
         this.isCompleted = true;
-        localStorage.setItem('ai-idle-tutorial-completed', 'true');
+        safeSetItem('ai-idle-tutorial-completed', 'true');
         this._hideOverlay();
     }
 
@@ -509,7 +511,7 @@ class TutorialSystem {
     }
 
     restart() {
-        localStorage.removeItem('ai-idle-tutorial-completed');
+        safeRemoveItem('ai-idle-tutorial-completed');
         this.isCompleted = false;
         this.isActive = false;
         this.currentStep = 0;

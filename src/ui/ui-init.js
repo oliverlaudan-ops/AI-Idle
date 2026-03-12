@@ -4,6 +4,8 @@ import { initializeTabs } from './ui-tabs.js';
 import { showToast } from './ui-render.js';
 import { ComboUI } from './combo-ui.js';
 import { DeploymentUI } from './deployment-ui.js';
+import { safeSetItem, safeRemoveItem } from '../utils/storage.js';
+import { wrapClickHandler, safeExecute } from '../utils/error-boundary.js';
 
 let comboUI = null;
 let deploymentUI = null;
@@ -18,7 +20,8 @@ export function initializeUI(game) {
     // Initialize combo UI
     comboUI = new ComboUI(game.comboSystem, collectBtn);
     
-    collectBtn.addEventListener('click', () => {
+    // Wrap collect button with error handler
+    wrapClickHandler(collectBtn, () => {
         // Use the new manualCollect method that integrates with combo system
         const result = game.manualCollect();
         
@@ -30,7 +33,7 @@ export function initializeUI(game) {
         
         // Show floating text with combo info
         comboUI.showFloatingText(result.amount, result.multiplier);
-    });
+    }, 'collect-data', { log: true, notify: true });
     
     // Initialize Deployment UI
     deploymentUI = new DeploymentUI(game);
@@ -49,7 +52,7 @@ export function initializeUI(game) {
         // Only update if enough time has passed
         if (now - lastComboUpdate >= COMBO_UPDATE_INTERVAL) {
             if (comboUI) {
-                comboUI.updateTimer();
+                safeExecute(() => comboUI.updateTimer(), 'comboUI.updateTimer', { log: true, notify: false });
             }
             lastComboUpdate = now;
         }
@@ -59,43 +62,44 @@ export function initializeUI(game) {
     updateComboTimer();
     
     // Save button
-    document.getElementById('btn-save').addEventListener('click', () => {
-        game.save();
+    wrapClickHandler(document.getElementById('btn-save'), () => {
         const saveData = game.save();
-        localStorage.setItem('ai-idle-save', JSON.stringify(saveData));
+        safeSetItem('ai-idle-save', saveData);
         showToast('Game saved successfully!', 'success');
-    });
+    }, 'save-game', { log: true, notify: true });
     
     // Export button - show modal with save string
-    document.getElementById('btn-export').addEventListener('click', () => {
+    wrapClickHandler(document.getElementById('btn-export'), () => {
         const saveString = game.export();
         showExportModal(saveString);
-    });
+    }, 'export-save', { log: true, notify: false });
     
     // Import button - show modal for paste
-    document.getElementById('btn-import').addEventListener('click', () => {
+    wrapClickHandler(document.getElementById('btn-import'), () => {
         showImportModal(game);
-    });
+    }, 'import-save', { log: true, notify: false });
     
     // Restart Tutorial button
-    document.getElementById('btn-restart-tutorial').addEventListener('click', () => {
+    wrapClickHandler(document.getElementById('btn-restart-tutorial'), () => {
         if (window.tutorial) {
             window.tutorial.restart();
             showToast('Tutorial restarted!', 'success');
         } else {
             showToast('Tutorial system not available.', 'warning');
         }
-    });
+    }, 'restart-tutorial', { log: true, notify: false });
     
     // Settings button
     const settingsBtn = document.getElementById('btn-settings');
     if (settingsBtn) {
         settingsBtn.addEventListener('click', () => {
-            if (window.settingsUI) {
-                window.settingsUI.open();
-            } else {
-                showToast('Settings not available yet.', 'warning');
-            }
+            safeExecute(() => {
+                if (window.settingsUI) {
+                    window.settingsUI.open();
+                } else {
+                    showToast('Settings not available yet.', 'warning');
+                }
+            }, 'settings-open', { log: true, notify: false });
         });
     }
     
@@ -103,26 +107,28 @@ export function initializeUI(game) {
     const hotkeysBtn = document.getElementById('btn-hotkeys');
     if (hotkeysBtn) {
         hotkeysBtn.addEventListener('click', () => {
-            if (window.hotkeys) {
-                window.hotkeys.showHelp();
-            } else {
-                showToast('Hotkeys not available yet.', 'warning');
-            }
+            safeExecute(() => {
+                if (window.hotkeys) {
+                    window.hotkeys.showHelp();
+                } else {
+                    showToast('Hotkeys not available yet.', 'warning');
+                }
+            }, 'hotkeys-show', { log: true, notify: false });
         });
     }
     
-    // Reset button
-    document.getElementById('btn-reset').addEventListener('click', () => {
+    // Reset button - wrapped with extra care as it's destructive
+    wrapClickHandler(document.getElementById('btn-reset'), () => {
         const confirmed = confirm('Are you sure you want to reset? This will delete ALL progress!');
         if (confirmed) {
             const doubleCheck = confirm('This action cannot be undone. Are you REALLY sure?');
             if (doubleCheck) {
                 game.reset();
-                localStorage.removeItem('ai-idle-save');
+                safeRemoveItem('ai-idle-save');
                 location.reload();
             }
         }
-    });
+    }, 'reset-game', { log: true, notify: true });
     
     // Modal close handlers
     setupModalHandlers();

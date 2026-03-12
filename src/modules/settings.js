@@ -1,6 +1,8 @@
 // Settings Module
 // Manages game settings and user preferences
 
+import { saveToStorage, loadFromStorage } from '../utils/storage.js';
+
 export class Settings {
     constructor() {
         this.data = this.getDefaultSettings();
@@ -71,7 +73,7 @@ export class Settings {
      */
     load() {
         try {
-            const saved = localStorage.getItem('ai-idle-settings');
+            const saved = loadFromStorage('ai-idle-settings', null);
             if (saved) {
                 const parsed = JSON.parse(saved);
                 // Merge with defaults to handle new settings
@@ -90,7 +92,7 @@ export class Settings {
      */
     save() {
         try {
-            localStorage.setItem('ai-idle-settings', JSON.stringify(this.data));
+            saveToStorage('ai-idle-settings', this.data);
             console.log('💾 Settings saved');
             return true;
         } catch (e) {

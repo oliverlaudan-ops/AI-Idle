@@ -8,6 +8,28 @@
  * - Stable training through random sampling
  */
 
+// Memory monitoring (optional - loaded lazily)
+let checkMemoryThreshold = null;
+
+/**
+ * Lazy load memory monitor
+ */
+function getMemoryChecker() {
+    if (checkMemoryThreshold === null) {
+        try {
+            // Will be set if import succeeds
+            import('./tf-memory-monitor.js').then(module => {
+                checkMemoryThreshold = module.checkMemoryThreshold;
+            }).catch(() => {
+                checkMemoryThreshold = false; // Not available
+            });
+        } catch (e) {
+            checkMemoryThreshold = false;
+        }
+    }
+    return checkMemoryThreshold;
+}
+
 /**
  * Experience tuple structure
  * @typedef {object} Experience
@@ -139,7 +161,22 @@ export class ReplayBuffer {
      * @returns {boolean} Whether buffer has enough experiences
      */
     canSample(batchSize) {
-        return this.size >= batchSize;
+        // Check buffer size
+        if (this.size < batchSize) {
+            return false;
+        }
+        
+        // Check memory availability (optional - don't block if monitor unavailable)
+        const memoryChecker = getMemoryChecker();
+        if (memoryChecker && memoryChecker !== false) {
+            const memCheck = memoryChecker(200 * 1024 * 1024); // 200MB minimum
+            if (!memCheck.ok) {
+                console.warn(`[ReplayBuffer] Low memory (${memCheck.percentUsed}%), skipping sample`);
+                return false;
+            }
+        }
+        
+        return true;
     }
     
     /**

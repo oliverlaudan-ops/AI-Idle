@@ -13,6 +13,7 @@
  */
 
 import { AchievementProgressCalculator } from './achievement-progress-calculator.js';
+import { safeGetItem, safeSetItem } from '../utils/storage.js';
 
 export class SmartAchievementPredictor {
     constructor(gameState) {
@@ -536,7 +537,7 @@ export class SmartAchievementPredictor {
      */
     saveTrainingHistory() {
         try {
-            localStorage.setItem('achievement-training-history', JSON.stringify(this.trainingHistory));
+            saveToStorage('achievement-training-history', this.trainingHistory);
         } catch (error) {
             console.error('[SmartPredictor] Failed to save history:', error);
         }
@@ -547,7 +548,7 @@ export class SmartAchievementPredictor {
      */
     loadTrainingHistory() {
         try {
-            const stored = localStorage.getItem('achievement-training-history');
+            const stored = loadFromStorage('achievement-training-history', null);
             if (stored) {
                 this.trainingHistory = JSON.parse(stored);
                 console.log('[SmartPredictor] Loaded', this.trainingHistory.length, 'historical unlocks');
