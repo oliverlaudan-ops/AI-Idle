@@ -30,6 +30,66 @@
     --text-muted: #a1a1a6;
     --border-color: #d2d2d7;
     --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    
+    /* Force text colors for light theme */
+    color-scheme: light;
+}
+
+[data-theme="light"] body {
+    background: #f5f5f7;
+    color: #1d1d1f;
+}
+
+[data-theme="light"] .game-container {
+    background: #f5f5f7;
+}
+
+[data-theme="light"] h1, 
+[data-theme="light"] h2, 
+[data-theme="light"] h3, 
+[data-theme="light"] h4 {
+    color: #1d1d1f;
+}
+
+[data-theme="light"] p,
+[data-theme="light"] span,
+[data-theme="light"] div {
+    color: #1d1d1f;
+}
+
+[data-theme="light"] .text-secondary,
+[data-theme="light"] .subtitle,
+[data-theme="light"] .tab-description {
+    color: #6e6e73 !important;
+}
+
+[data-theme="light"] .text-muted {
+    color: #a1a1a6 !important;
+}
+
+/* Override hardcoded colors for light theme */
+[data-theme="light"] .deployment-notice h3,
+[data-theme="light"] .deployment-notice p {
+    color: #1d1d1f !important;
+}
+
+[data-theme="light"] .deployment-notice p strong {
+    color: #1d1d1f !important;
+}
+
+[data-theme="light"] .tab-description,
+[data-theme="light"] .text-muted {
+    color: #6e6e73 !important;
+}
+
+/* Override inline styles for light theme */
+[data-theme="light"] .deployment-notice h3 {
+    color: #007aff !important;
+}
+
+[data-theme="light"] .deployment-notice p,
+[data-theme="light"] .deployment-notice span {
+    color: #1d1d1f !important;
 }
 
 * {
