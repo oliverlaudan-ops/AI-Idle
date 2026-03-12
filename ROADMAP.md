@@ -2,7 +2,7 @@
 
 **Long-term development plan for AI-Idle**
 
-Last Updated: 2026-03-12 | Current Version: 0.7.1
+Last Updated: 2026-03-12 | Current Version: 0.8.0
 
 ---
 
@@ -118,26 +118,44 @@ src/systems/rl-bot/
 
 ---
 
-## 🔵 Version 0.8.0 - UI Refactoring
+## ✅ Version 0.8.0 - UI Refactoring (COMPLETED)
 
-**Target:** Q2 2026 (May)  
-**Status:** 🔵 Planned
+**Released:** 2026-03-12  
+**Status:** ✅ Production Ready
 
-### Goals
+### Features Delivered
 
-- Component-based UI architecture
-- Improved state management
-- Performance optimization
-- Mobile responsiveness
+#### Theme System
+- **Dark/Light Mode Toggle** - Switch between themes via settings
+- CSS Variables for easy theming
+- `[data-theme="light"]` selector with light color palette
 
-### Features
+#### Mobile Responsiveness
+- **Responsive Design** - @media queries for screens < 768px
+- **Touch-friendly UI** - Minimum 44px touch targets
+- **Horizontal Tab Navigation** - Scrollable on mobile
+- **Flexible Stats Display** - Wraps on small screens
 
+#### Accessibility (WCAG 2.1)
+- **ARIA Attributes** - role, aria-selected, aria-controls for tabs
+- **Tab Panels** - role="tabpanel" with aria-labelledby
+- **Accessibility Settings** - High contrast, large text, reduced motion
+- **Screen Reader Mode** - Optimizations for assistive technologies
+
+#### UI Improvements
+- **Modular Components** - Separate UI render modules
+- **Performance Optimization** - Dirty flag re-rendering
+- **Improved State Management** - Settings system with apply methods
+
+---
+
+## 🔵 Version 0.8.x - Future UI Enhancements (Planned)
+
+### Potential Features
 - [ ] React/Vue/Svelte migration (TBD)
-- [ ] Modular component system
+- [ ] Additional theme options
 - [ ] Centralized state management
-- [ ] Responsive design (mobile-first)
-- [ ] Dark/Light theme toggle
-- [ ] Accessibility improvements (WCAG 2.1)
+- [ ] More accessibility features
 
 ---
 
@@ -265,7 +283,7 @@ src/systems/rl-bot/
 | 0.6.0 | 2026-02-23 | ✅ Released | Deployment System |
 | 0.7.0 | 2026-03-12 | ✅ Released | RL Bot (DQN) |
 | 0.7.1 | 2026-03-12 | ✅ Released | Stability & Cleanup |
-| 0.8.0 | 2026-05-31 | 🔵 Planned | UI Refactor |
+| 0.8.0 | 2026-03-12 | ✅ Released | UI Refactor (Theme, Mobile, A11y) |
 | 0.9.0 | 2026-07-31 | 🔵 Planned | Advanced Features |
 | 1.0.0 | 2026-10-31 | 🔵 Planned | Polish & Release |
 
