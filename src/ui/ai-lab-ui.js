@@ -1,6 +1,7 @@
 /**
  * AI Lab UI - User Interface for Real Machine Learning Features
  * 
+ * Now with SMART PREDICTIONS powered by player-specific ML!
  */
 
 import { RLEnvironment } from '../ai/rl-environment.js';
@@ -32,9 +33,7 @@ export class AILabUI {
 
             console.log('[AI Lab] TensorFlow.js version:', tf.version.tfjs);
 
-            // Get Smart Predictor from achievements module
             
-                throw new Error('Smart Predictor not initialized');
             }
 
             this.environment = new RLEnvironment(this.game);
@@ -70,7 +69,6 @@ export class AILabUI {
                     </div>
                     <div class="status-item">
                         <span class="status-icon">🧠</span>
-                        <span>Smart Predictor: ${modelInfo?.modelLoaded ? 'Trained' : 'Ready'}</span>
                     </div>
                     <div class="status-item">
                         <span class="status-icon">📊</span>
@@ -168,7 +166,6 @@ export class AILabUI {
     }
 
     /**
-     * Train Smart Predictor
      */
     async trainPredictor() {
         const status = document.getElementById('predictor-status');
@@ -218,7 +215,6 @@ export class AILabUI {
     }
 
     /**
-     * Make predictions with Smart Predictor
      */
     async makePredictions() {
         const results = document.getElementById('predictor-results');
