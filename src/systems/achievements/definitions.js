@@ -212,7 +212,3 @@ export function getAchievementStats() {
 }
 
 /**
- * Get Smart Predictor instance
- */
-    return smartPredictor;
-}
