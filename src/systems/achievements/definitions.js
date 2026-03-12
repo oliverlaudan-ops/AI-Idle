@@ -5,8 +5,6 @@
 
 
 // Global predictor instance
-let smartPredictor = null;
-let gameStateRef = null;
 
 export const achievements = {
     // Training Milestones
