@@ -190,5 +190,4 @@ export function getAchievementStats() {
 }
 
 /**
- * Initialize Smart Predictor
  */
