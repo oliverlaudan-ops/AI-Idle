@@ -15,7 +15,8 @@ export const ActionType = {
     BUILD: 'build',
     TRAIN: 'train',
     RESEARCH: 'research',
-    DEPLOY: 'deploy'
+    DEPLOY: 'deploy',
+    SHOP: 'shop'
 };
 
 /**
@@ -252,6 +253,87 @@ export const ACTION_SPACE = [
         name: 'Deploy (Complete Strategy)',
         tokenMultiplier: 1.5,
         description: 'Maximum tokens, requires 3+ deployments'
+    },
+    
+    // 36-38. Cloud Providers (v0.9.0) - Premium buildings
+    {
+        id: 36,
+        type: ActionType.BUILD,
+        target: 'aws_credits',
+        name: 'Build AWS Credits',
+        premium: true
+    },
+    {
+        id: 37,
+        type: ActionType.BUILD,
+        target: 'gcp_compute',
+        name: 'Build GCP Compute',
+        premium: true
+    },
+    {
+        id: 38,
+        type: ActionType.BUILD,
+        target: 'azure_vm',
+        name: 'Build Azure VMs',
+        premium: true
+    },
+    
+    // 39-43. New Research Items (v0.9.0) - Top priorities
+    {
+        id: 39,
+        type: ActionType.RESEARCH,
+        target: 'chain_of_thought',
+        name: 'Research Chain-of-Thought'
+    },
+    {
+        id: 40,
+        type: ActionType.RESEARCH,
+        target: 'quantization',
+        name: 'Research Quantization'
+    },
+    {
+        id: 41,
+        type: ActionType.RESEARCH,
+        target: 'rag',
+        name: 'Research RAG'
+    },
+    {
+        id: 42,
+        type: ActionType.RESEARCH,
+        target: 'moe',
+        name: 'Research Mixture of Experts'
+    },
+    {
+        id: 43,
+        type: ActionType.RESEARCH,
+        target: 'diffusion',
+        name: 'Research Diffusion Models'
+    },
+    
+    // 44-46. Shop Actions (v0.9.0) - Redeem tokens
+    {
+        id: 44,
+        type: ActionType.SHOP,
+        target: 'redeem_cheap',
+        name: 'Redeem Cheap Token',
+        costTier: 'cheap',
+        description: 'Redeem low-cost prestige token'
+    },
+    {
+        id: 45,
+        type: ActionType.SHOP,
+        target: 'redeem_medium',
+        name: 'Redeem Medium Token',
+        costTier: 'medium',
+        description: 'Redeem medium-cost prestige token'
+    },
+    {
+        id: 46,
+        type: ActionType.SHOP,
+        target: 'redeem_expensive',
+        name: 'Redeem Expensive Token',
+        costTier: 'expensive',
+        description: 'Redeem high-cost prestige token'
     }
 ];
 
@@ -272,7 +354,7 @@ export function getAction(actionId) {
  * @returns {number} Action space size
  */
 export function getActionSpaceSize() {
-    return ACTION_SPACE.length; // Now 36 actions!
+    return ACTION_SPACE.length; // Now 47 actions! (v0.9.0)
 }
 
 /**
@@ -360,6 +442,19 @@ export function isActionValid(gameState, actionId) {
         } catch (error) {
             return false;
         }
+    }
+    
+    // Shop - check if tokens available and tier unlocked
+    if (action.type === ActionType.SHOP) {
+        const tokens = gameState.tokens ?? 0;
+        const costTier = action.costTier;
+        
+        // Simple cost check - bot will learn from failed attempts
+        if (costTier === 'cheap' && tokens >= 100) return true;
+        if (costTier === 'medium' && tokens >= 500) return true;
+        if (costTier === 'expensive' && tokens >= 2000) return true;
+        
+        return false;
     }
     
     return false;
