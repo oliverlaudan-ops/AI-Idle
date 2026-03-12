@@ -8,7 +8,7 @@ import { TrainingQueueUI } from './ui/training-queue-ui.js';
 import { BulkPurchaseUI } from './ui/bulk-purchase-ui.js';
 import { SettingsUI } from './ui/settings-ui.js';
 import { HotkeySystem } from './modules/hotkeys.js';
-import { initializeSmartPredictor } from './modules/achievements.js';
+
 import { safeGetItem, safeSetItem } from './utils/storage.js';
 import { errorHandler, safeExecute } from './utils/error-boundary.js';
 
@@ -104,20 +104,6 @@ async function init() {
             }
         }
         
-        // Initialize Smart Achievement Predictor BEFORE UI
-        console.log('🧠 Initializing Smart Achievement Predictor...');
-        try {
-            // Check if TensorFlow.js is available
-            if (typeof tf !== 'undefined') {
-                await initializeSmartPredictor(window.game);
-                console.log('✅ Smart Predictor ready');
-            } else {
-                console.log('⚠️ TensorFlow.js not loaded - will initialize predictor when AI Lab opens');
-            }
-        } catch (error) {
-            console.warn('⚠️ Smart Predictor initialization deferred:', error.message);
-        }
-        
         // Initialize UI
         console.log('🎨 Initializing UI...');
         initializeUI(window.game);
@@ -187,16 +173,6 @@ function setupAILabLazyLoad() {
             await loadTensorFlow();
             
             if (statusEl) statusEl.textContent = 'Initializing RL Bot...';
-            
-            // Initialize Smart Predictor now if not already done
-            const { getSmartPredictor } = await import('./modules/achievements.js');
-            let predictor = getSmartPredictor();
-            
-            if (!predictor) {
-                console.log('[AI Lab] Initializing Smart Predictor...');
-                const { initializeSmartPredictor } = await import('./modules/achievements.js');
-                predictor = await initializeSmartPredictor(window.game);
-            }
             
             // Load RL Bot UI
             const { initializeRLBot } = await import('./ui/rl-bot-loader.js');
