@@ -6,7 +6,7 @@ Trainiere neuronale Netzwerke, optimiere Algorithmen und skaliere deine KI-Infra
 
 [![Tests](https://github.com/oliverlaudan-ops/AI-Idle/actions/workflows/test.yml/badge.svg)](https://github.com/oliverlaudan-ops/AI-Idle/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.7.0-blue.svg)](https://github.com/oliverlaudan-ops/AI-Idle)
+[![Version](https://img.shields.io/badge/version-0.7.1-blue.svg)](https://github.com/oliverlaudan-ops/AI-Idle)
 
 ## 🎮 Features
 
@@ -34,6 +34,12 @@ Trainiere neuronale Netzwerke, optimiere Algorithmen und skaliere deine KI-Infra
 - **Deployment Strategy**: Bot lernt optimale Deployment-Strategien
 - **Accuracy-Based Rewards**: Training Rewards skaliert mit Model Accuracy
 - **Cost-Based Scaling**: Building/Training Rewards basieren auf Kosten
+
+### 🔧 Stability & Performance (v0.7.1) ✅
+- **Storage Safety**: Safe localStorage wrapper mit QuotaExceeded handling
+- **Error Boundaries**: Global error handling mit try/catch wrappers
+- **TensorFlow Memory Monitor**: Automatische memory leak Erkennung & cleanup
+- **Modular UI**: UI in 8 separate Module aufgeteilt (stats, buildings, models, training, research, achievements, statistics, notifications)
 
 ## 🎯 Gameplay Guide
 
@@ -129,8 +135,14 @@ ai-idle/
 │   │   └── rl-bot/        # ✅ v0.7.0 - RL Bot with TensorFlow.js
 │   │
 │   ├── modules/           # Game modules (legacy, being phased out)
-│   ├── ui/                # UI components
+│   ├── ui/                # UI components (modular since v0.7.1)
+│   │   ├── ui-render-*.js  # 8 separate render modules
+│   │   ├── error-boundary.js  # Global error handling
+│   │   └── tutorial.js
 │   ├── utils/             # Utility functions
+│   │   ├── storage.js     # Safe localStorage wrapper (v0.7.1)
+│   │   ├── error-boundary.js  # Error handling utilities
+│   │   └── tf-memory-monitor.js  # TensorFlow.js memory monitoring (v0.7.1)
 │   └── main.js            # Application entry point
 │
 ├── tests/                 # Test suite (Vitest)
@@ -232,6 +244,13 @@ Extraktion aus 850+ Zeilen monolithischem `game-state.js`:
 - ✅ DQN Agent mit TensorFlow.js
 - ✅ Auto-Pilot Mode
 - ✅ Live Training Visualisierung
+
+### ✅ v0.7.1 - Stability & Performance
+- ✅ Storage Safety mit QuotaExceeded handling
+- ✅ Error Boundaries (global try/catch)
+- ✅ TensorFlow.js Memory Monitor
+- ✅ Modular UI (8 separate modules)
+- ✅ Bug Fixes im UI Layer
 
 ### 🔵 v0.8.0 - UI Refactoring
 - [ ] Komponenten-basierte UI-Architektur

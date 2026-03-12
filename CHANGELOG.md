@@ -1,5 +1,48 @@
 # Changelog
 
+## [0.7.1] - 2026-03-12
+
+### ✅ Stability & Performance Improvements
+
+#### Storage Safety
+- **NEW**: `utils/storage.js` - Safe localStorage wrapper mit try/catch
+- **UPDATED**: `dqn-agent.js`, `smart-achievement-predictor.js`, `settings.js`, `main.js` nutzen jetzt den safe wrapper
+- **FIX**: QuotaExceeded handling für vollen localStorage
+
+#### UI Refactoring (Modular)
+- **NEW**: 8 separate UI-Render-Module:
+  - `ui-render-stats.js` - Stats-Anzeige
+  - `ui-render-buildings.js` - Building-Management
+  - `ui-render-models.js` - Model Training UI
+  - `ui-render-training.js` - Training Queue
+  - `ui-render-research.js` - Research Tree
+  - `ui-render-achievements.js` - Achievements
+  - `ui-render-statistics.js` - Statistics Panel
+  - `ui-render-notifications.js` - Toast Notifications
+- **REFACTORED**: `ui-render.js` von 614 Zeilen aufgeräumt
+
+#### Error Handling
+- **NEW**: `utils/error-boundary.js` - Global ErrorHandler class
+- **NEW**: `utils/safeExecute` utility für try/catch Wrappers
+- **UPDATED**: Alle UI-Render-Funktionen mit error handling
+- **FIX**: Inline onclick handler in `main.js` mit try/catch
+
+#### TensorFlow.js Memory Monitoring
+- **NEW**: `systems/rl-bot/tf-memory-monitor.js` - Memory leak detection
+- **INTEGRATED**: Memory checks in `dqn-agent.js` (every 100 steps)
+- **AUTO-CLEANUP**: Automatischer cleanup bei 400MB
+- **PROTECTION**: Block replay-buffer sampling below 200MB
+
+#### Bug Fixes
+- ✅ Global error handling im UI Layer
+- ✅ Safe localStorage operations
+- ✅ TensorFlow memory leak prevention
+
+#### Files Changed
+- 19 files changed, +1237 lines, -625 lines
+
+---
+
 ## [0.6.0] - 2026-02-23
 
 ### ✅ Deployment System Complete — Production Ready!
