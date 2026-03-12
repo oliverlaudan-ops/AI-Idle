@@ -1,16 +1,13 @@
 /**
  * AI Lab UI - User Interface for Real Machine Learning Features
  * 
- * Now with SMART PREDICTIONS powered by player-specific ML!
  */
 
-import { getSmartPredictor } from '../modules/achievements.js';
 import { RLEnvironment } from '../ai/rl-environment.js';
 
 export class AILabUI {
     constructor(gameState) {
         this.game = gameState;
-        this.smartPredictor = null;
         this.environment = null;
         this.isInitialized = false;
         this.updateInterval = null;
@@ -36,9 +33,7 @@ export class AILabUI {
             console.log('[AI Lab] TensorFlow.js version:', tf.version.tfjs);
 
             // Get Smart Predictor from achievements module
-            this.smartPredictor = getSmartPredictor();
             
-            if (!this.smartPredictor) {
                 throw new Error('Smart Predictor not initialized');
             }
 
@@ -64,7 +59,6 @@ export class AILabUI {
         const content = document.getElementById('ai-lab-content');
         if (!content) return;
         
-        const modelInfo = this.smartPredictor ? this.smartPredictor.getModelInfo() : null;
 
         content.innerHTML = `
             <div class="ai-lab-container">
@@ -180,7 +174,6 @@ export class AILabUI {
         const status = document.getElementById('predictor-status');
         const trainBtn = document.getElementById('btn-train-predictor');
 
-        if (!this.smartPredictor || !status || !trainBtn) return;
 
         try {
             status.style.display = 'block';
@@ -188,7 +181,6 @@ export class AILabUI {
             trainBtn.textContent = '⏳ Training...';
             status.innerHTML = '<p>Training ML model on your achievement history...</p><div class="training-progress"></div>';
 
-            const success = await this.smartPredictor.train((progress) => {
                 if (progress.epoch % 10 === 0) {
                     status.innerHTML = `
                         <p>Training: Epoch ${progress.epoch}/${progress.totalEpochs}</p>
@@ -230,10 +222,8 @@ export class AILabUI {
      */
     async makePredictions() {
         const results = document.getElementById('predictor-results');
-        if (!this.smartPredictor || !results) return;
 
         try {
-            const topPredictions = await this.smartPredictor.getTopPredictions(5);
 
             if (topPredictions.length === 0) {
                 results.innerHTML = `
@@ -247,7 +237,6 @@ export class AILabUI {
                 return;
             }
 
-            const modelInfo = this.smartPredictor.getModelInfo();
 
             results.style.display = 'block';
             results.innerHTML = `
