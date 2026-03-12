@@ -299,6 +299,13 @@ export class Settings {
     applyVisualSettings() {
         const visual = this.data.visual;
         
+        // Dark mode / Theme
+        if (visual.darkMode) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
+        
         // Reduced motion
         if (visual.reducedMotion) {
             document.body.classList.add('reduced-motion');

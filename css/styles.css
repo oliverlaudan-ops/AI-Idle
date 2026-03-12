@@ -15,6 +15,23 @@
     --shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
+/* Light Theme */
+[data-theme="light"] {
+    --bg-primary: #f5f5f7;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e8e8ed;
+    --accent-primary: #007aff;
+    --accent-secondary: #5856d6;
+    --accent-success: #34c759;
+    --accent-warning: #ff9500;
+    --accent-error: #ff3b30;
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --text-muted: #a1a1a6;
+    --border-color: #d2d2d7;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 * {
     margin: 0;
     padding: 0;

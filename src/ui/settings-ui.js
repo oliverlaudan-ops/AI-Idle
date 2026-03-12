@@ -216,6 +216,12 @@ export class SettingsUI {
                            ${visual.showTooltips ? 'checked' : ''} />
                     <p class="setting-description">Display helpful tooltips on hover</p>
                 </div>
+                <div class="setting-item">
+                    <label>🌙 Dark Mode</label>
+                    <input type="checkbox" class="setting-checkbox" data-category="visual" data-key="darkMode" 
+                           ${visual.darkMode ? 'checked' : ''} />
+                    <p class="setting-description">Use dark theme (light theme available)</p>
+                </div>
             </div>
         `;
     }
