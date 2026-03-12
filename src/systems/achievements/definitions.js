@@ -6,7 +6,6 @@
 import { SmartAchievementPredictor } from '../../ai/smart-achievement-predictor.js';
 
 // Global predictor instance
-let smartPredictor = null;
 let gameStateRef = null;
 
 export const achievements = {
@@ -188,3 +187,26 @@ export function getAchievementStats() {
         total,
         unlocked,
         remaining: total - unlocked,
+        percentage
+    };
+}
+
+/**
+ * Initialize Smart Predictor
+ */
+    gameStateRef = gameState;
+    
+    try {
+        
+        console.log('[Achievements] Smart Predictor initialized');
+        
+    } catch (error) {
+        console.error('[Achievements] Failed to initialize Smart Predictor:', error);
+        return null;
+    }
+}
+
+/**
+ * Get Smart Predictor instance
+ */
+}
