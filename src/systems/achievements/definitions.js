@@ -3,7 +3,6 @@
  * All achievement data and requirements
  */
 
-import { SmartAchievementPredictor } from '../../ai/smart-achievement-predictor.js';
 
 // Global predictor instance
 let smartPredictor = null;
