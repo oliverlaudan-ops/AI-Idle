@@ -35,6 +35,77 @@ Trainiere neuronale Netzwerke, optimiere Algorithmen und skaliere deine KI-Infra
 - **Accuracy-Based Rewards**: Training Rewards skaliert mit Model Accuracy
 - **Cost-Based Scaling**: Building/Training Rewards basieren auf Kosten
 
+## 🎯 Gameplay Guide
+
+### Ressourcen
+
+| Ressource | Beschreibung | Wofür wichtig |
+|-----------|--------------|---------------|
+| 📊 **Training Data** | Rohdaten fürs Training | Modelle trainieren |
+| ⚡ **Compute (TFLOPS)** | Rechenleistung | Training ermöglichen |
+| 🎯 **Accuracy** | Modell-Genauigkeit | Bessere Rewards, Deployment |
+| 🔬 **Research** | Forschungspunkte | Tech freischalten |
+
+### Buildings (Tiers)
+
+Das Building-System ist in **3 Tiers** unterteilt:
+
+**Tier 1: Foundation**
+- 🗄️ **Data Collector** – Sammelt automatisch Training Data (+1/s)
+- 🔲 **CPU Core** – Basis-Compute für Training (+0.2 TFLOPS/s)
+- 💾 **Storage Server** – Schnellerer Data-Zugriff (+0.5 Data/s)
+
+**Tier 2: Acceleration**
+- GPU-basierte Buildings für mehr Compute
+
+**Tier 3: Advanced**
+- Fortgeschrittene Infrastruktur
+
+### Bulk Buy Shortcuts
+
+Beim Kaufen mehrerer Buildings gleichzeitig:
+
+| Tastenkürzel | Effekt |
+|--------------|--------|
+| `SHIFT` | ×10 |
+| `CTRL` | ×100 |
+| `CTRL+SHIFT` | Max |
+
+### Training Models
+
+Im **Training** Tab findest du verschiedene Modelle:
+
+**Classification Tasks (Beispiel)**
+- 🔢 **Digit Recognition** – MNIST-style Ziffernerkennung
+  - Generates: +0.25% Accuracy/s, +0.03 Research/s
+  - Requires: 40 Data, 0 Compute
+
+Weitere Categories:
+- **Vision Tasks** – Bildklassifikation
+- **Advanced Tasks** – Complexe Modelle
+
+### AI Lab & RL Bot
+
+Der **Reinforcement Learning Bot** im AI Lab lernt selbstständig zu spielen!
+
+**Features:**
+- **DQN (Deep Q-Network)** mit TensorFlow.js
+- Epsilon (ε) startet bei 1.0 und decayt über Episodes
+- Lernt durch Trial & Error
+- Speed-Control: 1x, 2x, 5x, 10x
+
+**Live Training beobachten:**
+1. Gehe zum **AI Lab** Tab
+2. Wähle **10x Speed**
+3. Klicke **▶ Start Training**
+4. Schau zu wie der Bot lernt!
+
+**Bot-Stats im Auge behalten:**
+- **Episode** – Wie viele Trainings-Durchgänge
+- **ε (Epsilon)** – Explorationsrate (sinkt beim Lernen)
+- **Reward** – Je höher desto besser
+- **Steps/Second** – Wie schnell der Bot actioniert
+
 ## 🏭 Architektur
 
 Das Projekt wurde in **Phase 1 & 2** umfassend refactored für bessere Wartbarkeit, Testbarkeit und Skalierbarkeit.
@@ -52,82 +123,23 @@ ai-idle/
 │   │
 │   ├── systems/           # Game systems (organized by domain)
 │   │   ├── achievements/
-│   │   │   ├── definitions.js
-│   │   │   ├── checker.js
-│   │   │   ├── rewards.js
-│   │   │   └── index.js
 │   │   ├── training/
-│   │   │   ├── models.js
-│   │   │   ├── queue.js
-│   │   │   └── index.js
 │   │   ├── buildings/
-│   │   │   ├── definitions.js
-│   │   │   ├── costs.js
-│   │   │   └── index.js
 │   │   ├── research/
-│   │   │   ├── definitions.js
-│   │   │   ├── effects.js
-│   │   │   └── index.js
-│   │   └── rl-bot/           # ✅ v0.7.0 - RL Bot with TensorFlow.js
-│   │       ├── dqn-agent.js
-│   │       ├── game-environment.js
-│   │       ├── replay-buffer.js
-│   │       └── index.js
+│   │   └── rl-bot/        # ✅ v0.7.0 - RL Bot with TensorFlow.js
 │   │
 │   ├── modules/           # Game modules (legacy, being phased out)
-│   │   ├── game-state.js  # Central game state (delegates to core & systems)
-│   │   ├── resources.js
-│   │   ├── deployment.js
-│   │   ├── deployment-strategies.js
-│   │   ├── deployment-upgrades.js
-│   │   ├── deployment-portfolio.js
-│   │   ├── combo-system.js
-│   │   ├── bulk-purchase.js
-│   │   └── settings.js
-│   │
 │   ├── ui/                # UI components
-│   │   ├── ui-init.js
-│   │   ├── ui-render.js
-│   │   ├── ui-tabs.js
-│   │   ├── ai-lab-ui.js
-│   │   ├── combo-ui.js
-│   │   ├── deployment-ui.js
-│   │   ├── bulk-purchase-ui.js
-│   │   ├── training-queue-ui.js
-│   │   ├── settings-ui.js
-│   │   ├── tutorial.js
-│   │   └── training-animations.js
-│   │
 │   ├── utils/             # Utility functions
-│   │   ├── format.js      # Number, time formatting
-│   │   ├── calculations.js # Cost calculations, scaling
-│   │   └── storage.js     # LocalStorage helpers
-│   │
 │   └── main.js            # Application entry point
 │
 ├── tests/                 # Test suite (Vitest)
-│   ├── core/
-│   │   ├── resource-manager.test.js
-│   │   ├── production-calculator.test.js
-│   │   └── save-system.test.js
-│   └── setup.js
-│
-├── .github/
-│   └── workflows/
-│       └── test.yml       # CI/CD pipeline
-│
+├── .github/workflows/     # CI/CD pipeline
 ├── docs/                  # Documentation
-│   ├── DEPLOYMENT_SYSTEM.md
-│   └── DEPLOYMENT.md      # 🔜 Coming soon
-│
 ├── styles/                # CSS styles
 ├── index.html            # Main HTML file
-├── package.json          # Dependencies & scripts
-├── vitest.config.js      # Test configuration
-└── README.md             # This file
+└── package.json          # Dependencies & scripts
 ```
-
-## 📦 Module Overview
 
 ### Core Modules (`src/core/`)
 
@@ -136,56 +148,23 @@ ai-idle/
 - `addResource(resourceId, amount)` - Fügt Ressourcen hinzu
 - `canAfford(costs)` - Prüft ob Kosten bezahlbar sind
 - `spendResources(costs)` - Gibt Ressourcen aus
-- Aktualisiert automatisch Stats (totalDataGenerated, maxAccuracy, etc.)
 
 #### `production-calculator.js`
 **Verantwortlich für**: Berechnung aller Produktionsraten
 - `recalculateProduction(gameState)` - Berechnet perSecond für alle Ressourcen
-- Berücksichtigt Buildings, Training, Achievement-Boni
-- Wendet Multiplikatoren korrekt an (dataGeneration, allProduction, etc.)
 
 #### `save-system.js`
 **Verantwortlich für**: Speichern & Laden des Spielstands
 - `saveGame(gameState)` - Speichert in localStorage
-- `loadGame(gameState)` - Lädt aus localStorage
 - `exportSave(gameState)` - Exportiert als Base64 String
-- `importSave(gameState, saveString)` - Importiert aus String
-- Unterstützt Backwards-Compatibility
 
 #### `offline-progress.js`
 **Verantwortlich für**: Offline-Fortschritt Berechnung
 - `processOfflineProgress(gameState, offlineTime)` - Simuliert offline Zeit
-- Begrenzt auf Maximum (z.B. 24 Stunden)
-- Gibt Bericht über generierten Fortschritt
-
-### System Modules (`src/systems/`)
-
-Jedes System folgt dem gleichen Pattern:
-- `definitions.js` - Daten & Konfiguration
-- `[logic].js` - Geschäftslogik
-- `index.js` - Public API (was exportiert wird)
-
-#### Achievement System
-- **definitions.js**: Alle Achievement-Definitionen
-- **checker.js**: Prüft Unlock-Conditions
-- **rewards.js**: Wendet Achievement-Boni an
-
-#### Training System
-- **models.js**: ML-Model Definitionen
-- **queue.js**: Training Queue Management
-
-#### Buildings System
-- **definitions.js**: Building Definitionen
-- **costs.js**: Kosten-Berechnung mit Scaling
-
-#### Research System
-- **definitions.js**: Research Tree (40+ Items)
-- **effects.js**: Anwendung von Research-Effekten
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-
 - Node.js 18+ oder 20+
 - npm oder yarn
 
@@ -203,6 +182,9 @@ npm install
 npm run dev
 ```
 
+### Spielen (ohne Installation)
+**Live Demo**: [https://ai-idle.future-pulse.tech](https://ai-idle.future-pulse.tech)
+
 ### Testing
 
 ```bash
@@ -211,37 +193,13 @@ npm test
 
 # Run tests with UI
 npm run test:ui
-
-# Generate coverage report
-npm run test:coverage
 ```
 
 ## 🧪 Testing
 
 Das Projekt verwendet **Vitest** für Unit- und Integration-Tests.
 
-### Test Structure
-
-```javascript
-import { describe, it, expect, beforeEach } from 'vitest';
-
-describe('ModuleName', () => {
-  let gameState;
-  
-  beforeEach(() => {
-    // Setup vor jedem Test
-    gameState = createTestGameState();
-  });
-  
-  it('should do something', () => {
-    // Test implementation
-    expect(result).toBe(expected);
-  });
-});
-```
-
 ### Coverage Goals
-
 - ✅ Core Modules: **>90% Coverage**
 - ✅ System Modules: **>80% Coverage**
 - 🔄 UI Modules: **>60% Coverage** (in progress)
@@ -249,10 +207,7 @@ describe('ModuleName', () => {
 ## 📊 Architecture Decisions
 
 ### Phase 1: Core Refactoring
-
-**Problem**: `game-state.js` war 850+ Zeilen mit vermischten Concerns
-
-**Lösung**: Extraktion in spezialisierte Module
+Extraktion aus 850+ Zeilen monolithischem `game-state.js`:
 - ✅ `resource-manager.js` - Ressourcen-Logik
 - ✅ `production-calculator.js` - Produktions-Berechnung
 - ✅ `save-system.js` - Speichern/Laden
@@ -261,94 +216,50 @@ describe('ModuleName', () => {
 **Resultat**: `game-state.js` von 850 → 450 Zeilen (-47%)
 
 ### Phase 2: Systems Organization
+- ✅ `systems/achievements/`
+- ✅ `systems/training/`
+- ✅ `systems/buildings/`
+- ✅ `systems/research/`
 
-**Problem**: Große Monolithen (`buildings.js`, `research.js`, etc.)
+## 🗺️ Roadmap
 
-**Lösung**: Organisation in domain-spezifische Systeme
-- ✅ `systems/achievements/` - Achievement-System
-- ✅ `systems/training/` - Training-System
-- ✅ `systems/buildings/` - Building-System
-- ✅ `systems/research/` - Research-System
+### ✅ v0.6.0 - Deployment System
+- ✅ 3 Deployment Strategien mit Token-Multiplier
+- ✅ Token Shop mit 15 permanenten Upgrades
+- ✅ Portfolio System mit Ranks & Tracking
 
-**Pattern**: `definitions.js` + `logic.js` + `index.js` (Public API)
+### ✅ v0.7.0 - Reinforcement Learning Bot
+- ✅ DQN Agent mit TensorFlow.js
+- ✅ Auto-Pilot Mode
+- ✅ Live Training Visualisierung
 
-### Phase 3: Testing & Documentation (Current)
+### 🔵 v0.8.0 - UI Refactoring
+- [ ] Komponenten-basierte UI-Architektur
+- [ ] State Management verbessern
+- [ ] Mobile Responsiveness
 
-**Ziel**: Validation der Refactorings und Dokumentation
-- ✅ Unit Tests für Core Module
-- ✅ Architecture Documentation
-- 🔄 Integration Tests (in progress)
-- 🔄 API Documentation (in progress)
+### 🔵 v1.0.0 - Polish & Release
+- [ ] Animationen & VFX
+- [ ] Sound System
+- [ ] Full Documentation
 
 ## 🤝 Contributing
-
-### Development Workflow
 
 1. **Fork** das Repository
 2. **Create Branch**: `git checkout -b feature/amazing-feature`
 3. **Write Tests**: Tests zuerst für neue Features
 4. **Implement Feature**: Schreibe den Code
-5. **Run Tests**: `npm test` - Stelle sicher alle Tests bestehen
+5. **Run Tests**: `npm test`
 6. **Commit**: `git commit -m 'feat: Add amazing feature'`
 7. **Push**: `git push origin feature/amazing-feature`
 8. **Pull Request**: Öffne einen PR
 
 ### Commit Convention
-
-Wir verwenden [Conventional Commits](https://www.conventionalcommits.org/):
-
 - `feat:` - Neues Feature
 - `fix:` - Bug Fix
 - `refactor:` - Code-Refactoring
 - `test:` - Test-bezogen
 - `docs:` - Dokumentation
-- `style:` - Code-Style (formatting)
-- `perf:` - Performance-Verbesserung
-
-### Code Style
-
-- **Indentation**: 4 Spaces
-- **Quotes**: Single quotes für Strings
-- **Semicolons**: Ja
-- **Line Length**: Max 100 Zeichen
-- **Comments**: JSDoc für Public APIs
-
-## 🗺️ Roadmap
-
-### ✅ v0.6.0 - Deployment System (Released 2026-02-23)
-- ✅ 3 Deployment Strategien mit Token-Multiplier
-- ✅ Token Shop mit 15 permanenten Upgrades
-- ✅ Portfolio System mit Ranks & Tracking
-- ✅ Lifetime Stats über alle Runs hinweg
-- ✅ Deployment UI mit 3-Tab Modal
-
-### ✅ v0.7.0 - Reinforcement Learning Bot (Released 2026-03-11)
-- ✅ DQN Agent mit TensorFlow.js
-- ✅ Auto-Pilot Mode
-- ✅ Live Training Visualisierung
-- ✅ Performance Metrics Dashboard
-- ✅ Deployment Strategy Optimization
-- ✅ Accuracy-Based Training Rewards
-- ✅ Cost-Based Building & Training Rewards
-
-### 🔵 v0.8.0 - UI Refactoring
-- [ ] Komponenten-basierte UI-Architektur
-- [ ] State Management verbessern
-- [ ] Performance-Optimierung für Rendering
-- [ ] Mobile Responsiveness
-
-### 🔵 v0.9.0 - Advanced Features
-- [ ] Neue Model-Kategorien (LLMs, Multimodal)
-- [ ] Erweiterter Research Tree (60+ Items)
-- [ ] Cloud Providers System
-- [ ] Multiplayer-Leaderboards
-
-### 🔵 v1.0.0 - Polish & Release
-- [ ] Animationen & VFX
-- [ ] Sound System
-- [ ] Tutorial System überarbeiten
-- [ ] Balance Pass
-- [ ] Full Documentation
 
 ## 📝 License
 
@@ -358,17 +269,12 @@ MIT License - siehe [LICENSE](LICENSE) für Details
 
 - Inspiriert von klassischen Idle Games (Cookie Clicker, Universal Paperclips)
 - Machine Learning Concepts von TensorFlow, PyTorch, und Hugging Face
-- Community Feedback & Contributions
 - Catppuccin Color Theme
 
 ## 📧 Contact
 
 Oliver Laudan - oliver.laudan@gmail.com
 
-Project Link: [https://github.com/oliverlaudan-ops/AI-Idle](https://github.com/oliverlaudan-ops/AI-Idle)
-
-Live Demo: [https://idle.future-pulse.tech](https://idle.future-pulse.tech)
-
----
+**Live Demo**: [https://ai-idle.future-pulse.tech](https://ai-idle.future-pulse.tech)
 
 **Made with ❤️ and ☕ in Munich, Germany**
