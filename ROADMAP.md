@@ -2,7 +2,103 @@
 
 **Long-term development plan for AI-Idle**
 
-Last Updated: 2026-02-23 | Current Version: 0.6.0
+Last Updated: 2026-03-12 | Current Version: 0.7.1
+
+---
+
+## ✅ Version 0.7.1 - Stability & RL Bot (COMPLETED)
+
+**Released:** 2026-03-12  
+**Status:** ✅ Production Ready
+
+### Features Delivered
+
+#### Storage Safety
+- **NEW**: `utils/storage.js` - Safe localStorage wrapper mit try/catch
+- **UPDATED**: `dqn-agent.js`, `settings.js`, `main.js` nutzen jetzt den safe wrapper
+- **FIX**: QuotaExceeded handling für vollen localStorage
+
+#### UI Refactoring (Modular)
+- **NEW**: 8 separate UI-Render-Module:
+  - `ui-render-stats.js` - Stats-Anzeige
+  - `ui-render-buildings.js` - Building-Management
+  - `ui-render-models.js` - Model Training UI
+  - `ui-render-training.js` - Training Queue
+  - `ui-render-research.js` - Research Tree
+  - `ui-render-achievements.js` - Achievements
+  - `ui-render-statistics.js` - Statistics Panel
+  - `ui-render-notifications.js` - Toast Notifications
+- **REFACTORED**: `ui-render.js` von 614 Zeilen aufgeräumt
+
+#### Error Handling
+- **NEW**: `utils/error-boundary.js` - Global ErrorHandler class
+- **NEW**: `utils/safeExecute` utility für try/catch Wrappers
+- **UPDATED**: Alle UI-Render-Funktionen mit error handling
+- **FIX**: Inline onclick handler in `main.js` mit try/catch
+
+#### TensorFlow.js Memory Monitoring
+- **NEW**: `systems/rl-bot/tf-memory-monitor.js` - Memory leak detection
+- **INTEGRATED**: Memory checks in `dqn-agent.js` (every 100 steps)
+- **AUTO-CLEANUP**: Automatischer cleanup bei 400MB
+- **PROTECTION**: Block replay-buffer sampling below 200MB
+
+#### SmartPredictor Removal
+- **REMOVED**: Deprecated SmartPredictor feature
+- **CLEANUP**: Removed all SmartPredictor references from codebase
+
+---
+
+## ✅ Version 0.7.0 - Reinforcement Learning Bot (COMPLETED)
+
+**Released:** 2026-03-12  
+**Status:** ✅ Production Ready
+
+### Features Delivered
+
+#### 🤖 DQN Agent
+- **Neural Network:** 3-layer dense architecture with TensorFlow.js (27 → 128 → 64 → 29)
+- **State Space:** 27 features (resources, buildings, research, training, deployment)
+- **Action Space:** 29 discrete actions (build, train, research, deploy, wait)
+- **Reward Function:** Deployment-focused with accuracy, efficiency, research bonuses
+- **Experience Replay:** 10K buffer with uniform sampling
+- **Target Network:** For training stability
+- **Model Persistence:** IndexedDB save/load
+
+#### 🎮 Auto-Pilot Mode
+- Bot takes control and plays automatically
+- Watch in real-time as it learns
+- Speed controls (1×, 2×, 5×, 10×)
+- Pause/resume/stop functionality
+- Auto-save every 10 episodes
+
+#### 📊 Training Metrics
+- Episode count, total reward, average reward
+- Exploration rate (epsilon) tracking
+- Loss monitoring
+- Buffer size display
+- Deployment success tracking
+
+#### 📁 Module Structure
+
+```
+src/systems/rl-bot/
+├── dqn-agent.js           # Core DQN algorithm
+├── game-environment.js    # GameState wrapper for RL
+├── replay-buffer.js       # Experience replay memory
+├── state-encoder.js       # Normalize game state to neural net input
+├── action-space.js        # Define all possible actions (29 actions)
+├── reward-function.js     # Calculate rewards
+├── bot-controller.js      # Main bot loop
+├── action-executor.js     # Translate actions → game mutations
+├── tf-memory-monitor.js   # TensorFlow.js memory management
+└── index.js               # Public API
+```
+
+#### Documentation
+- Complete README.md in `src/systems/rl-bot/`
+- Architecture overview
+- Usage examples
+- Training tips & troubleshooting
 
 ---
 
@@ -19,222 +115,6 @@ Last Updated: 2026-02-23 | Current Version: 0.6.0
 - ✅ **Lifetime Stats** tracking across all deployments
 - ✅ **Smart UI** with performance optimization
 - ✅ **Complete Documentation** (DEPLOYMENT.md)
-
-### Technical Achievements
-
-- ✅ Deployment strategies with token multipliers
-- ✅ Upgrade prerequisite system
-- ✅ Portfolio scoring and ranking algorithm
-- ✅ Lifetime accuracy tracking
-- ✅ Efficient re-rendering with dirty flags
-- ✅ Catppuccin-themed UI components
-
-### Impact
-
-- 🎮 Adds meaningful progression system
-- 📈 Increases replayability significantly
-- 🏆 Provides long-term goals for players
-- 🔧 Permanent upgrades make runs more efficient
-
----
-
-## 🔴 Version 0.7.0 - Reinforcement Learning Bot (IN DEVELOPMENT)
-
-**Target:** Q1 2026 (March)  
-**Status:** 🔴 Phase 1 - Planning & Architecture
-
-### Vision
-
-Create an **AI agent that learns to play AI-Idle optimally** using Deep Q-Learning (DQN). The bot will be a playable feature that:
-
-- Learns from trial and error
-- Optimizes building purchases
-- Discovers efficient strategies
-- Competes with human players
-
-### Core Features
-
-#### 🤖 DQN Agent
-- **Neural Network:** 3-layer dense architecture with TensorFlow.js
-- **State Space:** Resources, buildings, research status, training state
-- **Action Space:** 20+ actions (build, train, research, wait)
-- **Reward Function:** Accuracy gain per second
-
-#### 🎮 Auto-Pilot Mode
-- Bot takes control and plays automatically
-- Watch in real-time as it learns
-- Speed controls (1×, 2×, 5×, 10×)
-- Pause/resume functionality
-
-#### 📊 Live Training Visualization
-- **Metrics Dashboard:**
-  - Episode count
-  - Total reward
-  - Average reward (last 100 episodes)
-  - Exploration rate (epsilon)
-  - Loss over time
-- **Action Distribution Chart**
-- **Reward Curve** (smoothed moving average)
-- **Q-Value Heatmap**
-
-#### 🏆 Performance Analytics
-- Bot vs Human leaderboard
-- Best runs comparison
-- Strategy discovery tracking
-- Token efficiency metrics
-
-### Technical Implementation
-
-#### Module Structure
-
-```
-src/systems/rl-bot/
-├── dqn-agent.js          # Core DQN algorithm
-├── game-environment.js   # GameState wrapper for RL
-├── replay-buffer.js      # Experience replay memory
-├── state-encoder.js      # Normalize game state to neural net input
-├── action-space.js       # Define all possible actions
-├── reward-function.js    # Calculate rewards
-├── bot-controller.js     # Main bot loop
-└── index.js              # Public API
-```
-
-#### Neural Network Architecture
-
-```javascript
-// State Input (normalized 0-1)
-// └── Dense Layer (128 neurons, ReLU)
-//     └── Dense Layer (64 neurons, ReLU)
-//         └── Dense Layer (action_space, Linear)
-//             └── Q-Values Output
-```
-
-#### State Representation (20 features)
-
-```javascript
-[
-  // Resources (normalized by current max)
-  data / max_data,
-  compute / max_compute,
-  accuracy / target_accuracy,
-  research_points / max_rp,
-  
-  // Buildings (normalized by cost)
-  data_center_count / 50,
-  compute_cluster_count / 50,
-  gpu_farm_count / 50,
-  // ... (7 building types)
-  
-  // Research (binary flags)
-  has_sgd, has_adam, has_relu, has_transformer,
-  // ... (critical research items)
-  
-  // Training State
-  is_training, training_progress,
-  current_model_tier,
-  
-  // Time
-  run_duration / max_duration
-]
-```
-
-#### Action Space (25 actions)
-
-```javascript
-[
-  'wait',                    // Do nothing this step
-  'build_data_center',       // 7 building types
-  'build_compute_cluster',
-  // ...
-  'train_linear_regression', // 10 model types
-  'train_neural_network',
-  // ...
-  'research_sgd',           // 8 critical research items
-  'research_adam',
-  // ...
-]
-```
-
-#### Reward Function
-
-```javascript
-reward = (
-  accuracy_gain * 1.0 +           // Primary objective
-  efficiency_bonus * 0.5 +        // Reward efficient resource use
-  research_completion * 2.0 +     // Encourage tech progression
-  deployment_success * 50.0 -     // Major reward for deployment
-  invalid_action_penalty * 5.0    // Discourage illegal moves
-)
-```
-
-### UI Components
-
-#### AI Lab Tab Enhancement
-
-```
-🤖 Reinforcement Learning Bot
-┌────────────────────────────────────────┐
-│ Status: [Training / Idle / Playing]       │
-│                                          │
-│ Episode: 1,234                           │
-│ Total Reward: 45,678                     │
-│ Avg Reward (100): 892                    │
-│ Exploration: 15%                         │
-│                                          │
-│ [Start Training] [Stop] [Reset]          │
-│ Speed: [1×] [2×] [5×] [10×]                  │
-│                                          │
-│ 📊 Reward Curve (Live Chart)           │
-│ 🎯 Action Distribution (Pie Chart)     │
-│ 🧠 Q-Value Heatmap (State × Action)    │
-└────────────────────────────────────────┘
-```
-
-### Development Phases
-
-#### Phase 1: Core RL System (❶ week)
-- [x] Architecture planning
-- [ ] DQN Agent implementation
-- [ ] State encoding
-- [ ] Action space definition
-- [ ] Reward function
-- [ ] Experience replay buffer
-
-#### Phase 2: Game Integration (❷ week)
-- [ ] GameEnvironment wrapper
-- [ ] Bot controller
-- [ ] Action executor
-- [ ] State observer
-- [ ] Training loop
-
-#### Phase 3: UI & Visualization (❸ week)
-- [ ] AI Lab tab redesign
-- [ ] Metrics dashboard
-- [ ] Live charts (Chart.js)
-- [ ] Control panel
-- [ ] Speed controls
-
-#### Phase 4: Advanced Features (❹ week)
-- [ ] Model save/load
-- [ ] Pre-trained models
-- [ ] Hyperparameter tuning UI
-- [ ] Bot vs Human leaderboard
-- [ ] Strategy analysis
-
-#### Phase 5: Polish & Documentation (❺ week)
-- [ ] Performance optimization
-- [ ] Tutorial for RL Bot
-- [ ] Documentation
-- [ ] Testing
-- [ ] Balancing
-
-### Success Criteria
-
-- ✅ Bot can play from start to first deployment
-- ✅ Bot discovers efficient building strategies
-- ✅ Training converges (reward increases over time)
-- ✅ UI provides meaningful insights into learning
-- ✅ Players enjoy watching the bot learn
 
 ---
 
@@ -383,7 +263,8 @@ reward = (
 | Version | Target Date | Status | Key Features |
 |---------|------------|--------|-------------|
 | 0.6.0 | 2026-02-23 | ✅ Released | Deployment System |
-| 0.7.0 | 2026-03-31 | 🔴 In Dev | RL Bot |
+| 0.7.0 | 2026-03-12 | ✅ Released | RL Bot (DQN) |
+| 0.7.1 | 2026-03-12 | ✅ Released | Stability & Cleanup |
 | 0.8.0 | 2026-05-31 | 🔵 Planned | UI Refactor |
 | 0.9.0 | 2026-07-31 | 🔵 Planned | Advanced Features |
 | 1.0.0 | 2026-10-31 | 🔵 Planned | Polish & Release |
@@ -402,4 +283,4 @@ We value community input! If you have ideas for features or improvements:
 
 **This roadmap is subject to change based on player feedback, technical constraints, and new ideas!**
 
-*Last Updated: 2026-02-23 by Oliver Laudan*
+*Last Updated: 2026-03-12 by Oliver Laudan*
