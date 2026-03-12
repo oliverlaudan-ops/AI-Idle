@@ -4,7 +4,6 @@
  * Now with SMART PREDICTIONS powered by player-specific ML!
  */
 
-import { getSmartPredictor } from '../modules/achievements.js';
 import { RLEnvironment } from '../ai/rl-environment.js';
 
 export class AILabUI {
@@ -35,11 +34,8 @@ export class AILabUI {
 
             console.log('[AI Lab] TensorFlow.js version:', tf.version.tfjs);
 
-            // Get Smart Predictor from achievements module
-            this.smartPredictor = getSmartPredictor();
             
             if (!this.smartPredictor) {
-                throw new Error('Smart Predictor not initialized');
             }
 
             this.environment = new RLEnvironment(this.game);
@@ -76,7 +72,6 @@ export class AILabUI {
                     </div>
                     <div class="status-item">
                         <span class="status-icon">🧠</span>
-                        <span>Smart Predictor: ${modelInfo?.modelLoaded ? 'Trained' : 'Ready'}</span>
                     </div>
                     <div class="status-item">
                         <span class="status-icon">📊</span>
@@ -87,7 +82,6 @@ export class AILabUI {
                 <!-- Achievement Predictor Section -->
                 <div class="ai-section">
                     <div class="ai-section-header">
-                        <h3>🎯 Smart Achievement Predictor</h3>
                         <p>Personalized ML predictions based on YOUR playstyle</p>
                     </div>
                     <div class="ai-section-content">
@@ -137,7 +131,6 @@ export class AILabUI {
                     </div>
                     <div class="ai-section-content">
                         <div class="tech-info">
-                            <h4>Smart Achievement Predictor:</h4>
                             <pre>Input (30 features) → Dense (24, ReLU) → Dropout → Dense (12, ReLU) → Output (1, Sigmoid)</pre>
                             <p><strong>Personalization:</strong> Learns from your achievement unlock patterns</p>
                             <p><strong>Features:</strong> Progress, playstyle, skill level, temporal patterns</p>
@@ -174,7 +167,6 @@ export class AILabUI {
     }
 
     /**
-     * Train Smart Predictor
      */
     async trainPredictor() {
         const status = document.getElementById('predictor-status');
@@ -226,7 +218,6 @@ export class AILabUI {
     }
 
     /**
-     * Make predictions with Smart Predictor
      */
     async makePredictions() {
         const results = document.getElementById('predictor-results');

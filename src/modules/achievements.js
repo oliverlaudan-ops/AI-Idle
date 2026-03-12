@@ -1,11 +1,5 @@
 // Achievement Definitions
 
-import { SmartAchievementPredictor } from '../ai/smart-achievement-predictor.js';
-
-// Global predictor instance
-let smartPredictor = null;
-let gameStateRef = null;
-
 export const achievements = {
     // Training Milestones
     firststeps: {
@@ -167,33 +161,6 @@ export const achievements = {
 };
 
 /**
- * Initialize Smart Predictor
- */
-export async function initializeSmartPredictor(gameState) {
-    gameStateRef = gameState;
-    
-    try {
-        smartPredictor = new SmartAchievementPredictor(gameState);
-        await smartPredictor.init();
-        
-        console.log('[Achievements] Smart Predictor initialized');
-        console.log('[Achievements] Training history:', smartPredictor.getModelInfo().trainingDataSize, 'unlocks');
-        
-        return smartPredictor;
-    } catch (error) {
-        console.error('[Achievements] Failed to initialize Smart Predictor:', error);
-        return null;
-    }
-}
-
-/**
- * Get Smart Predictor instance
- */
-export function getSmartPredictor() {
-    return smartPredictor;
-}
-
-/**
  * Check if achievement is unlocked
  */
 export function checkAchievement(achievement, gameStats) {
@@ -230,7 +197,7 @@ export function checkAchievement(achievement, gameStats) {
 }
 
 /**
- * Unlock achievement and record for ML training
+ * Unlock achievement
  */
 export async function unlockAchievement(achievementId, gameState) {
     const achievement = achievements[achievementId];
@@ -243,22 +210,6 @@ export async function unlockAchievement(achievementId, gameState) {
     achievement.unlocked = true;
     
     console.log(`[Achievements] 🎉 Unlocked: ${achievement.name}`);
-    
-    // Record unlock for ML training
-    if (smartPredictor) {
-        smartPredictor.recordUnlock(achievementId);
-        
-        // Auto-train if we have enough data
-        const modelInfo = smartPredictor.getModelInfo();
-        if (modelInfo.canTrain && !modelInfo.isTraining) {
-            // Train in background (don't wait)
-            smartPredictor.train().then(success => {
-                if (success) {
-                    console.log('[Achievements] ML model retrained with new unlock');
-                }
-            });
-        }
-    }
     
     // Trigger UI notification
     if (typeof window !== 'undefined' && window.gameUI) {
@@ -276,7 +227,7 @@ export async function checkAllAchievements(gameStats) {
     
     for (const [id, achievement] of Object.entries(achievements)) {
         if (!achievement.unlocked && checkAchievement(achievement, gameStats)) {
-            const unlocked = await unlockAchievement(id, gameStateRef);
+            const unlocked = await unlockAchievement(id, gameStats);
             if (unlocked) {
                 newlyUnlocked.push(achievement);
             }
