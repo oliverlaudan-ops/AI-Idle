@@ -3,7 +3,6 @@
  * All achievement data and requirements
  */
 
-import { SmartAchievementPredictor } from '../../ai/smart-achievement-predictor.js';
 
 // Global predictor instance
 let smartPredictor = null;
@@ -195,11 +194,9 @@ export function getAchievementStats() {
 /**
  * Initialize Smart Predictor
  */
-export async function initializeSmartPredictor(gameState) {
     gameStateRef = gameState;
     
     try {
-        smartPredictor = new SmartAchievementPredictor(gameState);
         await smartPredictor.init();
         
         console.log('[Achievements] Smart Predictor initialized');
@@ -215,6 +212,5 @@ export async function initializeSmartPredictor(gameState) {
 /**
  * Get Smart Predictor instance
  */
-export function getSmartPredictor() {
     return smartPredictor;
 }
