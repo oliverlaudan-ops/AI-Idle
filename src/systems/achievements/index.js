@@ -7,8 +7,6 @@ export {
     achievements,
     initializeAchievements,
     getAchievementStats,
-    initializeSmartPredictor,
-    getSmartPredictor
 } from './definitions.js';
 
 export {
