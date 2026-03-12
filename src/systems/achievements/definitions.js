@@ -3,8 +3,10 @@
  * All achievement data and requirements
  */
 
+import { SmartAchievementPredictor } from '../../ai/smart-achievement-predictor.js';
 
 // Global predictor instance
+let smartPredictor = null;
 let gameStateRef = null;
 
 export const achievements = {
@@ -191,17 +193,5 @@ export function getAchievementStats() {
 }
 
 /**
+ * Initialize Smart Predictor
  */
-    gameStateRef = gameState;
-    
-    try {
-        
-        
-    } catch (error) {
-        return null;
-    }
-}
-
-/**
- */
-}
