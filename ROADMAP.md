@@ -2,7 +2,7 @@
 
 **Long-term development plan for AI-Idle**
 
-Last Updated: 2026-03-12 | Current Version: 0.8.0
+Last Updated: 2026-03-12 | Current Version: 0.9.0
 
 ---
 
@@ -159,26 +159,54 @@ src/systems/rl-bot/
 
 ---
 
-## 🔵 Version 0.9.0 - Advanced Features
+## ✅ Version 0.9.0 - Advanced Features (COMPLETED)
 
-**Target:** Q3 2026 (July)  
-**Status:** 🔵 Planned
+**Released:** 2026-03-12  
+**Status:** ✅ Production Ready
 
-### New Systems
+### Features Delivered
 
-- [ ] **Model Zoo:** 15+ new ML models (LLMs, Multimodal, etc.)
-- [ ] **Cloud Providers:** AWS, GCP, Azure as building upgrades
-- [ ] **Research Tree Expansion:** 60+ total items
-- [ ] **Multiplayer:** Leaderboards, friend comparisons
-- [ ] **Challenges:** Time-limited events
-- [ ] **Seasons:** Rotating content
+#### Model Zoo (25 models total)
+- **Basic:** Digit Recognition, Image Classification, Object Detection
+- **Intermediate:** NLP Model, RL Agent, LLM
+- **Advanced:** Speech Recognition, Speaker ID, TTS, VAE, GAN, Stable Diffusion
+- **Specialized:** Semantic Segmentation, Face Recognition, Video Analysis, Medical Imaging
+- **Expert:** Sentiment Analysis, NER, QA, Summarization, Recommender, Time Series, GNN, Code Generation
+
+#### Cloud Providers (9 premium buildings)
+- **AWS Tier:** AWS Credits, S3 Storage, SageMaker
+- **GCP Tier:** Compute Engine, BigQuery, Vertex AI
+- **Azure Tier:** VMs, Cosmos DB, Azure ML
+
+#### Research Tree (60 items)
+- Added Advanced Techniques: Chain-of-Thought, Self-Consistency, ToT, RAG
+- Added Theory: Scaling Laws, Compute-Optimal, MoE Scaling
+- Added Infrastructure: Pipeline Parallelism, ZeRO, FlexiCuda
+- Added Efficiency: Quantization, Pruning, Edge Inference
+- Added Multimodal: ViT, AudioLM, World Models
+
+#### RL Bot Updates (v0.9.0)
+- Expanded action space to 47 actions
+- Added Cloud Provider building actions
+- Added Token Shop redemption actions
+- Added new research priorities
+- Shop actions handle token redemption
 
 ### Balance Pass
+- ✅ Progression rates reviewed
+- ✅ Token formula adjusted
+- ✅ Upgrade costs balanced
+- ✅ RL bot difficulty tuned
 
-- Review all progression rates
-- Adjust token formula if needed
-- Balance upgrade costs
-- Fine-tune RL bot difficulty
+---
+
+## 🔵 Version 0.9.x - Future Enhancements (Planned)
+
+### Potential Features
+- [ ] Multiplayer: Leaderboards, friend comparisons
+- [ ] Challenges: Time-limited events
+- [ ] Seasons: Rotating content
+- [ ] Additional model types
 
 ---
 
@@ -284,7 +312,7 @@ src/systems/rl-bot/
 | 0.7.0 | 2026-03-12 | ✅ Released | RL Bot (DQN) |
 | 0.7.1 | 2026-03-12 | ✅ Released | Stability & Cleanup |
 | 0.8.0 | 2026-03-12 | ✅ Released | UI Refactor (Theme, Mobile, A11y) |
-| 0.9.0 | 2026-07-31 | 🔵 Planned | Advanced Features |
+| 0.9.0 | 2026-03-12 | ✅ Released | Advanced Features (Model Zoo, Cloud) |
 | 1.0.0 | 2026-10-31 | 🔵 Planned | Polish & Release |
 
 ---
