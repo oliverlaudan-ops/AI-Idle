@@ -51,6 +51,15 @@
 
 .training-progress-fill.near-complete {
     animation: pulse 0.5s ease-in-out infinite, progressGlow 1s ease-in-out infinite;
+    background: linear-gradient(90deg, var(--accent-success), #00ff88, var(--accent-success));
+    background-size: 200% 100%;
+    animation: progressStripes 0.3s linear infinite, progressGlow 1s ease-in-out infinite, gradientFlow 1s linear infinite;
+}
+
+@keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 /* Particle Canvas for Celebrations */
