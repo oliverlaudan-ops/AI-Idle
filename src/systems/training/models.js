@@ -142,6 +142,166 @@ export const models = {
         unlockRequirement: { accuracy: 250000, research: 400 },
         trainingTime: 600,
         realConcept: 'CLIP, DALL-E, vision-language models'
+    },
+    
+    // ============================================
+    // NEW: Generative AI Models (v0.9.0)
+    // ============================================
+    speech_recognition: {
+        id: 'speech_recognition',
+        name: 'Speech Recognition',
+        category: 'audio',
+        icon: '🎤',
+        description: 'Convert spoken words to text',
+        requirements: {
+            data: 800000,
+            compute: 500
+        },
+        production: {
+            accuracy: 500,
+            research: 50
+        },
+        unlocked: false,
+        unlockRequirement: { accuracy: 5000, research: 30 },
+        trainingTime: 120,
+        realConcept: 'Wav2Vec, Whisper, CTC networks'
+    },
+    vae: {
+        id: 'vae',
+        name: 'Variational Autoencoder',
+        category: 'generative',
+        icon: '🎲',
+        description: 'Learn latent representations for generation',
+        requirements: {
+            data: 2000000,
+            compute: 1200
+        },
+        production: {
+            accuracy: 1200,
+            research: 120
+        },
+        unlocked: false,
+        unlockRequirement: { accuracy: 15000, research: 35 },
+        trainingTime: 150,
+        realConcept: 'Latent space learning, VAE, reparameterization trick'
+    },
+    gan: {
+        id: 'gan',
+        name: 'GAN',
+        category: 'generative',
+        icon: '🎭',
+        description: 'Generate realistic synthetic data',
+        requirements: {
+            data: 5000000,
+            compute: 3000
+        },
+        production: {
+            accuracy: 2500,
+            research: 250
+        },
+        unlocked: false,
+        unlockRequirement: { accuracy: 30000, research: 45 },
+        trainingTime: 200,
+        realConcept: 'Generator-Discriminator adversarial training'
+    },
+    stable_diffusion: {
+        id: 'stable_diffusion',
+        name: 'Stable Diffusion',
+        category: 'generative',
+        icon: '🎨',
+        description: 'Text-to-image generation via diffusion',
+        requirements: {
+            data: 15000000,
+            compute: 8000
+        },
+        production: {
+            accuracy: 6000,
+            research: 600
+        },
+        unlocked: false,
+        unlockRequirement: { accuracy: 60000, research: 55 },
+        trainingTime: 250,
+        realConcept: 'Latent diffusion, CLIP text encoders'
+    },
+    
+    // ============================================
+    // NEW: Vision & NLP Models (v0.9.0)
+    // ============================================
+    semantic_segmentation: {
+        id: 'semantic_segmentation',
+        name: 'Semantic Segmentation',
+        category: 'vision',
+        icon: '🔲',
+        description: 'Pixel-level image understanding',
+        requirements: {
+            data: 10000000,
+            compute: 6000
+        },
+        production: {
+            accuracy: 4500,
+            research: 450
+        },
+        unlocked: false,
+        unlockRequirement: { accuracy: 40000, research: 50 },
+        trainingTime: 180,
+        realConcept: 'U-Net, FCN, Mask R-CNN'
+    },
+    sentiment_analysis: {
+        id: 'sentiment_analysis',
+        name: 'Sentiment Analysis',
+        category: 'nlp',
+        icon: '😊',
+        description: 'Detect emotions in text',
+        requirements: {
+            data: 3000000,
+            compute: 1500
+        },
+        production: {
+            accuracy: 1800,
+            research: 180
+        },
+        unlocked: false,
+        unlockRequirement: { accuracy: 25000, research: 40 },
+        trainingTime: 100,
+        realConcept: 'BERT-based sentiment classifiers'
+    },
+    ner: {
+        id: 'ner',
+        name: 'Named Entity Recognition',
+        category: 'nlp',
+        icon: '📛',
+        description: 'Extract entities from text',
+        requirements: {
+            data: 4000000,
+            compute: 2000
+        },
+        production: {
+            accuracy: 2200,
+            research: 220
+        },
+        unlocked: false,
+        unlockRequirement: { accuracy: 35000, research: 45 },
+        trainingTime: 120,
+        realConcept: 'Token classification, CRF layers'
+    },
+    code_generation: {
+        id: 'code_generation',
+        name: 'Code Generation',
+        category: 'nlp',
+        icon: '💻',
+        description: 'Generate code from natural language',
+        requirements: {
+            data: 25000000,
+            compute: 15000
+        },
+        production: {
+            accuracy: 8000,
+            research: 800
+        },
+        unlocked: false,
+        unlockRequirement: { accuracy: 80000, research: 60 },
+        trainingTime: 300,
+        realConcept: 'Codex, CodeGen, LLMs for programming'
     }
 };
 
