@@ -255,7 +255,7 @@ export const ACTION_SPACE = [
         description: 'Maximum tokens, requires 3+ deployments'
     },
     
-    // 36-38. Cloud Providers (v0.9.0) - Premium buildings
+    // 36-44. Cloud Providers (v0.9.0) - Premium buildings
     {
         id: 36,
         type: ActionType.BUILD,
@@ -266,53 +266,95 @@ export const ACTION_SPACE = [
     {
         id: 37,
         type: ActionType.BUILD,
-        target: 'gcp_compute',
-        name: 'Build GCP Compute',
+        target: 'aws_s3',
+        name: 'Build AWS S3 Storage',
         premium: true
     },
     {
         id: 38,
         type: ActionType.BUILD,
+        target: 'aws_sagemaker',
+        name: 'Build AWS SageMaker',
+        premium: true
+    },
+    {
+        id: 39,
+        type: ActionType.BUILD,
+        target: 'gcp_compute',
+        name: 'Build GCP Compute',
+        premium: true
+    },
+    {
+        id: 40,
+        type: ActionType.BUILD,
+        target: 'gcp_bigquery',
+        name: 'Build GCP BigQuery',
+        premium: true
+    },
+    {
+        id: 41,
+        type: ActionType.BUILD,
+        target: 'gcp_vertex',
+        name: 'Build GCP Vertex AI',
+        premium: true
+    },
+    {
+        id: 42,
+        type: ActionType.BUILD,
         target: 'azure_vm',
         name: 'Build Azure VMs',
         premium: true
     },
-    
-    // 39-43. New Research Items (v0.9.0) - Top priorities
     {
-        id: 39,
+        id: 43,
+        type: ActionType.BUILD,
+        target: 'azure_cosmos',
+        name: 'Build Azure Cosmos DB',
+        premium: true
+    },
+    {
+        id: 44,
+        type: ActionType.BUILD,
+        target: 'azure_ml',
+        name: 'Build Azure ML',
+        premium: true
+    },
+    
+    // 45-52. New Research Items (v0.9.0) - Top priorities
+    {
+        id: 45,
         type: ActionType.RESEARCH,
         target: 'chain_of_thought',
         name: 'Research Chain-of-Thought'
     },
     {
-        id: 40,
+        id: 46,
         type: ActionType.RESEARCH,
         target: 'quantization',
         name: 'Research Quantization'
     },
     {
-        id: 41,
+        id: 47,
         type: ActionType.RESEARCH,
         target: 'rag',
         name: 'Research RAG'
     },
     {
-        id: 42,
+        id: 48,
         type: ActionType.RESEARCH,
         target: 'moe',
         name: 'Research Mixture of Experts'
     },
     {
-        id: 43,
+        id: 49,
         type: ActionType.RESEARCH,
         target: 'diffusion',
         name: 'Research Diffusion Models'
     },
     
-    // 44-46. Shop Actions (v0.9.0) - Redeem tokens
+    // 50-52. Shop Actions (v0.9.0) - Redeem tokens
     {
-        id: 44,
+        id: 50,
         type: ActionType.SHOP,
         target: 'redeem_cheap',
         name: 'Redeem Cheap Token',
@@ -320,7 +362,7 @@ export const ACTION_SPACE = [
         description: 'Redeem low-cost prestige token'
     },
     {
-        id: 45,
+        id: 51,
         type: ActionType.SHOP,
         target: 'redeem_medium',
         name: 'Redeem Medium Token',
@@ -328,7 +370,7 @@ export const ACTION_SPACE = [
         description: 'Redeem medium-cost prestige token'
     },
     {
-        id: 46,
+        id: 52,
         type: ActionType.SHOP,
         target: 'redeem_expensive',
         name: 'Redeem Expensive Token',

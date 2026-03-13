@@ -123,6 +123,145 @@ export const buildings = {
         unlocked: false,
         unlockRequirement: { accuracy: 4000, research: 40 },
         count: 0
+    },
+    
+    // ============================================
+    // Tier 4: Cloud Providers (Premium)
+    // ============================================
+    
+    // AWS Services
+    aws_credits: {
+        id: 'aws_credits',
+        name: 'AWS Credits',
+        tier: 4,
+        premium: true,
+        icon: '☁️',
+        description: 'AWS cloud credits for on-demand compute. Provides +500 compute/s',
+        baseCost: { data: 5000000 },
+        costMultiplier: 1.30,
+        production: { compute: 500 },
+        unlocked: false,
+        unlockRequirement: { research: 50 },
+        count: 0
+    },
+    aws_s3: {
+        id: 'aws_s3',
+        name: 'AWS S3 Storage',
+        tier: 4,
+        premium: true,
+        icon: '🪣',
+        description: 'Scalable object storage for training data. Provides +300 data/s',
+        baseCost: { data: 3000000 },
+        costMultiplier: 1.30,
+        production: { data: 300 },
+        unlocked: false,
+        unlockRequirement: { research: 55 },
+        count: 0
+    },
+    aws_sagemaker: {
+        id: 'aws_sagemaker',
+        name: 'AWS SageMaker',
+        tier: 4,
+        premium: true,
+        icon: '🤖',
+        description: 'Managed ML platform. Provides +800 compute/s and +10% global bonus',
+        baseCost: { data: 10000000, compute: 1000 },
+        costMultiplier: 1.35,
+        production: { compute: 800 },
+        bonus: { globalProduction: 0.10 },
+        unlocked: false,
+        unlockRequirement: { research: 60 },
+        count: 0
+    },
+    
+    // GCP Services
+    gcp_compute: {
+        id: 'gcp_compute',
+        name: 'GCP Compute Engine',
+        tier: 4,
+        premium: true,
+        icon: '🔧',
+        description: 'Virtual machines in Google Cloud. Provides +550 compute/s',
+        baseCost: { data: 5500000 },
+        costMultiplier: 1.30,
+        production: { compute: 550 },
+        unlocked: false,
+        unlockRequirement: { research: 50 },
+        count: 0
+    },
+    gcp_bigquery: {
+        id: 'gcp_bigquery',
+        name: 'GCP BigQuery',
+        tier: 4,
+        premium: true,
+        icon: '📊',
+        description: 'Serverless data warehouse. Provides +400 data/s',
+        baseCost: { data: 4000000 },
+        costMultiplier: 1.30,
+        production: { data: 400 },
+        unlocked: false,
+        unlockRequirement: { research: 55 },
+        count: 0
+    },
+    gcp_vertex: {
+        id: 'gcp_vertex',
+        name: 'GCP Vertex AI',
+        tier: 4,
+        premium: true,
+        icon: '🎯',
+        description: 'Unified ML platform. Provides +850 compute/s and +12% global bonus',
+        baseCost: { data: 11000000, compute: 1100 },
+        costMultiplier: 1.35,
+        production: { compute: 850 },
+        bonus: { globalProduction: 0.12 },
+        unlocked: false,
+        unlockRequirement: { research: 60 },
+        count: 0
+    },
+    
+    // Azure Services
+    azure_vm: {
+        id: 'azure_vm',
+        name: 'Azure VMs',
+        tier: 4,
+        premium: true,
+        icon: '🖥️',
+        description: 'Azure virtual machines. Provides +600 compute/s',
+        baseCost: { data: 6000000 },
+        costMultiplier: 1.30,
+        production: { compute: 600 },
+        unlocked: false,
+        unlockRequirement: { research: 50 },
+        count: 0
+    },
+    azure_cosmos: {
+        id: 'azure_cosmos',
+        name: 'Azure Cosmos DB',
+        tier: 4,
+        premium: true,
+        icon: '🌍',
+        description: 'Globally distributed database. Provides +350 data/s',
+        baseCost: { data: 3500000 },
+        costMultiplier: 1.30,
+        production: { data: 350 },
+        unlocked: false,
+        unlockRequirement: { research: 55 },
+        count: 0
+    },
+    azure_ml: {
+        id: 'azure_ml',
+        name: 'Azure ML',
+        tier: 4,
+        premium: true,
+        icon: '📈',
+        description: 'Enterprise ML service. Provides +900 compute/s and +15% global bonus',
+        baseCost: { data: 12000000, compute: 1200 },
+        costMultiplier: 1.35,
+        production: { compute: 900 },
+        bonus: { globalProduction: 0.15 },
+        unlocked: false,
+        unlockRequirement: { research: 60 },
+        count: 0
     }
 };
 
