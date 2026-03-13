@@ -38,6 +38,8 @@ function createResearchCard(id, research) {
     const card = document.createElement('div');
     card.className = 'research-card';
     card.id = `research-${id}`;
+    // Add educational tooltip - show realConcept on hover
+    card.dataset.tooltip = research.realConcept || 'No description available';
     
     card.innerHTML = `
         <div class="card-header">

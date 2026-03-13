@@ -33,6 +33,8 @@ function createModelCard(id, model) {
     const card = document.createElement('div');
     card.className = 'model-card';
     card.id = `model-${id}`;
+    // Add educational tooltip - show realConcept on hover
+    card.dataset.tooltip = model.realConcept || 'No description available';
     
     card.innerHTML = `
         <div class="card-header">
