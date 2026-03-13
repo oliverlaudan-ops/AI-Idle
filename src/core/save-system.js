@@ -96,7 +96,16 @@ export function loadGame(gameState) {
         gameState.buildings = saveData.buildings;
         gameState.models    = saveData.models;
         gameState.research  = saveData.research;
-        gameState.achievements = saveData.achievements;
+        // Merge achievements: keep new ones from game code, preserve unlocked status from save
+        const savedAchievements = saveData.achievements || {};
+        const newAchievements = gameState.achievements;
+        for (const [id, achievement] of Object.entries(newAchievements)) {
+            if (savedAchievements[id]) {
+                achievement.unlocked = savedAchievements[id].unlocked;
+                achievement.unlockedAt = savedAchievements[id].unlockedAt;
+            }
+        }
+        gameState.achievements = newAchievements;
 
         // ── Deployment migration chain ──────────────────────────────────────
         if (saveData.deployment) {
