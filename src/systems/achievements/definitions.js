@@ -163,6 +163,372 @@ export const achievements = {
         requirement: { type: 'totalAccuracy', value: 1000000000 },
         reward: 'Unlock experimental AGI projects',
         unlocked: false
+    },
+    
+    // ====== v1.0.0 Additional Achievements ======
+    
+    // Training Milestones
+    traine100: {
+        id: 'train100',
+        name: 'Century Trainer',
+        category: 'training',
+        icon: '💯',
+        description: 'Train 100 total models',
+        requirement: { type: 'modelsTrained', value: 100 },
+        reward: '+10% training speed',
+        unlocked: false
+    },
+    traine500: {
+        id: 'train500',
+        name: 'Half Thousand',
+        category: 'training',
+        icon: '🏋️',
+        description: 'Train 500 total models',
+        requirement: { type: 'modelsTrained', value: 500 },
+        reward: '+15% training speed',
+        unlocked: false
+    },
+    traine1000: {
+        id: 'train1000',
+        name: 'Grandmaster Trainer',
+        category: 'training',
+        icon: '🏆',
+        description: 'Train 1,000 total models',
+        requirement: { type: 'modelsTrained', value: 1000 },
+        reward: '+25% training speed',
+        unlocked: false
+    },
+    firstexpert: {
+        id: 'firstexpert',
+        name: 'Expert Trainer',
+        category: 'training',
+        icon: '🎖️',
+        description: 'Train your first Expert model',
+        requirement: { type: 'uniqueExpertModels', value: 1 },
+        reward: 'Unlock all Expert models',
+        unlocked: false
+    },
+    firstspecialized: {
+        id: 'firstspecialized',
+        name: 'Specialist',
+        category: 'training',
+        icon: '🔧',
+        description: 'Train your first Specialized model',
+        requirement: { type: 'uniqueSpecializedModels', value: 1 },
+        reward: 'Unlock Specialized category',
+        unlocked: false
+    },
+    
+    // Research Milestones
+    research25: {
+        id: 'research25',
+        name: 'Research Scholar',
+        category: 'research',
+        icon: '📚',
+        description: 'Complete 25 research items',
+        requirement: { type: 'researchCompleted', value: 25 },
+        reward: '+10% research speed',
+        unlocked: false
+    },
+    research50: {
+        id: 'research50',
+        name: 'Research Master',
+        category: 'research',
+        icon: '🎓',
+        description: 'Complete 50 research items',
+        requirement: { type: 'researchCompleted', value: 50 },
+        reward: '+20% research speed',
+        unlocked: false
+    },
+    alloptimizers: {
+        id: 'alloptimizers',
+        name: 'Optimizer Master',
+        category: 'research',
+        icon: '⚙️',
+        description: 'Research all optimizers',
+        requirement: { type: 'researchCategory', category: 'optimizers' },
+        reward: '+15% all production',
+        unlocked: false
+    },
+    allarchitectures: {
+        id: 'allarchitectures',
+        name: 'Architecture Expert',
+        category: 'research',
+        icon: '🏗️',
+        description: 'Research all architectures',
+        requirement: { type: 'researchCategory', category: 'architectures' },
+        reward: '+20% model performance',
+        unlocked: false
+    },
+    
+    // Building Milestones
+    buildings5: {
+        id: 'buildings5',
+        name: 'Growing Infrastructure',
+        category: 'buildings',
+        icon: '🏭',
+        description: 'Own 5 different building types',
+        requirement: { type: 'uniqueBuildings', value: 5 },
+        reward: '+5% all production',
+        unlocked: false
+    },
+    buildings10: {
+        id: 'buildings10',
+        name: 'Infrastructure Hub',
+        category: 'buildings',
+        icon: '🏢',
+        description: 'Own 10 different building types',
+        requirement: { type: 'uniqueBuildings', value: 10 },
+        reward: '+10% all production',
+        unlocked: false
+    },
+    buildingsall: {
+        id: 'buildingsall',
+        name: 'Full Infrastructure',
+        category: 'buildings',
+        icon: '🌆',
+        description: 'Own all building types',
+        requirement: { type: 'uniqueBuildings', value: 18 },
+        reward: '+25% all production',
+        unlocked: false
+    },
+    totalbuildings100: {
+        id: 'totalbuildings100',
+        name: 'Construction Tycoon',
+        category: 'buildings',
+        icon: '👷',
+        description: 'Own 100 total buildings',
+        requirement: { type: 'totalBuildings', value: 100 },
+        reward: '+10% building efficiency',
+        unlocked: false
+    },
+    totalbuildings500: {
+        id: 'totalbuildings500',
+        name: 'Industrial Empire',
+        category: 'buildings',
+        icon: '🏙️',
+        description: 'Own 500 total buildings',
+        requirement: { type: 'totalBuildings', value: 500 },
+        reward: '+20% building efficiency',
+        unlocked: false
+    },
+    
+    // Deployment Milestones
+    deploy10: {
+        id: 'deploy10',
+        name: 'Deployment Rookie',
+        category: 'deployment',
+        icon: '🚀',
+        description: 'Complete 10 deployments',
+        requirement: { type: 'deployments', value: 10 },
+        reward: '+5% token generation',
+        unlocked: false
+    },
+    deploy50: {
+        id: 'deploy50',
+        name: 'Deployment Pro',
+        category: 'deployment',
+        icon: '🛸',
+        description: 'Complete 50 deployments',
+        requirement: { type: 'deployments', value: 50 },
+        reward: '+10% token generation',
+        unlocked: false
+    },
+    deploy100: {
+        id: 'deploy100',
+        name: 'Deployment Master',
+        category: 'deployment',
+        icon: '🌟',
+        description: 'Complete 100 deployments',
+        requirement: { type: 'deployments', value: 100 },
+        reward: '+20% token generation',
+        unlocked: false
+    },
+    deployallstrategies: {
+        id: 'deployallstrategies',
+        name: 'Strategy Expert',
+        category: 'deployment',
+        icon: '♟️',
+        description: 'Use all deployment strategies',
+        requirement: { type: 'uniqueStrategies', value: 3 },
+        reward: '+15% token generation',
+        unlocked: false
+    },
+    
+    // Time-based Milestones
+    play1hour: {
+        id: 'play1hour',
+        name: 'Dedicated Player',
+        category: 'time',
+        icon: '⏰',
+        description: 'Play for 1 hour total',
+        requirement: { type: 'playTime', value: 3600 },
+        reward: 'Unlock Statistics tab',
+        unlocked: false
+    },
+    play10hours: {
+        id: 'play10hours',
+        name: 'Committed Player',
+        category: 'time',
+        icon: '🕐',
+        description: 'Play for 10 hours total',
+        requirement: { type: 'playTime', value: 36000 },
+        reward: '+10% all production',
+        unlocked: false
+    },
+    play100hours: {
+        id: 'play100hours',
+        name: 'AI Veteran',
+        category: 'time',
+        icon: '🕓',
+        description: 'Play for 100 hours total',
+        requirement: { type: 'playTime', value: 360000 },
+        reward: '+25% all production',
+        unlocked: false
+    },
+    day7: {
+        id: 'day7',
+        name: 'Week Survivor',
+        category: 'time',
+        icon: '📅',
+        description: 'Reach day 7',
+        requirement: { type: 'gameDays', value: 7 },
+        reward: '+5% all production',
+        unlocked: false
+    },
+    day30: {
+        id: 'day30',
+        name: 'Monthly Player',
+        category: 'time',
+        icon: '🗓️',
+        description: 'Reach day 30',
+        requirement: { type: 'gameDays', value: 30 },
+        reward: '+10% all production',
+        unlocked: false
+    },
+    day100: {
+        id: 'day100',
+        name: 'Century Mark',
+        category: 'time',
+        icon: '💫',
+        description: 'Reach day 100',
+        requirement: { type: 'gameDays', value: 100 },
+        reward: '+25% all production',
+        unlocked: false
+    },
+    
+    // Resource Milestones
+    coins1m: {
+        id: 'coins1m',
+        name: 'Millionaire',
+        category: 'resources',
+        icon: '💰',
+        description: 'Accumulate 1 million coins',
+        requirement: { type: 'maxCoins', value: 1000000 },
+        reward: 'Unlock premium buildings',
+        unlocked: false
+    },
+    coins1b: {
+        id: 'coins1b',
+        name: 'Billionaire',
+        category: 'resources',
+        icon: '💎',
+        description: 'Accumulate 1 billion coins',
+        requirement: { type: 'maxCoins', value: 1000000000 },
+        reward: '+50% coin generation',
+        unlocked: false
+    },
+    tokens100: {
+        id: 'tokens100',
+        name: 'Token Collector',
+        category: 'resources',
+        icon: '🪙',
+        description: 'Earn 100 deployment tokens',
+        requirement: { type: 'totalTokens', value: 100 },
+        reward: 'Unlock token shop',
+        unlocked: false
+    },
+    tokens1000: {
+        id: 'tokens1000',
+        name: 'Token Hoarder',
+        category: 'resources',
+        icon: '💵',
+        description: 'Earn 1,000 deployment tokens',
+        requirement: { type: 'totalTokens', value: 1000 },
+        reward: '+25% token generation',
+        unlocked: false
+    },
+    
+    // Special Achievements
+    firstrl: {
+        id: 'firstrl',
+        name: 'RL Pioneer',
+        category: 'special',
+        icon: '🤖',
+        description: 'Train your first RL Agent',
+        requirement: { type: 'specificModel', model: 'rlagent' },
+        reward: '+15% RL training speed',
+        unlocked: false
+    },
+    firstllm: {
+        id: 'firstllm',
+        name: 'LLM Pioneer',
+        category: 'special',
+        icon: '📝',
+        description: 'Train your first LLM',
+        requirement: { type: 'specificModel', model: 'llm' },
+        reward: '+20% LLM training speed',
+        unlocked: false
+    },
+    firstdeploy: {
+        id: 'firstdeploy',
+        name: 'First Deployment',
+        category: 'special',
+        icon: '�🚀',
+        description: 'Complete your first deployment',
+        requirement: { type: 'deployments', value: 1 },
+        reward: 'Unlock deployment strategies',
+        unlocked: false
+    },
+    maxlevel: {
+        id: 'maxlevel',
+        name: 'Max Level Master',
+        category: 'special',
+        icon: '⬆️',
+        description: 'Reach level 10 on any model',
+        requirement: { type: 'maxModelLevel', value: 10 },
+        reward: '+20% all training',
+        unlocked: false
+    },
+    allcategories: {
+        id: 'allcategories',
+        name: 'Full Unlock',
+        category: 'special',
+        icon: '🔓',
+        description: 'Unlock all model categories',
+        requirement: { type: 'unlockedCategories', value: 6 },
+        reward: 'Unlock secret category',
+        unlocked: false
+    },
+    cloudowner: {
+        id: 'cloudowner',
+        name: 'Cloud Owner',
+        category: 'special',
+        icon: '☁️',
+        description: 'Own at least one of each cloud provider',
+        requirement: { type: 'cloudProviders', value: 3 },
+        reward: '+30% premium production',
+        unlocked: false
+    },
+    perfectdeploy: {
+        id: 'perfectdeploy',
+        name: 'Perfect Deployment',
+        category: 'special',
+        icon: '💯',
+        description: 'Deploy with 100% accuracy',
+        requirement: { type: 'deploymentAccuracy', value: 100 },
+        reward: '+25% token generation',
+        unlocked: false
     }
 };
 
