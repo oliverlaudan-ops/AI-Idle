@@ -158,12 +158,17 @@ async function init() {
 }
 
 // Setup AI Lab lazy loading (RL Bot system)
+let aiLabLoading = false;
 function setupAILabLazyLoad() {
     const aiLabTab = document.querySelector('[data-tab="ai-lab"]');
     if (!aiLabTab) return;
     
     aiLabTab.addEventListener('click', async () => {
-        if (window.rlBotUI) return; // Already loaded
+        if (window.rlBotUI || aiLabLoading) return;
+        if (typeof tf === 'undefined' && !window.confirm(
+            'Optional AI Lab: Load TensorFlow.js from cdn.jsdelivr.net? Your IP address and browser request data will be sent to jsDelivr and its CDN providers; processing outside the EU is possible. Training and saved models stay in your browser. Details: https://future-pulse.de/spiele-rechtliches/#ai-idle. Choose Cancel to continue the game without AI Lab. Consent applies until this page is reloaded.'
+        )) return;
+        aiLabLoading = true;
         
         const statusEl = document.getElementById('ai-lab-status');
         if (statusEl) statusEl.textContent = 'Loading TensorFlow.js...';
@@ -195,7 +200,8 @@ function setupAILabLazyLoad() {
                 `;
             }
         }
-    }, { once: true }); // Only fire once
+        finally { aiLabLoading = false; }
+    });
 }
 
 // Load TensorFlow.js dynamically
